@@ -21,6 +21,10 @@ captures/
 *.aab
 *.hprof
 
+# Local artifacts
+.screenshots/
+dist/
+
 # OS files
 .DS_Store
 Thumbs.db
