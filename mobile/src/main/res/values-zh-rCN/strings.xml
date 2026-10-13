@@ -1,4 +1,149 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">N2 桌面助手</string>
+    <string name="app_name">N2 桌面</string>
+    <string name="home">你的手表，你的桌面</string>
+    <string name="home_subtitle">在手机上编辑，在手腕上使用。</string>
+    <string name="connection">手表连接</string>
+    <string name="no_watch">未连接手表</string>
+    <string name="no_watch_detail">请通过 Wear OS 配套应用配对手表。离线时也能继续编辑。</string>
+    <string name="connected">已连接</string>
+    <string name="app_missing">请在手表上安装 N2 桌面</string>
+    <string name="app_missing_detail">已发现配对设备，但未发现手表端应用。</string>
+    <string name="play_missing">Google Play 服务不可用</string>
+    <string name="play_missing_detail">请安装或更新 Google Play 服务以同步。离线编辑仍可使用。</string>
+    <string name="watch_versions">%1$s · Android API %2$d · N2 %3$s</string>
+    <string name="refresh">刷新手表</string>
+    <string name="sync_title">同步</string>
+    <string name="sync">同步到手表</string>
+    <string name="sync_changes">同步我的修改</string>
+    <string name="sync_not_sent">尚未发送</string>
+    <string name="sync_waiting">已发送，等待手表确认</string>
+    <string name="sync_applied">已在手表上应用</string>
+    <string name="sync_missing_icons">已应用，部分图标缺失</string>
+    <string name="sync_conflict">手表上有更新的修改</string>
+    <string name="sync_rejected">手表未能应用此配置</string>
+    <string name="sync_outdated">请更新手表端应用后同步</string>
+    <string name="last_sync">上次应用：%1$s</string>
+    <string name="never_synced">尚未完成过同步</string>
+    <string name="unsent_changes">修改已保存在本手机</string>
+    <string name="load_watch">载入手表配置</string>
+    <string name="overwrite_watch">用我的修改覆盖</string>
+    <string name="conflict_detail">手表配置已更新，而草稿仍基于旧配置。请选择保留哪一端的修改。</string>
+    <string name="demo">演示模式</string>
+    <string name="demo_detail">包含 40 个应用的示例手表，不会向你的手表发送任何配置。</string>
+    <string name="try_demo">体验演示</string>
+    <string name="demo_watch">演示手表</string>
+    <string name="empty_title">从你的手表开始</string>
+    <string name="empty_detail">刷新以获取手表应用，或体验演示，探索全部编辑功能。</string>
+    <string name="preview">手表预览</string>
+    <string name="preview_detail">拖动查看，按手表的实际屏幕尺寸与密度绘制。</string>
+    <string name="preview_dimensions">%1$d × %2$d 像素 · %3$d dpi</string>
+    <string name="reset_pan">预览回到中心</string>
+    <string name="layout_editor">布局编辑</string>
+    <string name="layout_editor_detail">排序、设置常用和隐藏应用</string>
+    <string name="appearance">外观</string>
+    <string name="appearance_detail">布局、图标大小与动态效果</string>
+    <string name="icons">图标管理</string>
+    <string name="icons_detail">相册裁剪与 ZIP 图标包</string>
+    <string name="help">帮助</string>
+    <string name="help_detail">安装、配对与常见问题</string>
+    <string name="back">返回</string>
+    <string name="theme">切换浅色或深色主题</string>
+    <string name="search">搜索应用</string>
+    <string name="clear_search">清空搜索</string>
+    <string name="favorites">常用应用（%1$d/7）</string>
+    <string name="favorites_hint">固定在中心，拖动手柄可排序。</string>
+    <string name="all_apps">全部应用（%1$d）</string>
+    <string name="hidden_apps">已隐藏应用（%1$d）</string>
+    <string name="no_results">没有匹配的应用</string>
+    <string name="favorite_empty">点击星标按钮添加常用应用。</string>
+    <string name="add_favorite">将%1$s设为常用</string>
+    <string name="remove_favorite">移除常用应用%1$s</string>
+    <string name="hide_app">隐藏%1$s</string>
+    <string name="show_app">显示%1$s</string>
+    <string name="change_icon">更换%1$s的图标</string>
+    <string name="move_up">将%1$s上移</string>
+    <string name="move_down">将%1$s下移</string>
+    <string name="drag_app">拖动排序%1$s</string>
+    <string name="sort">应用排序方式</string>
+    <string name="custom">自定义</string>
+    <string name="alphabetical">字母顺序</string>
+    <string name="most_used">最常用</string>
+    <string name="recently_used">最近使用</string>
+    <string name="undo">撤销</string>
+    <string name="redo">重做</string>
+    <string name="saved_automatically">草稿自动保存，所有修改均可撤销。</string>
+    <string name="layout_mode">布局模式</string>
+    <string name="honeycomb">蜂窝</string>
+    <string name="grid">网格</string>
+    <string name="list">列表</string>
+    <string name="icon_size">图标大小</string>
+    <string name="small">小</string>
+    <string name="medium">中</string>
+    <string name="large">大</string>
+    <string name="icon_shape">图标形状</string>
+    <string name="circle">圆形</string>
+    <string name="squircle">圆角方形</string>
+    <string name="original">原始形状</string>
+    <string name="square">方形</string>
+    <string name="fisheye">鱼眼强度</string>
+    <string name="grid_columns">网格列数</string>
+    <string name="column_count">%1$d 列</string>
+    <string name="show_labels">显示应用名称</string>
+    <string name="snap">吸附到中心</string>
+    <string name="haptics">触觉反馈</string>
+    <string name="reduce_motion">减少动态效果</string>
+    <string name="icon_tip">为单个应用选择照片，或导入 ZIP。修改会留在草稿中，直到你主动同步。</string>
+    <string name="import_zip">导入 ZIP 图标包</string>
+    <string name="restore_all">恢复全部默认图标</string>
+    <string name="restore">恢复默认</string>
+    <string name="custom_icon">自定义图标</string>
+    <string name="default_icon">手表图标</string>
+    <string name="choose_photo">选择照片</string>
+    <string name="crop">裁剪图标</string>
+    <string name="crop_hint">拖动和双指缩放以填满遮罩，保存为 192 像素 PNG。</string>
+    <string name="zoom">缩放</string>
+    <string name="save_icon">使用此图标</string>
+    <string name="cancel">取消</string>
+    <string name="processing">正在安全处理…</string>
+    <string name="import_result">检查图标匹配结果</string>
+    <string name="import_matched_count">匹配应用：%1$d</string>
+    <string name="import_unmatched_count">未匹配图片：%1$d</string>
+    <string name="import_hint">尚未修改图标。确认应用匹配结果，或取消以保留当前图标。</string>
+    <string name="apply_matches">应用匹配图标</string>
+    <string name="unmatched">未匹配图片</string>
+    <string name="nothing_imported">尚未加载图标包，请从图标管理页选择 ZIP。</string>
+    <string name="notice_favorite_limit">最多设置 7 个常用应用，请先移除一个。</string>
+    <string name="notice_icon_limit">单份配置最多支持 300 个自定义图标，请先恢复部分默认图标。</string>
+    <string name="notice_import_failed">无法导入 ZIP。仅支持 PNG、JPEG、WebP 和可选的 appfilter.xml；最多 500 个条目、单文件 2 MB、总计 50 MB。</string>
+    <string name="notice_icon_failed">无法使用这张图片，请选择较小的 PNG、JPEG 或 WebP。</string>
+    <string name="notice_sync_failed">发送失败，草稿已保留。请重新连接手表后重试。</string>
+    <string name="notice_data_invalid">部分数据无法读取或保存，请刷新后重试。</string>
+    <string name="dismiss">关闭提示</string>
+    <string name="help_install">两端都需安装</string>
+    <string name="help_install_body">在手机和手表上安装 N2 桌面，两端的包名和签名必须一致。配对后，先打开一次手表端应用，再点击手机上的刷新。</string>
+    <string name="help_home">设为默认主屏</string>
+    <string name="help_home_body">在手表的设置 → 应用 → 默认应用 → 主屏应用中选择 N2 桌面（如果系统提供此选项）。部分手表不允许替换主屏，可以通过 N2 桌面的 Tile 或应用图标进入。</string>
+    <string name="help_pair">同步前检查</string>
+    <string name="help_pair_body">通过手表的 Wear OS 配套应用完成配对，保持蓝牙或 Wi-Fi 连接，启用 Google Play 服务，并在两端安装 N2 桌面。“已发送”表示手机已发布草稿，“已应用”表示手表已确认。</string>
+    <string name="help_offline">能离线编辑吗？</string>
+    <string name="help_offline_body">可以。草稿和图标保存在本手机，重新连接后刷新并同步即可。演示模式单独保存，绝不会同步。</string>
+    <string name="help_conflict">手表上也有修改怎么办？</string>
+    <string name="help_conflict_body">覆盖手表新修改之前，N2 会提醒你。可以载入手表配置以保留手表修改，也可以明确选择用手机草稿覆盖。</string>
+    <string name="help_icons">支持哪些图标包？</string>
+    <string name="help_icons_body">支持以包名命名的图片（如 com.example.app.png）及常见 appfilter.xml 组件映射。非图片文件和不安全路径会被拒绝，应用前可以检查匹配结果。选择照片无需存储权限。</string>
+    <string name="help_privacy">数据由你保管</string>
+    <string name="help_privacy_body">草稿和图片仅保存在你的手机与配对手表，不会上传服务器。使用频率排序只依赖手表启动器记录的启动次数，无需系统使用记录权限。</string>
+    <string-array name="demo_apps">
+        <item>电话</item><item>联系人</item><item>信息</item><item>天气</item>
+        <item>日历</item><item>健康</item><item>音乐</item><item>设置</item>
+        <item>闹钟</item><item>计时器</item><item>秒表</item><item>地图</item>
+        <item>钱包</item><item>相机</item><item>计算器</item><item>笔记</item>
+        <item>录音</item><item>指南针</item><item>手电筒</item><item>查找手机</item>
+        <item>跑步</item><item>骑行</item><item>游泳</item><item>睡眠</item>
+        <item>心率</item><item>呼吸</item><item>步数</item><item>锻炼</item>
+        <item>播客</item><item>收音机</item><item>相册</item><item>邮件</item>
+        <item>提醒</item><item>翻译</item><item>新闻</item><item>图书</item>
+        <item>旅行</item><item>家居</item><item>游戏</item><item>商店</item>
+    </string-array>
 </resources>

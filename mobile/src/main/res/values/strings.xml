@@ -1,4 +1,149 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">N2 Launcher Companion</string>
+    <string name="app_name">N2 Launcher</string>
+    <string name="home">Your watch, your layout</string>
+    <string name="home_subtitle">Edit here. See it on your wrist.</string>
+    <string name="connection">Watch connection</string>
+    <string name="no_watch">No watch connected</string>
+    <string name="no_watch_detail">Pair your watch in the Wear OS app. You can keep editing offline.</string>
+    <string name="connected">Connected</string>
+    <string name="app_missing">Install N2 Launcher on your watch</string>
+    <string name="app_missing_detail">A paired device was found, but the watch app is not available.</string>
+    <string name="play_missing">Google Play services unavailable</string>
+    <string name="play_missing_detail">Install or update Google Play services to sync. Offline editing still works.</string>
+    <string name="watch_versions">%1$s · Android API %2$d · N2 %3$s</string>
+    <string name="refresh">Refresh watch</string>
+    <string name="sync_title">Sync</string>
+    <string name="sync">Sync to watch</string>
+    <string name="sync_changes">Sync your changes</string>
+    <string name="sync_not_sent">Not sent yet</string>
+    <string name="sync_waiting">Sent, waiting for watch</string>
+    <string name="sync_applied">Applied on watch</string>
+    <string name="sync_missing_icons">Applied, some icons are missing</string>
+    <string name="sync_conflict">Watch has newer changes</string>
+    <string name="sync_rejected">Watch could not apply this configuration</string>
+    <string name="sync_outdated">Update the watch app to sync</string>
+    <string name="last_sync">Last applied: %1$s</string>
+    <string name="never_synced">No completed sync yet</string>
+    <string name="unsent_changes">Changes saved on this phone</string>
+    <string name="load_watch">Load watch configuration</string>
+    <string name="overwrite_watch">Overwrite with my changes</string>
+    <string name="conflict_detail">Your draft is based on an older watch configuration. Choose which changes to keep.</string>
+    <string name="demo">Demo mode</string>
+    <string name="demo_detail">A sample watch with 40 apps. Nothing will be sent to your watch.</string>
+    <string name="try_demo">Try the demo</string>
+    <string name="demo_watch">Demo watch</string>
+    <string name="empty_title">Start with your watch</string>
+    <string name="empty_detail">Refresh to get your apps, or try the demo to explore every editor.</string>
+    <string name="preview">Watch preview</string>
+    <string name="preview_detail">Drag to explore. Uses your watch’s screen size and density.</string>
+    <string name="preview_dimensions">%1$d × %2$d px · %3$d dpi</string>
+    <string name="reset_pan">Center preview</string>
+    <string name="layout_editor">Layout editor</string>
+    <string name="layout_editor_detail">Sort, pin favorites and hide apps</string>
+    <string name="appearance">Appearance</string>
+    <string name="appearance_detail">Layout, icon size and motion</string>
+    <string name="icons">Icons</string>
+    <string name="icons_detail">Photo crops and ZIP icon packs</string>
+    <string name="help">Help</string>
+    <string name="help_detail">Installation, pairing and answers</string>
+    <string name="back">Back</string>
+    <string name="theme">Switch light or dark theme</string>
+    <string name="search">Search apps</string>
+    <string name="clear_search">Clear search</string>
+    <string name="favorites">Favorites (%1$d/7)</string>
+    <string name="favorites_hint">Pinned to the center. Drag the handle to reorder.</string>
+    <string name="all_apps">All apps (%1$d)</string>
+    <string name="hidden_apps">Hidden apps (%1$d)</string>
+    <string name="no_results">No matching apps</string>
+    <string name="favorite_empty">Use the star button to add a favorite.</string>
+    <string name="add_favorite">Add %1$s to favorites</string>
+    <string name="remove_favorite">Remove %1$s from favorites</string>
+    <string name="hide_app">Hide %1$s</string>
+    <string name="show_app">Show %1$s</string>
+    <string name="change_icon">Change icon for %1$s</string>
+    <string name="move_up">Move %1$s up</string>
+    <string name="move_down">Move %1$s down</string>
+    <string name="drag_app">Drag to reorder %1$s</string>
+    <string name="sort">Sort apps</string>
+    <string name="custom">Custom</string>
+    <string name="alphabetical">Alphabetical</string>
+    <string name="most_used">Most used</string>
+    <string name="recently_used">Recently used</string>
+    <string name="undo">Undo</string>
+    <string name="redo">Redo</string>
+    <string name="saved_automatically">Draft saved automatically. All changes can be undone.</string>
+    <string name="layout_mode">Layout mode</string>
+    <string name="honeycomb">Honeycomb</string>
+    <string name="grid">Grid</string>
+    <string name="list">List</string>
+    <string name="icon_size">Icon size</string>
+    <string name="small">Small</string>
+    <string name="medium">Medium</string>
+    <string name="large">Large</string>
+    <string name="icon_shape">Icon shape</string>
+    <string name="circle">Circle</string>
+    <string name="squircle">Rounded square</string>
+    <string name="original">Original</string>
+    <string name="square">Square</string>
+    <string name="fisheye">Fisheye strength</string>
+    <string name="grid_columns">Grid columns</string>
+    <string name="column_count">%1$d columns</string>
+    <string name="show_labels">Show app labels</string>
+    <string name="snap">Snap to center</string>
+    <string name="haptics">Haptic feedback</string>
+    <string name="reduce_motion">Reduce motion</string>
+    <string name="icon_tip">Choose a photo for one app, or import a ZIP. Changes stay in your draft until you sync.</string>
+    <string name="import_zip">Import ZIP icon pack</string>
+    <string name="restore_all">Restore all default icons</string>
+    <string name="restore">Restore default</string>
+    <string name="custom_icon">Custom icon</string>
+    <string name="default_icon">Watch icon</string>
+    <string name="choose_photo">Choose photo</string>
+    <string name="crop">Crop icon</string>
+    <string name="crop_hint">Drag and pinch to fill the mask. The saved icon is a 192 px PNG.</string>
+    <string name="zoom">Zoom</string>
+    <string name="save_icon">Use this icon</string>
+    <string name="cancel">Cancel</string>
+    <string name="processing">Processing safely…</string>
+    <string name="import_result">Review icon matches</string>
+    <string name="import_matched_count">Matched apps: %1$d</string>
+    <string name="import_unmatched_count">Unmatched images: %1$d</string>
+    <string name="import_hint">Nothing has changed yet. Apply these matches, or cancel to keep your current icons.</string>
+    <string name="apply_matches">Apply matched icons</string>
+    <string name="unmatched">Unmatched images</string>
+    <string name="nothing_imported">No icon pack loaded. Choose a ZIP from the Icons page.</string>
+    <string name="notice_favorite_limit">You can pin up to 7 favorites. Remove one first.</string>
+    <string name="notice_icon_limit">This configuration supports up to 300 custom icons. Restore some defaults before adding more.</string>
+    <string name="notice_import_failed">Could not import this ZIP. Use only PNG, JPEG or WebP images and an optional appfilter.xml; limits are 500 entries, 2 MB per file and 50 MB total.</string>
+    <string name="notice_icon_failed">Could not use this image. Choose a smaller PNG, JPEG or WebP image.</string>
+    <string name="notice_sync_failed">Could not send. Your draft is safe. Reconnect the watch and try again.</string>
+    <string name="notice_data_invalid">Some data could not be read or saved. Refresh and try again.</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="help_install">Install on both devices</string>
+    <string name="help_install_body">Install N2 Launcher on your phone and watch. Both apps must have the same package and signature. After pairing, open the watch app once and tap Refresh on this phone.</string>
+    <string name="help_home">Use it as your home screen</string>
+    <string name="help_home_body">On your watch, open Settings → Apps → Default apps → Home app and choose N2 Launcher, if available. Some watches do not allow replacing the home screen. Use the N2 Launcher Tile or its app icon instead.</string>
+    <string name="help_pair">Before syncing</string>
+    <string name="help_pair_body">Pair your watch through its Wear OS companion app. Keep Bluetooth or Wi-Fi connected, enable Google Play services, and install N2 Launcher on both devices. “Sent” means the phone published your draft; “Applied” means the watch confirmed it.</string>
+    <string name="help_offline">Can I edit offline?</string>
+    <string name="help_offline_body">Yes. Your draft and icons are saved on this phone. Reconnect, refresh and sync when ready. Demo mode is separate and never syncs.</string>
+    <string name="help_conflict">What if I edited on my watch too?</string>
+    <string name="help_conflict_body">N2 warns you before replacing newer watch changes. Load the watch configuration to keep its edits, or explicitly overwrite it with your phone draft.</string>
+    <string name="help_icons">Which icon packs work?</string>
+    <string name="help_icons_body">ZIPs with package-named images (com.example.app.png) and common appfilter.xml component mappings. Non-image files and unsafe paths are rejected. Review matches before applying. Photo selection needs no storage permission.</string>
+    <string name="help_privacy">Your data stays with you</string>
+    <string name="help_privacy_body">Drafts and images stay on your phone and paired watch. N2 does not upload them to a server. Usage-based sorting uses launches recorded by the watch launcher, not Android-wide usage access.</string>
+    <string-array name="demo_apps">
+        <item>Phone</item><item>Contacts</item><item>Messages</item><item>Weather</item>
+        <item>Calendar</item><item>Health</item><item>Music</item><item>Settings</item>
+        <item>Alarm</item><item>Timer</item><item>Stopwatch</item><item>Maps</item>
+        <item>Wallet</item><item>Camera</item><item>Calculator</item><item>Notes</item>
+        <item>Recorder</item><item>Compass</item><item>Flashlight</item><item>Find phone</item>
+        <item>Running</item><item>Cycling</item><item>Swimming</item><item>Sleep</item>
+        <item>Heart rate</item><item>Breathing</item><item>Steps</item><item>Workout</item>
+        <item>Podcasts</item><item>Radio</item><item>Gallery</item><item>Mail</item>
+        <item>Reminders</item><item>Translate</item><item>News</item><item>Books</item>
+        <item>Travel</item><item>Home</item><item>Games</item><item>Store</item>
+    </string-array>
 </resources>
