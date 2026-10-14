@@ -1,4 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">N2 桌面</string>
+    <string name="tile_name">N2 常用应用</string>
+    <string name="settings">设置</string>
+    <string name="loading">正在加载应用…</string>
+    <string name="favorite_toggle">加入或移出常用</string>
+    <string name="hide_app">隐藏应用</string>
+    <string name="app_info">应用信息</string>
+    <string name="cancel">取消</string>
+    <string name="layout_mode">布局：%1$s</string>
+    <string name="icon_size">图标大小：%1$s</string>
+    <string name="icon_shape">图标形状：%1$s</string>
+    <string name="fisheye">鱼眼强度：%1$d%%</string>
+    <string name="grid_columns">网格列数：%1$d</string>
+    <string name="show_labels">显示标签：%1$b</string>
+    <string name="snap_center">吸附到中心：%1$b</string>
+    <string name="haptics">触觉反馈：%1$b</string>
+    <string name="reduce_motion">减少动态效果：%1$b</string>
+    <string name="sort_mode">排序：%1$s</string>
+    <string name="hidden_apps">已隐藏应用</string>
+    <string name="unhide_app">显示 %1$s</string>
+    <string name="restore_defaults">恢复默认</string>
+    <string name="demo_data">演示数据：%1$b</string>
+    <string name="about_version">版本 %1$s</string>
+    <string name="sync_time">上次同步：%1$d</string>
+    <string name="done">完成</string>
+    <string name="tile_header">常用应用</string>
+    <string name="tile_empty">还没有常用应用</string>
+    <string name="tile_open_launcher">打开启动器</string>
 </resources>
