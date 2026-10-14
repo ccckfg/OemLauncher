@@ -8,11 +8,30 @@ import com.n2.oemlauncher.shared.protocol.SyncStatusResolver
 import kotlinx.serialization.Serializable
 
 enum class ConnectionKind { UNDISCOVERED, CONNECTED, APP_MISSING, PLAY_SERVICES_MISSING }
+
+/** One discovered node and whether it advertises the watch app capability. */
+data class NodeStatus(val name: String, val hasWatchApp: Boolean)
+
 data class WatchConnection(
     val kind: ConnectionKind = ConnectionKind.UNDISCOVERED,
-    val names: List<String> = emptyList(),
+    val nodes: List<NodeStatus> = emptyList(),
 )
-enum class UserNotice { NONE, FAVORITE_LIMIT, ICON_LIMIT, IMPORT_FAILED, ICON_FAILED, SYNC_FAILED, DATA_INVALID }
+
+enum class UserNotice { NONE, FAVORITE_LIMIT, ICON_LIMIT, IMPORT_FAILED, ICON_FAILED, SYNC_FAILED, DATA_INVALID, ICONS_MISSING }
+
+/** Type and time only, never payloads or node identifiers. */
+data class ApiError(val type: String, val atMillis: Long)
+
+/** Session-scoped sync facts for the diagnostics page; not persisted. */
+data class SyncDiagnostics(
+    val nodes: List<NodeStatus> = emptyList(),
+    val lastCatalogMillis: Long = 0,
+    val lastStateMillis: Long = 0,
+    val lastSentRevision: Long? = null,
+    val lastSendSucceeded: Boolean? = null,
+    val localMissingIcons: List<String> = emptyList(),
+    val lastError: ApiError? = null,
+)
 
 @Serializable
 data class CompanionSnapshot(
@@ -32,6 +51,7 @@ data class CompanionState(
     val busy: Boolean = false,
     val notice: UserNotice = UserNotice.NONE,
     val iconGeneration: Long = 0,
+    val diagnostics: SyncDiagnostics = SyncDiagnostics(),
 ) {
     val catalog get() = snapshot.catalog
     val draft get() = snapshot.draft

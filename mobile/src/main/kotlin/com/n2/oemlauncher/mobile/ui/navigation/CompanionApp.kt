@@ -24,13 +24,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -53,8 +56,10 @@ import com.n2.oemlauncher.mobile.ui.screens.HomeScreen
 import com.n2.oemlauncher.mobile.ui.screens.IconScreen
 import com.n2.oemlauncher.mobile.ui.screens.ImportResultScreen
 import com.n2.oemlauncher.mobile.ui.screens.PreviewScreen
+import com.n2.oemlauncher.mobile.ui.screens.SyncDiagnosticsScreen
 import com.n2.oemlauncher.mobile.ui.theme.CompanionTheme
 import com.n2.oemlauncher.mobile.ui.theme.MatchSystemBars
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,14 +68,24 @@ fun CompanionApp(vm: CompanionViewModel) {
     val imports by vm.importState.collectAsStateWithLifecycle()
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
-    val destination = entry?.destination
+    // The destination changes before the fade finishes; keep the old title and actions
+    // until the incoming page is RESUMED so the app bar always matches the visible page.
+    var settled by remember { mutableStateOf(entry?.destination) }
+    LaunchedEffect(entry) {
+        val current = entry ?: return@LaunchedEffect
+        if (!current.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            current.lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.RESUMED) }
+        }
+        settled = current.destination
+    }
+    val destination = settled
     val home = destination == null || destination.hasRoute<Home>()
     var dark by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val systemDark = isSystemInDarkTheme()
     val editing = destination?.let {
         it.hasRoute<Editor>() || it.hasRoute<Appearance>() || it.hasRoute<IconsPage>() || it.hasRoute<Preview>()
     } ?: false
-    val importing = destination?.let { it.hasRoute<Crop>() || it.hasRoute<ImportResult>() } ?: false
+    val importing = entry?.destination?.let { it.hasRoute<Crop>() || it.hasRoute<ImportResult>() } ?: false
     val back: () -> Unit = {
         if (importing) vm.cancelImport()
         nav.popBackStack()
@@ -82,6 +97,7 @@ fun CompanionApp(vm: CompanionViewModel) {
         destination.hasRoute<Appearance>() -> R.string.appearance
         destination.hasRoute<IconsPage>() -> R.string.icons
         destination.hasRoute<Preview>() -> R.string.preview
+        destination.hasRoute<SyncDiagnostics>() -> R.string.sync_diagnostics
         destination.hasRoute<Crop>() -> R.string.crop
         destination.hasRoute<ImportResult>() -> R.string.import_result
         else -> R.string.help
@@ -134,6 +150,7 @@ fun CompanionApp(vm: CompanionViewModel) {
                                 HomeDestination.APPEARANCE -> nav.navigate(Appearance)
                                 HomeDestination.ICONS -> nav.navigate(IconsPage())
                                 HomeDestination.PREVIEW -> nav.navigate(Preview)
+                                HomeDestination.SYNC -> nav.navigate(SyncDiagnostics)
                                 HomeDestination.HELP -> nav.navigate(Help)
                             }
                         }
@@ -148,6 +165,7 @@ fun CompanionApp(vm: CompanionViewModel) {
                         }, { nav.navigate(ImportResult) })
                     }
                     composable<Preview> { PreviewScreen(state, vm) }
+                    composable<SyncDiagnostics> { SyncDiagnosticsScreen(state, vm) }
                     composable<Crop> { CropScreen(it.toRoute<Crop>().appKey, vm, imports) { nav.popBackStack() } }
                     composable<ImportResult> { ImportResultScreen(state, imports, vm) { nav.popBackStack() } }
                     composable<Help> { HelpScreen() }

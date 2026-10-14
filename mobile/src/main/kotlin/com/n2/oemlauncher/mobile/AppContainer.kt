@@ -19,7 +19,7 @@ class AppContainer(context: Context) {
     val icons = IconStore(context.filesDir)
     val repository = CompanionRepository(PreferencesSnapshotStore(context, appScope), icons, appScope)
     val receiver = WearDataReceiver(context, repository)
-    val gateway: WearGateway = GoogleWearGateway(context, receiver)
+    val gateway: WearGateway = GoogleWearGateway(context, receiver, repository::apiError)
     private val processor = IconProcessor()
     val importer = IconImportRepository(context.contentResolver, repository, processor)
     val demo = DemoCatalogFactory(context, icons, processor)

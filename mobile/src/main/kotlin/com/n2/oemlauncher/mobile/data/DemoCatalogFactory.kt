@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import androidx.core.graphics.createBitmap
 import com.n2.oemlauncher.mobile.R
 import com.n2.oemlauncher.mobile.config.DemoConstants
 import com.n2.oemlauncher.mobile.iconpack.IconProcessor
@@ -27,7 +28,7 @@ class DemoCatalogFactory(
         val labels = context.resources.getStringArray(R.array.demo_apps)
         val entries = labels.take(DemoConstants.SIZE).mapIndexed { index, label ->
             val side = ProtocolLimits.CATALOG_ICON_PX
-            val bitmap = Bitmap.createBitmap(side, side, Bitmap.Config.ARGB_8888)
+            val bitmap = createBitmap(side, side)
             val canvas = Canvas(bitmap)
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
             paint.color = Color.HSVToColor(

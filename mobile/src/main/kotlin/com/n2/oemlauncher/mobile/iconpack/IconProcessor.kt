@@ -8,6 +8,8 @@ import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withTranslation
 import androidx.exifinterface.media.ExifInterface
 import com.n2.oemlauncher.mobile.config.ImportLimits
 import com.n2.oemlauncher.mobile.config.StorageConstants
@@ -56,21 +58,20 @@ class IconProcessor {
 
     fun crop(source: Bitmap, transform: CropTransform, circle: Boolean): ByteArray {
         val side = ProtocolLimits.CUSTOM_ICON_PX
-        val output = Bitmap.createBitmap(side, side, Bitmap.Config.ARGB_8888)
+        val output = createBitmap(side, side)
         val canvas = Canvas(output)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         val safe = transform.constrained(source.width, source.height)
-        val scale = side.toFloat() / minOf(source.width, source.height) * safe.zoom
-        canvas.save()
-        canvas.translate(
-            (side - source.width * scale) / 2f + safe.x * side,
-            (side - source.height * scale) / 2f + safe.y * side,
-        )
-        canvas.scale(scale, scale)
-        canvas.drawBitmap(source, 0f, 0f, paint)
-        canvas.restore()
+        val factor = side.toFloat() / minOf(source.width, source.height) * safe.zoom
+        canvas.withTranslation(
+            (side - source.width * factor) / 2f + safe.x * side,
+            (side - source.height * factor) / 2f + safe.y * side,
+        ) {
+            scale(factor, factor)
+            drawBitmap(source, 0f, 0f, paint)
+        }
         if (circle) {
-            val mask = Bitmap.createBitmap(side, side, Bitmap.Config.ARGB_8888)
+            val mask = createBitmap(side, side)
             Canvas(mask).drawCircle(side / 2f, side / 2f, side / 2f, paint)
             paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
             canvas.drawBitmap(mask, 0f, 0f, paint)

@@ -48,7 +48,7 @@ fun ImportResultScreen(state: CompanionState, imports: ImportState, vm: Companio
         if (preview != null) {
             items(preview.matches, key = { it.app.key }) { match ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    AppIcon(match.app, state.config, vm.container.icons, match.iconId)
+                    AppIcon(match.app, state.config, vm, match.iconId)
                     Text(match.app.label, Modifier.padding(horizontal = UiDimensions.GAP.dp))
                 }
             }

@@ -14,10 +14,15 @@ object ImportLimits {
     val ZIP_MIME_TYPES = arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream")
 }
 
+object SyncLimits {
+    const val ASSET_FETCH_CONCURRENCY = 4
+}
+
 object StorageConstants {
     const val DATASTORE_FILE = "companion.preferences_pb"
     const val SNAPSHOT_KEY = "snapshot"
     const val ICON_DIRECTORY = "icons"
+    const val STAGING_DIRECTORY = "icons-staging"
     const val TEMP_ICON_SUFFIX = ".tmp"
     const val ICON_SUFFIX = ".png"
     const val BITMAP_CACHE_BYTES = 12 * 1024 * 1024
@@ -33,7 +38,7 @@ object UiDimensions {
     const val TOUCH_TARGET = 48
     const val APP_ICON = 44
     const val PREVIEW = 280
-    const val THUMBNAIL = 168
+    const val THUMBNAIL = 216
     const val WIDE_BREAKPOINT = 720
     const val PREVIEW_PANE = 320
     const val PREVIEW_FOOTER = 140
@@ -48,6 +53,7 @@ object UiDimensions {
     const val ICON_CORNER_RATIO = 0.24f
     const val ANIMATION_MS = 180
     const val LABEL_INSET_RATIO = 0.10f
+    const val LABEL_BAND_LINES = 2.6f
     const val CROP_SCRIM_ALPHA = 0.65f
 }
 

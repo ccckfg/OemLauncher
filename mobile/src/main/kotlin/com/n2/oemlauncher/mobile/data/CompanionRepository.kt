@@ -56,6 +56,10 @@ class CompanionRepository(
         }
     }
 
+    private fun diagnose(transform: (SyncDiagnostics) -> SyncDiagnostics) {
+        mutable.update { it.copy(diagnostics = transform(it.diagnostics)) }
+    }
+
     suspend fun edit(transform: (LauncherConfig) -> LauncherConfig) =
         update {
             val draft = it.draft ?: if (it.catalog != null) DraftHistory(LauncherConfig()) else null
@@ -78,28 +82,39 @@ class CompanionRepository(
 
     suspend fun receiveCatalog(catalog: WatchCatalog) = update {
         it.copy(catalog = catalog, demo = false, draft = if (it.demo) null else it.draft)
+    }.also {
+        diagnose { d -> d.copy(lastCatalogMillis = System.currentTimeMillis()) }
+    }
+
+    /** Returns true when [watch] is at least as new as [previous]; ties fall to updatedAtMillis. */
+    private fun isNotStale(watch: WatchConfigState, previous: WatchConfigState): Boolean {
+        if (watch.current.revision != previous.current.revision) {
+            return watch.current.revision > previous.current.revision
+        }
+        if (watch.lastDesiredRevision != previous.lastDesiredRevision) {
+            return watch.lastDesiredRevision > previous.lastDesiredRevision
+        }
+        return watch.updatedAtMillis >= previous.updatedAtMillis
     }
 
     suspend fun receiveState(watch: WatchConfigState) = update { old ->
         val previous = old.watch
-        if (previous != null && (
-            watch.current.revision < previous.current.revision ||
-                (watch.current.revision == previous.current.revision &&
-                    watch.lastDesiredRevision < previous.lastDesiredRevision)
-            )
-        ) return@update old
+        if (previous != null && !isNotStale(watch, previous)) return@update old
         val applied = watch.lastResult in setOf(ApplyResult.APPLIED, ApplyResult.APPLIED_MISSING_ICONS)
-        val acknowledged = applied && old.sent?.revision == watch.lastDesiredRevision
+        val sent = old.sent
+        val acknowledged = applied && sent != null && sent.revision == watch.lastDesiredRevision
         val draft = when {
             old.draft == null || old.demo -> DraftHistory(watch.current)
-            acknowledged -> old.draft.acknowledge(requireNotNull(old.sent), watch.current.revision)
+            acknowledged -> old.draft.acknowledge(requireNotNull(sent), watch.current.revision)
             else -> old.draft
         }
         old.copy(
             watch = watch, draft = draft, demo = false,
-            publishedRevision = if (acknowledged) old.sent?.revision else old.publishedRevision,
+            publishedRevision = if (acknowledged) sent.revision else old.publishedRevision,
             lastSyncMillis = if (acknowledged) watch.updatedAtMillis else old.lastSyncMillis,
         )
+    }.also {
+        diagnose { d -> d.copy(lastStateMillis = System.currentTimeMillis()) }
     }
 
     suspend fun loadWatch() = update {
@@ -110,23 +125,41 @@ class CompanionRepository(
         ready.await()
         if (!state.value.canSync || (state.value.conflict && !overwrite)) return
         mutable.update { it.copy(busy = true) }
+        var outgoing: LauncherConfig? = null
         try {
             // Persist the outbox before publishing: a fast receipt must never beat sentRevision.
-            var outgoing: LauncherConfig? = null
             update {
                 outgoing = it.draft?.commit(it.watch, it.sent?.revision, System.currentTimeMillis())
                 it.copy(sent = outgoing)
             }
             val config = outgoing ?: return
+            // A missing local icon file is a data problem, not a connection problem: skip it,
+            // let the watch answer APPLIED_MISSING_ICONS, and surface the ids in diagnostics.
             val assets = LinkedHashMap<String, ByteArray>()
+            val missing = mutableListOf<String>()
             for (id in config.iconOverrides.values.toSet()) {
-                assets[id] = requireNotNull(icons.bytes(id))
+                val bytes = icons.bytes(id)
+                if (bytes == null) missing += id else assets[id] = bytes
             }
             gateway.publish(config, assets)
             update { it.copy(publishedRevision = config.revision) }
+            diagnose { d ->
+                d.copy(
+                    lastSentRevision = config.revision, lastSendSucceeded = true,
+                    localMissingIcons = missing,
+                )
+            }
+            if (missing.isNotEmpty()) notice(UserNotice.ICONS_MISSING)
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            diagnose { d ->
+                d.copy(
+                    lastSentRevision = outgoing?.revision ?: d.lastSentRevision,
+                    lastSendSucceeded = false,
+                    lastError = ApiError(e::class.java.simpleName, System.currentTimeMillis()),
+                )
+            }
             connection(WatchConnection())
             notice(UserNotice.SYNC_FAILED)
         } finally {
@@ -136,12 +169,16 @@ class CompanionRepository(
 
     fun connection(connection: WatchConnection) {
         mutable.update { it.copy(connection = connection) }
+        diagnose { it.copy(nodes = connection.nodes) }
     }
     fun notice(notice: UserNotice) {
         mutable.update { it.copy(notice = notice) }
     }
     fun iconsChanged() {
         mutable.update { it.copy(iconGeneration = it.iconGeneration + 1) }
+    }
+    fun apiError(type: String) {
+        diagnose { it.copy(lastError = ApiError(type, System.currentTimeMillis())) }
     }
     fun invalidPayload() {
         Log.w(StorageConstants.TAG, "Rejected wearable payload")

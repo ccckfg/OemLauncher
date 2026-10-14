@@ -45,5 +45,6 @@ fun UserNotice.label(): Int = when (this) {
     UserNotice.ICON_FAILED -> R.string.notice_icon_failed
     UserNotice.SYNC_FAILED -> R.string.notice_sync_failed
     UserNotice.DATA_INVALID -> R.string.notice_data_invalid
+    UserNotice.ICONS_MISSING -> R.string.notice_icons_missing
     UserNotice.NONE -> R.string.dismiss
 }

@@ -10,6 +10,7 @@ import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.n2.oemlauncher.mobile.data.ConnectionKind
+import com.n2.oemlauncher.mobile.data.NodeStatus
 import com.n2.oemlauncher.mobile.data.WatchConnection
 import com.n2.oemlauncher.shared.model.LauncherConfig
 import com.n2.oemlauncher.shared.protocol.Capabilities
@@ -22,6 +23,7 @@ import kotlinx.coroutines.tasks.await
 class GoogleWearGateway(
     private val context: Context,
     private val receiver: WearDataReceiver,
+    private val onError: (String) -> Unit = {},
 ) : WearGateway {
     private val capability = Wearable.getCapabilityClient(context)
     private val nodes = Wearable.getNodeClient(context)
@@ -37,28 +39,34 @@ class GoogleWearGateway(
                 Capabilities.WATCH_APP, CapabilityClient.FILTER_REACHABLE,
             ).await().nodes
             val connected = nodes.connectedNodes.await()
+            val all = (connected.map { node ->
+                NodeStatus(node.displayName, installed.any { it.id == node.id })
+            } + installed.filter { app -> connected.none { it.id == app.id } }.map {
+                NodeStatus(it.displayName, hasWatchApp = true)
+            }).distinctBy { it.name }
             when {
-                installed.isNotEmpty() -> WatchConnection(
-                    ConnectionKind.CONNECTED, installed.map { it.displayName },
-                )
-                connected.isNotEmpty() -> WatchConnection(
-                    ConnectionKind.APP_MISSING, connected.map { it.displayName },
-                )
+                installed.isNotEmpty() -> WatchConnection(ConnectionKind.CONNECTED, all)
+                connected.isNotEmpty() -> WatchConnection(ConnectionKind.APP_MISSING, all)
                 else -> WatchConnection()
             }
         } catch (_: ApiException) {
+            onError(API_EXCEPTION)
             WatchConnection()
         }
     }
 
     override suspend fun requestCatalog() {
-        val installed = capability.getCapability(
-            Capabilities.WATCH_APP, CapabilityClient.FILTER_REACHABLE,
-        ).await().nodes
-        for (node in installed) {
-            Wearable.getMessageClient(context).sendMessage(
-                node.id, SyncPaths.MESSAGE_REQUEST_CATALOG, byteArrayOf(),
-            ).await()
+        try {
+            val installed = capability.getCapability(
+                Capabilities.WATCH_APP, CapabilityClient.FILTER_REACHABLE,
+            ).await().nodes
+            for (node in installed) {
+                Wearable.getMessageClient(context).sendMessage(
+                    node.id, SyncPaths.MESSAGE_REQUEST_CATALOG, byteArrayOf(),
+                ).await()
+            }
+        } catch (_: ApiException) {
+            onError(API_EXCEPTION)
         }
     }
 
@@ -93,5 +101,9 @@ class GoogleWearGateway(
         } finally {
             buffer.release()
         }
+    }
+
+    private companion object {
+        const val API_EXCEPTION = "ApiException"
     }
 }

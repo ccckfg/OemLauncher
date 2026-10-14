@@ -84,7 +84,6 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.profileinstaller)
     implementation(libs.androidx.exifinterface)
-    implementation(libs.coil.compose)
 
     implementation(libs.play.services.wearable)
     implementation(libs.kotlinx.coroutines.android)

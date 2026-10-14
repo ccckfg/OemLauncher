@@ -26,7 +26,7 @@ fun PreviewScreen(state: CompanionState, vm: CompanionViewModel) {
         verticalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp),
     ) {
         Text(stringResource(R.string.preview_detail))
-        WatchPreview(state, vm.container.icons)
+        WatchPreview(state, vm)
         ChoiceRow(LayoutMode.entries, state.config.layout.mode, { it.label() }) { mode ->
             vm.layout { it.copy(mode = mode) }
         }

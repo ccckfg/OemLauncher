@@ -3,7 +3,6 @@
     <string name="app_name">N2 Launcher</string>
     <string name="home">Your watch, your layout</string>
     <string name="home_subtitle">Edit here. See it on your wrist.</string>
-    <string name="connection">Watch connection</string>
     <string name="no_watch">No watch connected</string>
     <string name="no_watch_detail">Pair your watch in the Wear OS app. You can keep editing offline.</string>
     <string name="connected">Connected</string>
@@ -13,7 +12,6 @@
     <string name="play_missing_detail">Install or update Google Play services to sync. Offline editing still works.</string>
     <string name="watch_versions">%1$s · Android API %2$d · N2 %3$s</string>
     <string name="refresh">Refresh watch</string>
-    <string name="sync_title">Sync</string>
     <string name="sync">Sync to watch</string>
     <string name="sync_changes">Sync your changes</string>
     <string name="sync_not_sent">Not sent yet</string>
@@ -65,7 +63,6 @@
     <string name="move_up">Move %1$s up</string>
     <string name="move_down">Move %1$s down</string>
     <string name="drag_app">Drag to reorder %1$s</string>
-    <string name="sort">Sort apps</string>
     <string name="custom">Custom</string>
     <string name="alphabetical">Alphabetical</string>
     <string name="most_used">Most used</string>
@@ -134,6 +131,35 @@
     <string name="help_icons_body">ZIPs with package-named images (com.example.app.png) and common appfilter.xml component mappings. Non-image files and unsafe paths are rejected. Review matches before applying. Photo selection needs no storage permission.</string>
     <string name="help_privacy">Your data stays with you</string>
     <string name="help_privacy_body">Drafts and images stay on your phone and paired watch. N2 does not upload them to a server. Usage-based sorting uses launches recorded by the watch launcher, not Android-wide usage access.</string>
+    <string name="preview_tap">Tap the preview to open it full screen.</string>
+    <string name="more_actions">More actions for %1$s</string>
+    <string name="action_move_up">Move up</string>
+    <string name="action_move_down">Move down</string>
+    <string name="action_hide">Hide</string>
+    <string name="action_show">Show</string>
+    <string name="action_change_icon">Change icon</string>
+    <string name="sync_diagnostics">Sync diagnostics</string>
+    <string name="notice_icons_missing">Some custom icon files are missing on this phone. The watch will show default icons for those apps.</string>
+    <string name="diag_nodes">Discovered nodes</string>
+    <string name="diag_no_nodes">No nodes found</string>
+    <string name="diag_node_ready">Watch app reachable</string>
+    <string name="diag_node_missing">Watch app not found</string>
+    <string name="diag_received">Last received</string>
+    <string name="diag_catalog_at">Catalog: %1$s</string>
+    <string name="diag_state_at">State: %1$s</string>
+    <string name="diag_never">Never</string>
+    <string name="diag_sent">Last sent</string>
+    <string name="diag_revision">Revision %1$d</string>
+    <string name="diag_send_ok">Delivered to the Data Layer</string>
+    <string name="diag_send_failed">Send failed</string>
+    <string name="diag_not_sent">Nothing sent yet</string>
+    <string name="diag_missing">Missing icons</string>
+    <string name="diag_missing_none">None</string>
+    <string name="diag_error">Last API error</string>
+    <string name="diag_error_none">None</string>
+    <string name="diag_error_at">%1$s at %2$s</string>
+    <string name="request_catalog">Request catalog again</string>
+    <string name="resend">Send again</string>
     <string-array name="demo_apps">
         <item>Phone</item><item>Contacts</item><item>Messages</item><item>Weather</item>
         <item>Calendar</item><item>Health</item><item>Music</item><item>Settings</item>

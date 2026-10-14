@@ -93,4 +93,28 @@ class IconImportRepositoryTest {
         }
         assertTrue(repository.state.value.config.iconOverrides.isEmpty())
     }
+    @Test fun cancelledImportRemovesEveryStagedFile() = runTest {
+        val repository = CompanionRepository(MemoryStore(), IconStore(temporary.root), this)
+        advanceUntilIdle()
+        repository.receiveCatalog(catalog())
+        val importer = importer(repository)
+        val result = importer.import(zip(mapOf("com.example.app.png" to png(), "unmatched.png" to png())))
+        assertTrue(File(temporary.root, "icons-staging").listFiles().orEmpty().isNotEmpty())
+        importer.discard(result)
+        assertTrue(File(temporary.root, "icons-staging").listFiles().orEmpty().isEmpty())
+        assertTrue(File(temporary.root, "icons").listFiles().orEmpty().isEmpty())
+        assertTrue(repository.state.value.config.iconOverrides.isEmpty())
+    }
+    @Test fun applyPromotesOnlyMatchedIconsAndDeletesOrphans() = runTest {
+        val repository = CompanionRepository(MemoryStore(), IconStore(temporary.root), this)
+        advanceUntilIdle()
+        repository.receiveCatalog(catalog())
+        val importer = importer(repository)
+        val result = importer.import(zip(mapOf("com.example.app.png" to png(), "unmatched.png" to png())))
+        importer.apply(result)
+        val stored = File(temporary.root, "icons").listFiles().orEmpty().map { it.nameWithoutExtension }
+        assertEquals(listOf(result.matches.single().iconId), stored)
+        assertTrue(File(temporary.root, "icons-staging").listFiles().orEmpty().isEmpty())
+        assertEquals(result.matches.single().iconId, repository.state.value.config.iconOverrides[app.key])
+    }
 }

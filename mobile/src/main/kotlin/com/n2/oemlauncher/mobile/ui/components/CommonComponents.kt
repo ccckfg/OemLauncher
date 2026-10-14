@@ -1,5 +1,6 @@
 package com.n2.oemlauncher.mobile.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -20,16 +21,18 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.n2.oemlauncher.mobile.R
 import com.n2.oemlauncher.mobile.config.UiDimensions
-import com.n2.oemlauncher.mobile.data.IconStore
+import com.n2.oemlauncher.mobile.editor.CompanionViewModel
 import com.n2.oemlauncher.shared.model.CatalogEntry
 import com.n2.oemlauncher.shared.model.LauncherConfig
 
@@ -56,15 +59,18 @@ fun SearchField(query: String, onChange: (String) -> Unit) {
 }
 
 @Composable
-fun AppIcon(app: CatalogEntry, config: LauncherConfig, store: IconStore, iconId: String? = null) {
+fun AppIcon(app: CatalogEntry, config: LauncherConfig, vm: CompanionViewModel, iconId: String? = null) {
     val id = iconId ?: config.iconOverrides[app.key] ?: app.iconId
+    val images by vm.iconImages.collectAsStateWithLifecycle()
+    LaunchedEffect(id) { if (id != null) vm.prefetchIcons(listOf(id)) }
+    val image = id?.let { images[it] }
     Surface(
         Modifier.size(UiDimensions.APP_ICON.dp), shape = CircleShape,
         color = MaterialTheme.colorScheme.secondaryContainer,
     ) {
-        if (id != null) {
-            AsyncImage(
-                model = store.file(id), contentDescription = null,
+        if (image != null) {
+            Image(
+                image, contentDescription = null,
                 modifier = Modifier.size(UiDimensions.APP_ICON.dp).clip(CircleShape),
             )
         } else {

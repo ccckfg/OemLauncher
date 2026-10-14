@@ -1,28 +1,29 @@
 package com.n2.oemlauncher.mobile.ui.components
 
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.ArrowDownward
-import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.DragHandle
-import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -30,13 +31,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.n2.oemlauncher.mobile.R
 import com.n2.oemlauncher.mobile.config.UiDimensions
-import com.n2.oemlauncher.mobile.data.IconStore
+import com.n2.oemlauncher.mobile.editor.CompanionViewModel
 import com.n2.oemlauncher.shared.model.CatalogEntry
 import com.n2.oemlauncher.shared.model.LauncherConfig
 
@@ -44,7 +46,7 @@ import com.n2.oemlauncher.shared.model.LauncherConfig
 fun EditableAppRow(
     app: CatalogEntry,
     config: LauncherConfig,
-    store: IconStore,
+    vm: CompanionViewModel,
     canUp: Boolean,
     canDown: Boolean,
     favorite: () -> Unit,
@@ -59,6 +61,11 @@ fun EditableAppRow(
     val threshold = with(LocalDensity.current) { UiDimensions.DRAG_THRESHOLD.dp.toPx() }
     val haptic = LocalHapticFeedback.current
     val dragLabel = stringResource(R.string.drag_app, app.label)
+    val upLabel = stringResource(R.string.move_up, app.label)
+    val downLabel = stringResource(R.string.move_down, app.label)
+    val hideLabel = stringResource(if (hidden) R.string.show_app else R.string.hide_app, app.label)
+    val iconLabel = stringResource(R.string.change_icon, app.label)
+    var menu by remember { mutableStateOf(false) }
     val drag = Modifier.pointerInput(app.key, hidden) {
         if (!hidden) {
             var distance = 0f
@@ -76,41 +83,61 @@ fun EditableAppRow(
             )
         }
     }
-    Surface(modifier.fillMaxWidth().then(drag), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-        Column(Modifier.padding(horizontal = UiDimensions.SMALL_GAP.dp, vertical = UiDimensions.SMALL_GAP.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AppIcon(app, config, store)
-                Text(
-                    app.label, Modifier.weight(1f).padding(horizontal = UiDimensions.GAP.dp),
-                    style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                )
-                if (!hidden) Icon(
-                    Icons.Outlined.DragHandle, dragLabel,
-                    modifier = Modifier.size(UiDimensions.TOUCH_TARGET.dp).padding(UiDimensions.GAP.dp),
+    // TalkBack cannot drag; the same reorder is offered as custom actions on the row.
+    val actions = Modifier.semantics {
+        customActions = buildList {
+            if (!hidden && canUp) add(CustomAccessibilityAction(upLabel) { currentMove.value(-1); true })
+            if (!hidden && canDown) add(CustomAccessibilityAction(downLabel) { currentMove.value(1); true })
+            add(CustomAccessibilityAction(hideLabel) { hide(); true })
+            add(CustomAccessibilityAction(iconLabel) { icon(); true })
+        }
+    }
+    Surface(modifier.fillMaxWidth().then(drag).then(actions), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        Row(
+            Modifier.padding(horizontal = UiDimensions.SMALL_GAP.dp, vertical = UiDimensions.SMALL_GAP.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AppIcon(app, config, vm)
+            Text(
+                app.label, Modifier.weight(1f).padding(horizontal = UiDimensions.GAP.dp),
+                style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+            if (!hidden) IconButton(favorite) {
+                Icon(
+                    if (pinned) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                    stringResource(if (pinned) R.string.remove_favorite else R.string.add_favorite, app.label),
+                    tint = if (pinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                IconButton(favorite) {
-                    Icon(
-                        if (pinned) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                        stringResource(if (pinned) R.string.remove_favorite else R.string.add_favorite, app.label),
-                        tint = if (pinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            Box {
+                IconButton({ menu = true }) {
+                    Icon(Icons.Outlined.MoreVert, stringResource(R.string.more_actions, app.label))
+                }
+                DropdownMenu(menu, { menu = false }) {
+                    if (!hidden) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_move_up)) },
+                            enabled = canUp, onClick = { menu = false; move(-1) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_move_down)) },
+                            enabled = canDown, onClick = { menu = false; move(1) },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_change_icon)) },
+                        onClick = { menu = false; icon() },
                     )
-                }
-                IconButton(hide) {
-                    Icon(
-                        if (hidden) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
-                        stringResource(if (hidden) R.string.show_app else R.string.hide_app, app.label),
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (hidden) R.string.action_show else R.string.action_hide)) },
+                        onClick = { menu = false; hide() },
                     )
-                }
-                IconButton(icon) { Icon(Icons.Outlined.Image, stringResource(R.string.change_icon, app.label)) }
-                IconButton({ move(-1) }, enabled = canUp && !hidden) {
-                    Icon(Icons.Outlined.ArrowUpward, stringResource(R.string.move_up, app.label))
-                }
-                IconButton({ move(1) }, enabled = canDown && !hidden) {
-                    Icon(Icons.Outlined.ArrowDownward, stringResource(R.string.move_down, app.label))
                 }
             }
+            if (!hidden) Icon(
+                Icons.Outlined.DragHandle, dragLabel,
+                modifier = Modifier.size(UiDimensions.TOUCH_TARGET.dp).padding(UiDimensions.GAP.dp),
+            )
         }
     }
 }

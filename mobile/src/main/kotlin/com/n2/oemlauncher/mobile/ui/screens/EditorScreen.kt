@@ -62,7 +62,7 @@ fun EditorScreen(state: CompanionState, vm: CompanionViewModel, chooseIcon: (Str
                     }
                     Text(stringResource(R.string.saved_automatically), style = MaterialTheme.typography.bodySmall)
                 }
-                if (!wide) item { WatchPreview(state, vm.container.icons, thumbnail = true) }
+                if (!wide) item { WatchPreview(state, vm, thumbnail = true, onOpen = preview) }
                 item { SearchField(query) { query = it } }
                 item {
                     ChoiceRow(SortMode.entries, state.config.sortMode, { it.label() }) { vm.sort(it) }
@@ -75,7 +75,7 @@ fun EditorScreen(state: CompanionState, vm: CompanionViewModel, chooseIcon: (Str
                 itemsIndexed(favorites, key = { _, app -> "favorite-${app.key}" }) { _, app ->
                     val index = arranged.favorites.indexOf(app)
                     EditableAppRow(
-                        app, state.config, vm.container.icons, index > 0, index < arranged.favorites.lastIndex,
+                        app, state.config, vm, index > 0, index < arranged.favorites.lastIndex,
                         { vm.favorite(app.key) }, { vm.hide(app.key, true) }, { chooseIcon(app.key) },
                         { delta -> vm.moveFavoriteKey(app.key, delta) },
                         if (state.config.layout.reduceMotion) Modifier else Modifier.animateItem(),
@@ -85,7 +85,7 @@ fun EditorScreen(state: CompanionState, vm: CompanionViewModel, chooseIcon: (Str
                 itemsIndexed(others, key = { _, app -> app.key }) { _, app ->
                     val index = arranged.others.indexOf(app)
                     EditableAppRow(
-                        app, state.config, vm.container.icons, index > 0, index < arranged.others.lastIndex,
+                        app, state.config, vm, index > 0, index < arranged.others.lastIndex,
                         { vm.favorite(app.key) }, { vm.hide(app.key, true) }, { chooseIcon(app.key) },
                         { vm.moveApp(app.key, it) },
                         if (state.config.layout.reduceMotion) Modifier else Modifier.animateItem(),
@@ -99,7 +99,7 @@ fun EditorScreen(state: CompanionState, vm: CompanionViewModel, chooseIcon: (Str
                 }
                 if (showHidden) itemsIndexed(hidden, key = { _, app -> "hidden-${app.key}" }) { _, app ->
                     EditableAppRow(
-                        app, state.config, vm.container.icons, false, false,
+                        app, state.config, vm, false, false,
                         { vm.favorite(app.key) }, { vm.hide(app.key, false) }, { chooseIcon(app.key) }, {},
                     )
                 }
@@ -109,7 +109,7 @@ fun EditorScreen(state: CompanionState, vm: CompanionViewModel, chooseIcon: (Str
                 Modifier.width(UiDimensions.PREVIEW_PANE.dp).padding(UiDimensions.GAP.dp)
                     .verticalScroll(rememberScrollState()),
             ) {
-                WatchPreview(state, vm.container.icons, maxEdgeDp = previewEdge)
+                WatchPreview(state, vm, maxEdgeDp = previewEdge)
                 Text(stringResource(R.string.preview_detail), style = MaterialTheme.typography.bodySmall)
             }
         }

@@ -55,7 +55,7 @@ fun HomeScreen(state: CompanionState, vm: CompanionViewModel, navigate: (HomeDes
             }
         }
         item { ConnectionCard(state, vm::refresh) }
-        item { SyncCard(state, vm) }
+        item { SyncCard(state, vm) { navigate(HomeDestination.SYNC) } }
         if (state.demo) item {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                 Column(Modifier.padding(UiDimensions.GAP.dp)) {
@@ -74,8 +74,8 @@ fun HomeScreen(state: CompanionState, vm: CompanionViewModel, navigate: (HomeDes
             }
         } else item {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                WatchPreview(state, vm.container.icons, thumbnail = true)
-                TextButton({ navigate(HomeDestination.PREVIEW) }) { Text(stringResource(R.string.preview)) }
+                WatchPreview(state, vm, thumbnail = true, onOpen = { navigate(HomeDestination.PREVIEW) })
+                Text(stringResource(R.string.preview_tap), style = MaterialTheme.typography.bodySmall)
             }
         }
         item {
@@ -96,7 +96,7 @@ fun HomeScreen(state: CompanionState, vm: CompanionViewModel, navigate: (HomeDes
     }
 }
 
-enum class HomeDestination { EDITOR, APPEARANCE, ICONS, PREVIEW, HELP }
+enum class HomeDestination { EDITOR, APPEARANCE, ICONS, PREVIEW, SYNC, HELP }
 
 @Composable
 private fun ConnectionCard(state: CompanionState, refresh: () -> Unit) {
@@ -125,7 +125,7 @@ private fun ConnectionCard(state: CompanionState, refresh: () -> Unit) {
 }
 
 @Composable
-private fun SyncCard(state: CompanionState, vm: CompanionViewModel) {
+private fun SyncCard(state: CompanionState, vm: CompanionViewModel, diagnostics: () -> Unit) {
     val lastSync = remember(state.snapshot.lastSyncMillis) {
         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(state.snapshot.lastSyncMillis))
     }
@@ -157,6 +157,9 @@ private fun SyncCard(state: CompanionState, vm: CompanionViewModel) {
                         Text(stringResource(R.string.overwrite_watch))
                     }
                 }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(diagnostics) { Text(stringResource(R.string.sync_diagnostics)) }
             }
         }
     }

@@ -2,6 +2,7 @@ package com.n2.oemlauncher.mobile.editor
 
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -20,6 +21,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class ImportState(
@@ -33,6 +35,8 @@ class CompanionViewModel(val container: AppContainer) : ViewModel() {
     val state = repository.state
     private val mutableImport = MutableStateFlow(ImportState())
     val importState = mutableImport.asStateFlow()
+    private val mutableImages = MutableStateFlow<Map<String, ImageBitmap>>(emptyMap())
+    val iconImages = mutableImages.asStateFlow()
     private var discovery: Job? = null
     private var operation: Job? = null
     private var foreground = false
@@ -45,6 +49,8 @@ class CompanionViewModel(val container: AppContainer) : ViewModel() {
     fun stop() {
         foreground = false
         discovery?.cancel()
+        // Imports keep writing files unless cancelled; background pages must not continue them.
+        cancelImport()
         container.gateway.stopObserving()
     }
     fun refresh() {
@@ -58,11 +64,33 @@ class CompanionViewModel(val container: AppContainer) : ViewModel() {
                 container.gateway.requestCatalog()
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                repository.apiError(e::class.java.simpleName)
                 repository.connection(WatchConnection())
             }
         }
     }
+    fun requestCatalog() = launch {
+        try {
+            container.gateway.requestCatalog()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            repository.apiError(e::class.java.simpleName)
+            repository.notice(UserNotice.SYNC_FAILED)
+        }
+    }
+
+    /** Icons surface as state; the data layer owns loading, caching and integrity checks. */
+    fun prefetchIcons(ids: List<String?>) {
+        val missing = ids.filterNotNull().distinct().filter { it !in mutableImages.value }
+        if (missing.isEmpty()) return
+        launch {
+            val loaded = missing.mapNotNull { id -> repository.icons.bitmap(id)?.let { id to it } }
+            if (loaded.isNotEmpty()) mutableImages.update { it + loaded }
+        }
+    }
+
     fun demo() = launch {
         val (catalog, config) = container.demo.create()
         repository.demo(catalog, config)
@@ -103,6 +131,7 @@ class CompanionViewModel(val container: AppContainer) : ViewModel() {
     fun photo(uri: Uri) {
         operation?.cancel()
         operation = launch {
+            mutableImport.value.photo?.recycle()
             mutableImport.value = ImportState(busy = true)
             try {
                 mutableImport.value = ImportState(photo = container.importer.photo(uri))
@@ -158,7 +187,11 @@ class CompanionViewModel(val container: AppContainer) : ViewModel() {
     }
     fun cancelImport() {
         operation?.cancel()
+        operation = null
+        val stale = mutableImport.value
         mutableImport.value = ImportState()
+        stale.photo?.recycle()
+        stale.preview?.let { launch { container.importer.discard(it) } }
     }
     private fun launch(block: suspend () -> Unit): Job = viewModelScope.launch { block() }
     override fun onCleared() { stop() }

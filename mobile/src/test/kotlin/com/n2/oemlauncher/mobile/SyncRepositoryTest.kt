@@ -5,6 +5,7 @@ import com.n2.oemlauncher.mobile.editor.DraftHistory
 import com.n2.oemlauncher.mobile.sync.WearGateway
 import com.n2.oemlauncher.shared.config.ConfigEditor
 import com.n2.oemlauncher.shared.model.*
+import com.n2.oemlauncher.shared.protocol.IconId
 import com.n2.oemlauncher.shared.protocol.SyncPhase
 import com.n2.oemlauncher.shared.protocol.SyncStatusResolver
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,9 +38,11 @@ class SyncRepositoryTest {
         val receipt: suspend (LauncherConfig) -> Unit = {},
     ) : WearGateway {
         var published: LauncherConfig? = null
+        var publishedIcons: Map<String, ByteArray>? = null
         override suspend fun publish(config: LauncherConfig, icons: Map<String, ByteArray>) {
             if (fail) throw IllegalStateException("offline")
             published = config
+            publishedIcons = icons
             receipt(config)
         }
         override suspend fun discover() = WatchConnection(ConnectionKind.CONNECTED)
@@ -207,5 +210,46 @@ class SyncRepositoryTest {
         repo.receiveState(WatchConfigState(LauncherConfig(revision = 6), 5, ApplyResult.APPLIED))
         assertEquals(10L, repo.state.value.snapshot.watch?.lastDesiredRevision)
         assertEquals(ApplyResult.REJECTED_STALE, repo.state.value.snapshot.watch?.lastResult)
+    }
+    @Test fun sameRevisionReceiptsAreArbitratedByTimestamp() = runTest {
+        val repo = CompanionRepository(MemoryStore(), IconStore(temporary.root), this)
+        advanceUntilIdle()
+        repo.receiveState(WatchConfigState(LauncherConfig(revision = 6), 10, ApplyResult.APPLIED, updatedAtMillis = 200))
+        repo.receiveState(WatchConfigState(LauncherConfig(revision = 6), 10, ApplyResult.REJECTED_STALE, updatedAtMillis = 100))
+        assertEquals(ApplyResult.APPLIED, repo.state.value.snapshot.watch?.lastResult)
+        repo.receiveState(WatchConfigState(LauncherConfig(revision = 6), 10, ApplyResult.REJECTED_INVALID, updatedAtMillis = 300))
+        assertEquals(ApplyResult.REJECTED_INVALID, repo.state.value.snapshot.watch?.lastResult)
+    }
+    @Test fun missingLocalAssetsAreSkippedWithoutHidingTheWatch() = runTest {
+        val repo = CompanionRepository(MemoryStore(), IconStore(temporary.root), this)
+        advanceUntilIdle()
+        repo.receiveCatalog(catalog)
+        repo.receiveState(WatchConfigState(LauncherConfig(revision = 3)))
+        repo.connection(WatchConnection(ConnectionKind.CONNECTED))
+        val missingId = IconId.of(byteArrayOf(7, 7, 7))
+        repo.edit { ConfigEditor.setIconOverride(it, key, missingId) }
+        val gateway = FakeGateway()
+        repo.sync(gateway)
+        assertNotNull(gateway.published)
+        assertTrue(gateway.publishedIcons.isNullOrEmpty())
+        assertEquals(ConnectionKind.CONNECTED, repo.state.value.connection.kind)
+        assertEquals(UserNotice.ICONS_MISSING, repo.state.value.notice)
+        assertEquals(listOf(missingId), repo.state.value.diagnostics.localMissingIcons)
+    }
+    @Test fun diagnosticsRecordSendOutcomeAndApiErrors() = runTest {
+        val repo = CompanionRepository(MemoryStore(), IconStore(temporary.root), this)
+        advanceUntilIdle()
+        repo.receiveState(WatchConfigState(LauncherConfig(revision = 3)))
+        repo.connection(WatchConnection(ConnectionKind.CONNECTED))
+        repo.sync(FakeGateway(fail = true))
+        val failed = repo.state.value.diagnostics
+        assertEquals(false, failed.lastSendSucceeded)
+        assertEquals(4L, failed.lastSentRevision)
+        assertEquals("IllegalStateException", failed.lastError?.type)
+        repo.connection(WatchConnection(ConnectionKind.CONNECTED))
+        repo.sync(FakeGateway())
+        val sent = repo.state.value.diagnostics
+        assertEquals(true, sent.lastSendSucceeded)
+        assertEquals(5L, sent.lastSentRevision)
     }
 }

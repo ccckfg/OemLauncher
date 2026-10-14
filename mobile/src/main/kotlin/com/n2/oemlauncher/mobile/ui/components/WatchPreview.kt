@@ -1,8 +1,8 @@
 package com.n2.oemlauncher.mobile.ui.components
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,9 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,19 +33,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.n2.oemlauncher.mobile.R
 import com.n2.oemlauncher.mobile.config.DemoConstants
 import com.n2.oemlauncher.mobile.config.UiDimensions
 import com.n2.oemlauncher.mobile.data.CompanionState
-import com.n2.oemlauncher.mobile.data.IconStore
+import com.n2.oemlauncher.mobile.editor.CompanionViewModel
 import com.n2.oemlauncher.shared.model.LayoutMode
 import com.n2.oemlauncher.shared.model.WatchDisplay
 import com.n2.oemlauncher.shared.ordering.AppOrdering
 
 @Composable
 fun WatchPreview(
-    state: CompanionState, store: IconStore, thumbnail: Boolean = false,
-    maxEdgeDp: Int = UiDimensions.PREVIEW,
+    state: CompanionState, vm: CompanionViewModel, thumbnail: Boolean = false,
+    maxEdgeDp: Int = UiDimensions.PREVIEW, onOpen: (() -> Unit)? = null,
 ) {
     val catalog = state.catalog ?: return
     // CatalogSanitizer does not validate display facts; malformed peer data must not crash UI.
@@ -56,14 +57,21 @@ fun WatchPreview(
     val config = state.config
     val apps = remember(catalog.entries, config) { AppOrdering.arrange(catalog.entries, config).all }
     val ids = remember(apps, config.iconOverrides) { apps.map { config.iconOverrides[it.key] ?: it.iconId } }
-    val images by produceState<List<Bitmap?>>(emptyList(), ids, state.iconGeneration) {
-        value = ids.map { id -> id?.let { store.bitmap(it)?.asAndroidBitmap() } }
-    }
+    val iconImages by vm.iconImages.collectAsStateWithLifecycle()
+    LaunchedEffect(ids, state.iconGeneration) { vm.prefetchIcons(ids) }
+    val images = ids.map { id -> id?.let { iconImages[it] }?.asAndroidBitmap() }
     val renderer = remember(apps, display, config.layout, images) {
         PreviewRenderer(apps, display, config.layout, images)
     }
-    var panX by remember(config.layout.mode, config.layout.iconSize) { mutableFloatStateOf(0f) }
-    var panY by remember(config.layout.mode, config.layout.iconSize) { mutableFloatStateOf(0f) }
+    val panKeys: Array<Any> = arrayOf(config.layout.mode, config.layout.iconSize, config.layout.gridColumns)
+    var panX by remember(*panKeys) { mutableFloatStateOf(0f) }
+    var panY by remember(*panKeys) { mutableFloatStateOf(0f) }
+    // A rebuilt renderer can shrink the content; clamp so the preview never shows blank space.
+    LaunchedEffect(renderer.scrollLimit, config.layout.mode) {
+        if (config.layout.mode != LayoutMode.HONEYCOMB) {
+            panY = PreviewRenderer.clampedVerticalPan(panY, renderer.scrollLimit)
+        }
+    }
     val description = stringResource(R.string.preview)
     val shape = if (display.isRound) CircleShape else RoundedCornerShape(0.dp)
     Column(
@@ -74,6 +82,7 @@ fun WatchPreview(
             Modifier.widthIn(max = (if (thumbnail) UiDimensions.THUMBNAIL else maxEdgeDp).dp)
                 .fillMaxWidth().aspectRatio(display.widthPx.toFloat() / display.heightPx)
                 .clip(shape).background(MaterialTheme.colorScheme.outlineVariant)
+                .then(if (onOpen != null) Modifier.clickable(onClick = onOpen) else Modifier)
                 .padding(UiDimensions.PREVIEW_BORDER.dp),
         ) {
             Canvas(
@@ -102,7 +111,7 @@ fun WatchPreview(
                                     renderer.bounds.rubberBand(rawX, rawY, renderer.scratch)
                                     panX = renderer.scratch[0]; panY = renderer.scratch[1]
                                 } else {
-                                    panY = rawY.coerceIn(-renderer.scrollLimit, 0f)
+                                    panY = PreviewRenderer.clampedVerticalPan(rawY, renderer.scrollLimit)
                                 }
                             },
                         )

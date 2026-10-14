@@ -99,10 +99,10 @@ fun AppearanceScreen(state: CompanionState, vm: CompanionViewModel) {
         if (wide) Row {
             controls(Modifier.weight(1f))
             Column(Modifier.width(UiDimensions.PREVIEW_PANE.dp).verticalScroll(rememberScrollState())) {
-                WatchPreview(previewState, vm.container.icons, maxEdgeDp = previewEdge)
+                WatchPreview(previewState, vm, maxEdgeDp = previewEdge)
             }
         } else Column {
-            WatchPreview(previewState, vm.container.icons, thumbnail = true)
+            WatchPreview(previewState, vm, thumbnail = true)
             controls(Modifier.weight(1f))
         }
     }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- targetSdk 36 is a deliberate project decision: Wear OS 6 (API 36) is the deployment
+         target and both apps must stay aligned. Do not "fix" by bumping targetSdk. -->
+    <issue id="OldTargetApi" severity="ignore" />
+    <!-- The flagged headers embed counts as plain numbers ("%1$d"); neither the English nor
+         the Chinese wording changes with quantity, so plurals would add no value. -->
+    <issue id="PluralsCandidate" severity="ignore" />
+</lint>

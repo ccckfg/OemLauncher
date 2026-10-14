@@ -72,7 +72,7 @@ fun IconScreen(
             Card {
                 Column(Modifier.padding(UiDimensions.GAP.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        AppIcon(app, state.config, vm.container.icons)
+                        AppIcon(app, state.config, vm)
                         Column(Modifier.weight(1f).padding(horizontal = UiDimensions.GAP.dp)) {
                             Text(app.label, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(
