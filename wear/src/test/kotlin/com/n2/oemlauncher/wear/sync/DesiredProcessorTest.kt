@@ -2,59 +2,115 @@ package com.n2.oemlauncher.wear.sync
 
 import com.n2.oemlauncher.shared.model.ApplyResult
 import com.n2.oemlauncher.shared.model.LauncherConfig
-import com.n2.oemlauncher.shared.model.WatchConfigState
 import com.n2.oemlauncher.shared.protocol.IconId
 import com.n2.oemlauncher.shared.protocol.PayloadCodec
+import com.n2.oemlauncher.shared.protocol.ProtocolLimits
 import com.n2.oemlauncher.shared.protocol.ProtocolVersion
-import com.n2.oemlauncher.wear.data.ConfigWriter
-import com.n2.oemlauncher.wear.data.IconFileStore
-import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
-import java.io.File
 
 class DesiredProcessorTest {
-    private lateinit var processor: DesiredProcessor
+    private val icons = FakeIconStore()
+    private val processor = DesiredProcessor(icons)
 
-    private class FakeWriter : ConfigWriter {
-        override suspend fun save(config: LauncherConfig) = Unit
-    }
-
-    @Before
-    fun setUp() {
-        processor = DesiredProcessor(FakeWriter(), IconFileStore(File(System.getProperty("java.io.tmpdir"), "icons-test-${System.nanoTime()}").apply { mkdirs() }))
+    @Test
+    fun decideRejectsUnsupportedSchemaAndMalformedPayload() {
+        val state = testState(revision = 0)
+        val schema = processor.decide(99, byteArrayOf(), state, 1L) as DesiredDecision.Rejected
+        assertEquals(ApplyResult.REJECTED_SCHEMA, schema.state.lastResult)
+        val malformed = processor.decide(ProtocolVersion.CURRENT, byteArrayOf(1), state, 1L) as DesiredDecision.Rejected
+        assertEquals(ApplyResult.REJECTED_INVALID, malformed.state.lastResult)
     }
 
     @Test
-    fun rejectsUnsupportedSchemaAndMalformedPayload() = runTest {
-        val state = WatchConfigState(LauncherConfig())
-        assertEquals(ApplyResult.REJECTED_SCHEMA, processor.process(99, byteArrayOf(), emptyMap(), state, 1).state.lastResult)
-        assertEquals(ApplyResult.REJECTED_INVALID, processor.process(ProtocolVersion.CURRENT, byteArrayOf(1), emptyMap(), state, 1).state.lastResult)
-    }
+    fun decideIgnoresRedeliveryAndRejectsStale() {
+        val state = testState(revision = 4, lastDesired = 4)
+        val redelivery = processor.decide(
+            ProtocolVersion.CURRENT,
+            PayloadCodec.encodeConfig(LauncherConfig(revision = 4)),
+            state,
+            1L,
+        )
+        assertEquals(DesiredDecision.Redelivery, redelivery)
 
-    @Test
-    fun ignoresRedeliveryAndRejectsStale() = runTest {
-        val state = WatchConfigState(LauncherConfig(revision = 4), lastDesiredRevision = 4)
-        val desired = LauncherConfig(revision = 4)
-        val payload = PayloadCodec.encodeConfig(desired)
-        assertFalse(processor.process(1, payload, emptyMap(), state, 1).applied)
-        val stale = processor.process(1, PayloadCodec.encodeConfig(LauncherConfig(revision = 3)), emptyMap(), WatchConfigState(LauncherConfig(revision = 4), lastDesiredRevision = 0), 1)
+        val stale = processor.decide(
+            ProtocolVersion.CURRENT,
+            PayloadCodec.encodeConfig(LauncherConfig(revision = 3)),
+            testState(revision = 4),
+            1L,
+        ) as DesiredDecision.Rejected
         assertEquals(ApplyResult.REJECTED_STALE, stale.state.lastResult)
+        assertEquals(3L, stale.state.lastDesiredRevision)
     }
 
     @Test
-    fun appliesAndReportsMissingIcons() = runTest {
-        val raw = "icon".encodeToByteArray()
-        val iconId = IconId.of(raw)
-        val desired = LauncherConfig(revision = 2, iconOverrides = mapOf("com.example/.Main" to iconId))
-        val state = WatchConfigState(LauncherConfig())
-        val missing = processor.process(1, PayloadCodec.encodeConfig(desired), emptyMap(), state, 2)
-        assertEquals(ApplyResult.APPLIED_MISSING_ICONS, missing.state.lastResult)
-        assertTrue(missing.applied)
-        val applied = processor.process(1, PayloadCodec.encodeConfig(desired.copy(revision = 3)), mapOf(iconId to raw), missing.state, 3)
-        assertEquals(ApplyResult.APPLIED, applied.state.lastResult)
+    fun decideAcceptsNewerRevisionAndListsReferencedIcons() {
+        val iconId = IconId.of("a".encodeToByteArray())
+        val desired = LauncherConfig(revision = 6, iconOverrides = mapOf(TEST_APP_KEY to iconId))
+        val decision = processor.decide(
+            ProtocolVersion.CURRENT,
+            PayloadCodec.encodeConfig(desired),
+            testState(revision = 5),
+            1L,
+        ) as DesiredDecision.Apply
+        assertEquals(listOf(iconId), decision.referencedIconIds)
+        assertEquals(6L, decision.desired.revision)
+    }
+
+    @Test
+    fun applyStoresValidIconsAndReportsInvalidOnes() {
+        val good = "good".encodeToByteArray()
+        val goodId = IconId.of(good)
+        val mismatched = "mismatched".encodeToByteArray()
+        val oversized = ByteArray(ProtocolLimits.MAX_ICON_BYTES + 1) { 7 }
+        val missingId = IconId.of("missing".encodeToByteArray())
+        val desired = LauncherConfig(
+            revision = 2,
+            iconOverrides = mapOf(
+                "com.example.app/com.example.app.One" to goodId,
+                "com.example.app/com.example.app.Two" to IconId.of(mismatched),
+                "com.example.app/com.example.app.Three" to IconId.of(oversized),
+                "com.example.app/com.example.app.Four" to missingId,
+            ),
+        )
+        val outcome = processor.apply(
+            desired,
+            mapOf(
+                goodId to good,
+                IconId.of(mismatched) to mismatched + "x".encodeToByteArray(),
+                IconId.of(oversized) to oversized,
+            ),
+            5L,
+        )
+        assertArrayEquals(good, icons.stored[goodId])
+        assertEquals(ApplyResult.APPLIED_MISSING_ICONS, outcome.state.lastResult)
+        assertEquals(3, outcome.state.missingIconIds.size)
+        assertFalse(outcome.state.missingIconIds.contains(goodId))
+        assertEquals(5L, outcome.state.updatedAtMillis)
+        assertEquals(2L, outcome.state.lastDesiredRevision)
+    }
+
+    @Test
+    fun applyReusesIconAlreadyStoredOnDisk() {
+        val bytes = "stored".encodeToByteArray()
+        val iconId = IconId.of(bytes)
+        icons.stored[iconId] = bytes
+        val desired = LauncherConfig(revision = 3, iconOverrides = mapOf(TEST_APP_KEY to iconId))
+        val outcome = processor.apply(desired, emptyMap(), 1L)
+        assertEquals(ApplyResult.APPLIED, outcome.state.lastResult)
+        assertTrue(outcome.state.missingIconIds.isEmpty())
+    }
+
+    @Test
+    fun applyTreatsWrongStoredContentAsMissing() {
+        val iconId = IconId.of("wanted".encodeToByteArray())
+        icons.stored[iconId] = "something else".encodeToByteArray()
+        val desired = LauncherConfig(revision = 3, iconOverrides = mapOf(TEST_APP_KEY to iconId))
+        val outcome = processor.apply(desired, emptyMap(), 1L)
+        assertEquals(ApplyResult.APPLIED_MISSING_ICONS, outcome.state.lastResult)
+        assertEquals(listOf(iconId), outcome.state.missingIconIds)
     }
 }

@@ -25,4 +25,7 @@
     <string name="about_version">版本 %1$s</string>
     <string name="sync_time">上次同步：%1$d</string>
     <string name="done">完成</string>
+    <string name="tile_header">常用应用</string>
+    <string name="tile_empty">还没有常用应用</string>
+    <string name="tile_open_launcher">打开启动器</string>
 </resources>
