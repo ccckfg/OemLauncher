@@ -20,7 +20,7 @@
 | 路径 | 拥有方 | DataMap 内容 | 用途 |
 | --- | --- | --- | --- |
 | `/oemlauncher/v1/catalog` | 手表 | `schema`: Int；`payload`: `PayloadCodec.encodeCatalog`；`icon_<iconId>`: Asset × N | 应用目录，以及每个应用的默认图标（128px PNG） |
-| `/oemlauncher/v1/config/desired` | 手机 | `schema`；`payload`: `encodeConfig`；`icon_<iconId>`: Asset × N | 手机希望手表采用的配置。Asset 只包含 `iconOverrides` 引用的自定义图标（192px） |
+| `/oemlauncher/v1/config/desired` | 手机 | `schema`；`payload`: `encodeConfig`；`revision`: Long（与 payload 内的 `revision` 相同）；`icon_<iconId>`: Asset × N | 手机希望手表采用的配置。Asset 只包含 `iconOverrides` 引用的自定义图标（192px） |
 | `/oemlauncher/v1/config/state` | 手表 | `schema`；`payload`: `encodeState` | 手表当前的配置和最近一次处理结果，同时充当回执 |
 
 消息 `/oemlauncher/v1/message/request-catalog` 由手机发给手表，负载为空，意思是“请立即重新发布目录”。
@@ -55,6 +55,8 @@
    - `lastResult` 设为 `APPLIED`，如果有缺失图标则设为 `APPLIED_MISSING_ICONS`。
 
 除第 3 种情况外，处理完都要把 `lastDesiredRevision` 设为本次 desired 的修订号，并发布 state。
+
+第 1、2 种情况下 payload 可能无法解码，修订号取 DataMap 里的 `SyncKeys.REVISION`。这个键是可选的（旧版手机不写），缺失时 `lastDesiredRevision` 保持不变，仍然发布带拒绝结果的 state。缺少 `payload` 的 desired 按第 2 种情况处理。
 
 ### 手表本地编辑
 

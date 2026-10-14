@@ -28,6 +28,13 @@ object SyncKeys {
     /** ByteArray: gzip JSON produced by PayloadCodec. */
     const val PAYLOAD = "payload"
 
+    /**
+     * Long, desired items only: the config revision, duplicated outside the payload so the watch
+     * can tie a schema or decode rejection to the revision the phone is waiting for. Optional,
+     * because phones built before it existed never write it.
+     */
+    const val REVISION = "revision"
+
     private const val ICON_ASSET_PREFIX = "icon_"
 
     fun iconAssetKey(iconId: String): String = ICON_ASSET_PREFIX + iconId
