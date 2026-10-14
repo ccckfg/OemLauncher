@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
@@ -24,7 +25,7 @@ fun AppMenuDialog(state: LauncherUiState, viewModel: LauncherViewModel, key: Str
             Text(state.entries.firstOrNull { it.key == key }?.label.orEmpty(), color = Color.White, fontSize = 14.sp)
             MenuAction(stringResource(R.string.favorite_toggle)) { viewModel.toggleFavorite(key); viewModel.showMenu(null) }
             MenuAction(stringResource(R.string.hide_app)) { viewModel.toggleHidden(key); viewModel.showMenu(null) }
-            MenuAction(stringResource(R.string.app_info)) { viewModel.showMenu(null) }
+            MenuAction(stringResource(R.string.app_info)) { viewModel.openAppInfo(key) }
             MenuAction(stringResource(R.string.cancel)) { viewModel.showMenu(null) }
         }
     }
@@ -32,5 +33,5 @@ fun AppMenuDialog(state: LauncherUiState, viewModel: LauncherViewModel, key: Str
 
 @Composable
 private fun MenuAction(label: String, onClick: () -> Unit) {
-    Text(label, Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp), color = Color.White, fontSize = 12.sp)
+    Text(label, Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(onClick = onClick).padding(vertical = 4.dp), color = Color.White, fontSize = 12.sp)
 }
