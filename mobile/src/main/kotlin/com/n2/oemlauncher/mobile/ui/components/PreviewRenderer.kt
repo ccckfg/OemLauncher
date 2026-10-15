@@ -89,8 +89,43 @@ class PreviewRenderer(
         }
     }
 
+    /** Top edge of the bottom label band in watch pixels. */
+    val labelBandTop: Float get() = watchHeight - labelBand
+
+    /** Projects one frame and drops icons that would show through the focus label. */
+    private fun prepareFrame(panX: Float, panY: Float) {
+        projector.project(panX, panY, radius, frame)
+        if (!settings.showLabels) return
+        val bandTop = labelBandTop
+        for (i in 0 until frame.size) {
+            if (frame.alpha[i] <= UiDimensions.LABEL_BAND_ALPHA_THRESHOLD) continue
+            val top = watchHeight / 2f + frame.y[i] - diameter * frame.scale[i] / 2f
+            val bottom = top + diameter * frame.scale[i]
+            if (top < watchHeight && bottom > bandTop) frame.alpha[i] = 0f
+        }
+    }
+
+    /**
+     * Icons the renderer would draw at [panX]/[panY], four values per icon (x, y, size, alpha)
+     * in watch pixels; returns how many entries were written. Reused buffer, no allocations.
+     */
+    fun visibleIcons(panX: Float, panY: Float, out: FloatArray): Int {
+        require(out.size >= frame.size * 4) { "output buffer too small" }
+        prepareFrame(panX, panY)
+        var count = 0
+        for (i in 0 until frame.size) {
+            if (frame.alpha[i] <= 0f) continue
+            out[count * 4] = watchWidth / 2f + frame.x[i]
+            out[count * 4 + 1] = watchHeight / 2f + frame.y[i]
+            out[count * 4 + 2] = diameter * frame.scale[i]
+            out[count * 4 + 3] = frame.alpha[i]
+            count++
+        }
+        return count
+    }
+
     private fun drawHoneycomb(canvas: Canvas, x: Float, y: Float) {
-        projector.project(x, y, radius, frame)
+        prepareFrame(x, y)
         var focused = -1
         var nearest = Float.MAX_VALUE
         for (i in 0 until frame.size) {
