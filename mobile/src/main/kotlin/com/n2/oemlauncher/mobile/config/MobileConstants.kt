@@ -80,4 +80,7 @@ object DemoConstants {
 object SearchConstants {
     /** Polyphonic labels multiply spellings per character; cap them so one label stays cheap. */
     const val MAX_SPELLINGS = 16
+
+    /** Keeps the index across quick screen switches instead of rebuilding it each time. */
+    const val INDEX_KEEP_ALIVE_MS = 5_000L
 }

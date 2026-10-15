@@ -14,6 +14,7 @@ import com.n2.oemlauncher.mobile.data.WatchConnection
 import com.n2.oemlauncher.mobile.iconpack.CropTransform
 import com.n2.oemlauncher.mobile.iconpack.ImportPreview
 import com.n2.oemlauncher.mobile.iconpack.IconOverrideLimitException
+import com.n2.oemlauncher.mobile.config.SearchConstants
 import com.n2.oemlauncher.mobile.search.AppSearchIndex
 import com.n2.oemlauncher.shared.config.ConfigEditor
 import com.n2.oemlauncher.shared.model.LayoutSettings
@@ -23,9 +24,12 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -42,19 +46,19 @@ class CompanionViewModel(val container: AppContainer) : ViewModel() {
     val importState = mutableImport.asStateFlow()
     private val mutableImages = MutableStateFlow<Map<String, ImageBitmap>>(emptyMap())
     val iconImages = mutableImages.asStateFlow()
-    private val mutableSearch = MutableStateFlow(AppSearchIndex.EMPTY)
-    val searchIndex = mutableSearch.asStateFlow()
+    /** Built only while a search screen collects it, so app startup never loads the pinyin dictionary. */
+    val searchIndex = state.map { it.catalog?.entries.orEmpty() }
+        .distinctUntilChanged()
+        .map { AppSearchIndex.build(it, container.romanizer) }
+        .flowOn(Dispatchers.Default)
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(SearchConstants.INDEX_KEEP_ALIVE_MS),
+            AppSearchIndex.EMPTY,
+        )
     private var discovery: Job? = null
     private var operation: Job? = null
     private var foreground = false
-
-    init {
-        viewModelScope.launch(Dispatchers.Default) {
-            state.map { it.catalog?.entries.orEmpty() }.distinctUntilChanged().collect { entries ->
-                mutableSearch.value = AppSearchIndex.build(entries, container.romanizer)
-            }
-        }
-    }
 
     fun start() {
         foreground = true
