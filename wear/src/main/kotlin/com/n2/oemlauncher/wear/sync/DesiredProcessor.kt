@@ -34,13 +34,20 @@ sealed class DesiredDecision {
  */
 class DesiredProcessor(private val iconStore: IconStore) {
 
-    fun decide(schema: Int, payload: ByteArray, currentState: WatchConfigState, now: Long): DesiredDecision {
+    fun decide(
+        schema: Int,
+        payload: ByteArray?,
+        reportedRevision: Long?,
+        currentState: WatchConfigState,
+        now: Long,
+    ): DesiredDecision {
         if (!ProtocolVersion.isSupported(schema)) {
-            return DesiredDecision.Rejected(rejected(currentState, ApplyResult.REJECTED_SCHEMA, now))
+            return DesiredDecision.Rejected(rejected(currentState, ApplyResult.REJECTED_SCHEMA, now, reportedRevision))
         }
-        val decoded = PayloadCodec.decodeConfig(schema, payload)
+        val decoded = payload?.let { PayloadCodec.decodeConfig(schema, it) }
         if (decoded !is DecodeResult.Success) {
-            return DesiredDecision.Rejected(rejected(currentState, ApplyResult.REJECTED_INVALID, now))
+            // Covers both a malformed payload and a missing one; the phone still needs a receipt.
+            return DesiredDecision.Rejected(rejected(currentState, ApplyResult.REJECTED_INVALID, now, reportedRevision))
         }
         val desired = decoded.value
         if (RevisionPolicy.isRedelivery(desired.revision, currentState)) return DesiredDecision.Redelivery
@@ -84,13 +91,20 @@ class DesiredProcessor(private val iconStore: IconStore) {
     private fun isValid(iconId: String, bytes: ByteArray): Boolean =
         bytes.size <= ProtocolLimits.MAX_ICON_BYTES && IconId.of(bytes) == iconId
 
+    /**
+     * Rejection receipt. [reportedRevision] is the revision the phone declared for this desired:
+     * the payload revision when it decoded, otherwise the DataMap `SyncKeys.REVISION` value (null
+     * when the phone is too old to send it). It only ever raises [WatchConfigState.lastDesiredRevision],
+     * so a rejection can never roll the receipt history back.
+     */
     private fun rejected(
         state: WatchConfigState,
         result: ApplyResult,
         now: Long,
-        desiredRevision: Long = state.lastDesiredRevision,
+        reportedRevision: Long? = null,
     ): WatchConfigState = state.copy(
-        lastDesiredRevision = desiredRevision,
+        lastDesiredRevision = reportedRevision?.let { maxOf(state.lastDesiredRevision, it) }
+            ?: state.lastDesiredRevision,
         lastResult = result,
         missingIconIds = emptyList(),
         updatedAtMillis = now,

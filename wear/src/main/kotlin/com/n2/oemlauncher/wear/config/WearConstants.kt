@@ -37,6 +37,9 @@ object WearConstants {
     /** Minimum touch target for tile rows and buttons, per accessibility rules. */
     const val TILE_TOUCH_TARGET_DP = 48f
 
+    /** Horizontal margin that keeps tile content inside the round screen safe area. */
+    const val TILE_HORIZONTAL_MARGIN_DP = 16f
+
     /** Font sizes of the tile header and of favorite labels. */
     const val TILE_HEADER_SP = 16f
     const val TILE_LABEL_SP = 14f

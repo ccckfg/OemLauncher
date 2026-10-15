@@ -75,9 +75,19 @@ class WearSyncRepository(
     private val _status = MutableStateFlow(SyncStatus())
     val status: StateFlow<SyncStatus> = _status.asStateFlow()
 
-    suspend fun handleDesired(schema: Int, payload: ByteArray, assets: Map<String, Asset>): DesiredOutcome = mutex.withLock {
+    /**
+     * Processes one desired config. [reportedRevision] is the revision read from the DataMap
+     * `SyncKeys.REVISION` key; it ties schema/decode/missing-payload rejections to the revision
+     * the phone is waiting for. A payload that decodes always reports its own revision.
+     */
+    suspend fun handleDesired(
+        schema: Int,
+        payload: ByteArray?,
+        assets: Map<String, Asset>,
+        reportedRevision: Long? = null,
+    ): DesiredOutcome = mutex.withLock {
         ensureRestoredLocked()
-        when (val decision = processor.decide(schema, payload, state, clock())) {
+        when (val decision = processor.decide(schema, payload, reportedRevision, state, clock())) {
             // A redelivered desired is ignored entirely: no state update, no receipt.
             DesiredDecision.Redelivery -> DesiredOutcome(state, applied = false)
             is DesiredDecision.Rejected -> {
