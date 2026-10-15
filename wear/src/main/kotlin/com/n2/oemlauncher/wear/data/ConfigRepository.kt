@@ -45,16 +45,20 @@ class ConfigRepository(private val context: Context) : SyncStateStore {
         context.launcherDataStore.edit { it[configKey] = PayloadCodec.configToJson(config) }
     }
 
-    suspend fun recordLaunch(key: String, now: Long) {
+    /** Records one launch and returns the new total count for that app. */
+    suspend fun recordLaunch(key: String, now: Long): Int {
+        var count = 0
         context.launcherDataStore.edit { prefs ->
             val old = prefs[usageKey]?.let { runCatching { json.decodeFromString<UsageStats>(it) }.getOrNull() }
                 ?: emptyMap()
             val record = old[key] ?: UsageRecord()
+            count = record.launchCount + 1
             prefs[usageKey] = json.encodeToString(old + (key to record.copy(
-                launchCount = record.launchCount + 1,
+                launchCount = count,
                 lastLaunchedMillis = now,
             )))
         }
+        return count
     }
 
     override suspend fun load(): PersistedSyncState {

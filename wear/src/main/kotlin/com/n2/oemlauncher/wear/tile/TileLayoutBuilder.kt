@@ -88,17 +88,37 @@ object TileLayoutBuilder {
     ): LayoutElementBuilders.Column {
         val column = LayoutElementBuilders.Column.Builder()
             .setWidth(expand())
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
             .setModifiers(safeAreaModifiers())
             .addContent(title(header))
-        content.favorites.forEach { favorite -> column.addContent(favoriteRow(content, favorite, scope)) }
+            .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(8f)).build())
+        // 2x2 grid of round icon buttons: every cell stays clear of the round screen edge.
+        content.favorites.chunked(TILE_GRID_COLUMNS).forEach { rowFavorites ->
+            column.addContent(favoritesGridRow(content, rowFavorites, scope))
+            column.addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(6f)).build())
+        }
         return column.build()
     }
 
-    private fun favoriteRow(
+    private fun favoritesGridRow(
+        content: TileContent,
+        favorites: List<TileFavorite>,
+        scope: ProtoLayoutScope,
+    ): LayoutElementBuilders.Row {
+        val row = LayoutElementBuilders.Row.Builder()
+            .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+        favorites.forEachIndexed { index, favorite ->
+            if (index > 0) row.addContent(LayoutElementBuilders.Spacer.Builder().setWidth(dp(10f)).build())
+            row.addContent(favoriteCell(content, favorite, scope))
+        }
+        return row.build()
+    }
+
+    private fun favoriteCell(
         content: TileContent,
         favorite: TileFavorite,
         scope: ProtoLayoutScope,
-    ): LayoutElementBuilders.Row {
+    ): LayoutElementBuilders.Column {
         val modifiers = ModifiersBuilders.Modifiers.Builder()
             .setSemantics(
                 ModifiersBuilders.Semantics.Builder()
@@ -115,19 +135,15 @@ object TileLayoutBuilder {
                     .build(),
             )
         }
-        val row = LayoutElementBuilders.Row.Builder()
-            .setWidth(expand())
-            .setHeight(dp(WearConstants.TILE_TOUCH_TARGET_DP))
-            .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+        val cell = LayoutElementBuilders.Column.Builder()
+            .setWidth(dp(WearConstants.TILE_CELL_WIDTH_DP))
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
             .setModifiers(modifiers.build())
         favorite.iconId?.let { iconId ->
-            content.iconBytes[iconId]?.let { bytes ->
-                row.addContent(icon(bytes, iconId, scope))
-                row.addContent(LayoutElementBuilders.Spacer.Builder().setWidth(dp(8f)).build())
-            }
+            content.iconBytes[iconId]?.let { bytes -> cell.addContent(icon(bytes, iconId, scope)) }
         }
-        row.addContent(label(favorite.label))
-        return row.build()
+        cell.addContent(label(favorite.label))
+        return cell.build()
     }
 
     private fun emptyState(
@@ -216,7 +232,6 @@ object TileLayoutBuilder {
                     .build(),
             )
             .build()
-
     private fun icon(bytes: ByteArray, iconId: String, scope: ProtoLayoutScope): LayoutElementBuilders.Image =
         LayoutElementBuilders.Image.Builder(scope)
             .setImageResource(inlineImageResource(bytes), iconId)
@@ -239,4 +254,5 @@ object TileLayoutBuilder {
 
     private const val OPEN_LAUNCHER_ID = "open_launcher"
     private const val BUTTON_COLOR = 0xFF2A3A55.toInt()
+    private const val TILE_GRID_COLUMNS = 2
 }

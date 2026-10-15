@@ -16,21 +16,26 @@ import com.n2.oemlauncher.wear.tile.FavoritesTileUpdater
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 
 class AppContainer(context: Context) {
     val configRepository = ConfigRepository(context)
     val iconStore = IconFileStore(context.filesDir)
     val snapshotStore = CatalogSnapshotStore(context.filesDir)
-    val catalogRepository = AppCatalogRepository(context, configRepository, snapshotStore, iconStore)
+    val customIconRepository: CustomIconRepository = FileCustomIconRepository(iconStore)
+    val catalogRepository = AppCatalogRepository(context, configRepository, snapshotStore, iconStore, customIconRepository)
     val dataLayerClient: DataLayerClient = GoogleDataLayerClient(context)
     val syncRepository = WearSyncRepository(
         store = configRepository,
         iconStore = iconStore,
         client = dataLayerClient,
-        catalogProvider = CatalogBundleProvider(configRepository, catalogRepository, iconStore),
+        catalogProvider = CatalogBundleProvider(
+            source = catalogRepository,
+            iconStore = iconStore,
+            usage = { configRepository.usage.first() },
+        ),
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
         onStateChanged = { FavoritesTileUpdater.request(context) },
     )
     val catalogObserver = LauncherAppsObserver(context) { }
-    val customIconRepository: CustomIconRepository = FileCustomIconRepository(iconStore)
 }

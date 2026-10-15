@@ -9,7 +9,6 @@ import androidx.activity.viewModels
 import com.n2.oemlauncher.wear.ui.LauncherScreen
 import com.n2.oemlauncher.wear.ui.LauncherViewModel
 import com.n2.oemlauncher.wear.catalog.LauncherAppsObserver
-
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<LauncherViewModel>()
     private lateinit var appsObserver: LauncherAppsObserver

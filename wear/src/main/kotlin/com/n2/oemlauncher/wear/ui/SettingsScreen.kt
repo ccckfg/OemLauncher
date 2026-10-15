@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material3.Text
 import com.n2.oemlauncher.shared.config.ConfigEditor
 import com.n2.oemlauncher.shared.config.LauncherDefaults
+import com.n2.oemlauncher.shared.model.ApplyResult
 import com.n2.oemlauncher.shared.model.IconShape
 import com.n2.oemlauncher.shared.model.IconSize
 import com.n2.oemlauncher.shared.model.LayoutMode
@@ -55,7 +56,16 @@ fun SettingsScreen(state: LauncherUiState, viewModel: LauncherViewModel) {
         item { SettingRow(stringResource(R.string.restore_defaults)) { viewModel.updateConfig { com.n2.oemlauncher.shared.model.LauncherConfig() } } }
         if (BuildConfig.DEBUG) item { SettingRow(stringResource(R.string.demo_data, boolLabel(state.demoEnabled))) { viewModel.toggleDemo() } }
         item { Text(stringResource(R.string.about_version, BuildConfig.VERSION_NAME), Modifier.padding(top = 16.dp), color = Color.LightGray) }
-        item { Text(stringResource(R.string.sync_time, state.lastSyncMillis), color = Color.LightGray) }
+        item { Text(stringResource(R.string.sync_status, syncStatusLabel(state)), Modifier.padding(top = 8.dp), color = Color.LightGray, fontSize = 13.sp) }
+        item {
+            val lastSync = state.syncLastText
+            Text(
+                if (lastSync == null) stringResource(R.string.sync_time_never) else stringResource(R.string.sync_time, lastSync),
+                color = Color.LightGray,
+                fontSize = 13.sp,
+            )
+        }
+        item { Text(stringResource(R.string.sync_result, syncResultLabel(state)), color = Color.LightGray, fontSize = 13.sp) }
         item { SettingRow(stringResource(R.string.done)) { viewModel.openSettings(false) } }
     }
 }
@@ -74,3 +84,20 @@ private fun nextSort(mode: SortMode) = when (mode) { SortMode.CUSTOM -> SortMode
 @Composable private fun sizeLabel(value: IconSize) = stringResource(when (value) { IconSize.SMALL -> R.string.size_small; IconSize.MEDIUM -> R.string.size_medium; IconSize.LARGE -> R.string.size_large })
 @Composable private fun shapeLabel(value: IconShape) = stringResource(when (value) { IconShape.CIRCLE -> R.string.shape_circle; IconShape.SQUIRCLE -> R.string.shape_squircle; IconShape.ORIGINAL -> R.string.shape_original })
 @Composable private fun sortLabel(value: SortMode) = stringResource(when (value) { SortMode.CUSTOM -> R.string.sort_custom; SortMode.ALPHABETICAL -> R.string.sort_alphabetical; SortMode.MOST_USED -> R.string.sort_most_used; SortMode.RECENTLY_USED -> R.string.sort_recent })
+
+@Composable private fun syncStatusLabel(state: LauncherUiState) = stringResource(
+    when (state.syncConnected) {
+        null -> R.string.sync_status_never
+        true -> R.string.sync_status_connected
+        false -> R.string.sync_status_disconnected
+    },
+)
+
+@Composable private fun syncResultLabel(state: LauncherUiState) = when (state.syncResult) {
+    ApplyResult.NONE -> stringResource(R.string.sync_result_none)
+    ApplyResult.APPLIED -> stringResource(R.string.sync_result_applied)
+    ApplyResult.APPLIED_MISSING_ICONS -> stringResource(R.string.sync_result_missing_icons, state.syncMissingIcons)
+    ApplyResult.REJECTED_STALE -> stringResource(R.string.sync_result_rejected_stale)
+    ApplyResult.REJECTED_INVALID -> stringResource(R.string.sync_result_rejected_invalid)
+    ApplyResult.REJECTED_SCHEMA -> stringResource(R.string.sync_result_rejected_schema)
+}

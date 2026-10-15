@@ -5,6 +5,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,6 +58,17 @@ import kotlin.math.max
 private const val LONG_PRESS_MILLIS = 500L
 private const val INERTIA_STOP = 8f
 private val favoriteStroke = androidx.compose.ui.graphics.drawscope.Stroke(2f)
+
+/** Height of the bottom band (focus label + settings entry) and the fade above it, in dp. */
+private val BAND_HEIGHT = 96.dp
+private val BAND_FADE = 24.dp
+
+/**
+ * Icons fade to nothing before the bottom band starts, so the settings entry and the focus
+ * label never cover a visible icon no matter where the honeycomb is dragged.
+ */
+private fun bandFade(y: Float, bandTop: Float, fadeMargin: Float): Float =
+    if (fadeMargin <= 0f) 1f else ((bandTop - y) / fadeMargin).coerceIn(0f, 1f)
 
 @Composable
 fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel) {
@@ -128,6 +141,9 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel) {
                 bounds = bounds,
                 iconRadius = iconDiameter / 2f,
                 panScratch = panScratch,
+                // PointerInputScope is a Density, so dp converts here; size is the canvas size.
+                bandTopPx = size.height - BAND_HEIGHT.toPx(),
+                bandFadePx = BAND_FADE.toPx(),
                 getPanX = { panX },
                 getPanY = { panY },
                 setPan = { x, y -> panX = x; panY = y },
@@ -147,12 +163,14 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel) {
             projector.project(panX, panY, radius, frame)
             val centerX = size.width / 2f
             val centerY = size.height / 2f
+            val bandTop = size.height - BAND_HEIGHT.toPx()
+            val fadeMargin = BAND_FADE.toPx()
             for (index in 0 until frame.size) {
-                val alpha = frame.alpha[index]
-                if (alpha <= 0f) continue
-                val entry = state.entries[index]
                 val x = centerX + frame.x[index]
                 val y = centerY + frame.y[index]
+                val alpha = frame.alpha[index] * bandFade(y, bandTop, fadeMargin)
+                if (alpha <= 0f) continue
+                val entry = state.entries[index]
                 val r = iconDiameter / 2f * frame.scale[index]
                 drawCircle(Color(0xFF14263A), r, Offset(x, y), alpha = alpha)
                 imageIcons[entry.key]?.let { drawScaledIcon(it, x, y, r) }
@@ -165,8 +183,15 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel) {
             Box(Modifier.fillMaxWidth().height(110.dp).align(androidx.compose.ui.Alignment.BottomCenter).background(
                 Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.92f))),
             ))
-            state.entries.getOrNull(centerIndex.intValue)?.let { entry ->
-                Text(entry.label, Modifier.align(androidx.compose.ui.Alignment.BottomCenter).background(Color.Black.copy(alpha = 0.78f), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 4.dp).padding(bottom = 14.dp), color = Color.White, fontSize = 14.sp)
+            Column(
+                Modifier.align(androidx.compose.ui.Alignment.BottomCenter).padding(bottom = 10.dp),
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+            ) {
+                state.entries.getOrNull(centerIndex.intValue)?.let { entry ->
+                    Text(entry.label, Modifier.background(Color.Black.copy(alpha = 0.78f), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 4.dp), color = Color.White, fontSize = 14.sp, maxLines = 1)
+                }
+                Spacer(Modifier.height(8.dp))
+                SettingsEntry(onClick = { viewModel.openSettings(true) })
             }
         }
     }
@@ -184,6 +209,8 @@ private suspend fun PointerInputScope.honeycombPointerInput(
     bounds: PanBounds,
     iconRadius: Float,
     panScratch: FloatArray,
+    bandTopPx: Float,
+    bandFadePx: Float,
     getPanX: () -> Float,
     getPanY: () -> Float,
     setPan: (Float, Float) -> Unit,
@@ -216,6 +243,9 @@ private suspend fun PointerInputScope.honeycombPointerInput(
                     if (!dragged) {
                         projector.project(currentX, currentY, minOf(size.width, size.height) / 2f - 12f, frame)
                         val hit = honeycombHitIndex(frame, down.position.x - size.width / 2f, down.position.y - size.height / 2f, iconRadius, iconRadius.coerceAtLeast(24f))
+                            // Icons faded out behind the bottom band are not there to tap.
+                            .takeIf { it >= 0 && frame.alpha[it] * bandFade(size.height / 2f + frame.y[it], bandTopPx, bandFadePx) >= com.n2.oemlauncher.shared.layout.HoneycombDefaults.MIN_TAPPABLE_ALPHA }
+                            ?: -1
                         val hitX = if (hit >= 0) size.width / 2f + frame.x[hit] else 0f
                         val hitY = if (hit >= 0) size.height / 2f + frame.y[hit] else 0f
                         if (duration >= LONG_PRESS_MILLIS) onLongPress(hit) else onTap(hit, hitX, hitY)
