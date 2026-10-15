@@ -1,8 +1,9 @@
-package com.n2.oemlauncher.wear.domain
+package com.n2.oemlauncher.shared.layout
 
 /**
  * Honeycomb cell 0 is the settings gear, so the launcher rests with settings in the center and
  * the apps (favorites first) spiral around it. Cells after it map to apps in arranged order.
+ * The watch and the phone preview must both use this mapping so they show the same layout.
  */
 object HoneycombSlots {
     const val SETTINGS = 0

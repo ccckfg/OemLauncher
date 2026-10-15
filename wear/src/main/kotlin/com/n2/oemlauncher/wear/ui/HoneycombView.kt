@@ -30,10 +30,10 @@ import com.n2.oemlauncher.shared.layout.HoneycombDefaults
 import com.n2.oemlauncher.shared.layout.HoneycombFrame
 import com.n2.oemlauncher.shared.layout.HoneycombGeometry
 import com.n2.oemlauncher.shared.layout.HoneycombProjector
+import com.n2.oemlauncher.shared.layout.HoneycombSlots
 import com.n2.oemlauncher.shared.layout.PanBounds
 import com.n2.oemlauncher.wear.R
 import com.n2.oemlauncher.wear.config.WearUiTokens
-import com.n2.oemlauncher.wear.domain.HoneycombSlots
 import com.n2.oemlauncher.wear.input.HapticController
 import com.n2.oemlauncher.wear.ui.theme.edgeVignette
 import kotlin.math.abs
