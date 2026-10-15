@@ -65,7 +65,7 @@
     <string name="move_down">将%1$s下移</string>
     <string name="drag_app">拖动排序%1$s</string>
     <string name="custom">自定义</string>
-    <string name="alphabetical">字母顺序</string>
+    <string name="alphabetical">按名称</string>
     <string name="most_used">最常用</string>
     <string name="recently_used">最近使用</string>
     <string name="undo">撤销</string>
