@@ -167,8 +167,10 @@ adb -s <手机序列号> install -r mobile\build\outputs\apk\debug\mobile-debug.
 
 | 设备 | 第 1 次 | 第 2 次 | 第 3 次 |
 | --- | --- | --- | --- |
-| 手表 `emulator-5558` | 2121 ms | 1724 ms | 1697 ms |
+| 手表 `emulator-5558` | 840 ms | 902 ms | 871 ms |
 | 手机 `emulator-5556` | 1672 ms | 1652 ms | 1723 ms |
+
+手表刚装完包后的第一次冷启动会明显偏慢（实测 2121 ms，包含安装后的 profile 编译），随后稳定在 900 ms 上下；上表是稳定后的数据。
 
 ### 实测走过的流程
 
