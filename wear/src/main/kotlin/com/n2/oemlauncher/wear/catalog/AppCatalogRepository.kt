@@ -12,7 +12,9 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.os.UserHandle
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.scale
 import com.n2.oemlauncher.shared.model.AppKey
 import com.n2.oemlauncher.shared.model.CatalogEntry
 import com.n2.oemlauncher.shared.model.IconShape
@@ -24,14 +26,18 @@ import com.n2.oemlauncher.shared.protocol.ProtocolLimits
 import com.n2.oemlauncher.wear.config.WearConstants
 import com.n2.oemlauncher.wear.data.CatalogSnapshotStore
 import com.n2.oemlauncher.wear.data.ConfigRepository
+import com.n2.oemlauncher.wear.data.CustomIconRepository
 import com.n2.oemlauncher.wear.data.IconFileStore
 import com.n2.oemlauncher.wear.data.UsageRecord
 import com.n2.oemlauncher.wear.data.UsageStats
+import com.n2.oemlauncher.wear.sync.CatalogSource
+import com.n2.oemlauncher.shared.layout.HoneycombDefaults
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.roundToInt
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 
@@ -40,13 +46,17 @@ class AppCatalogRepository(
     private val configRepository: ConfigRepository,
     private val snapshotStore: CatalogSnapshotStore,
     private val iconStore: IconFileStore,
-) {
+    private val customIcons: CustomIconRepository,
+) : CatalogSource {
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
     private val packageManager = context.packageManager
     private val memory = IconMemoryCache(WearConstants.ICON_CACHE_BYTES)
     private val users = ConcurrentHashMap<String, UserHandle>()
 
-    fun snapshot(): WatchCatalog? = snapshotStore.read()
+    override fun snapshot(): WatchCatalog? = snapshotStore.read()
+
+    /** Full rebuild: query LauncherApps, regenerate default icons and store a fresh snapshot. */
+    override suspend fun rebuild(config: LauncherConfig, usage: UsageStats): WatchCatalog = refresh(config, usage)
 
     suspend fun query(config: LauncherConfig, usage: UsageStats): List<LaunchableApp> =
         withContext(Dispatchers.IO) {
@@ -88,21 +98,42 @@ class AppCatalogRepository(
 
     suspend fun loadIcon(entry: CatalogEntry, config: LauncherConfig): Bitmap? = withContext(Dispatchers.IO) {
         val shape = config.layout.iconShape
+        val targetPx = displayTargetPx(config)
         val overrideId = config.iconOverrides[entry.key]
-        val iconId = overrideId ?: entry.iconId ?: return@withContext null
-        val cacheKey = IconCacheKey(iconId, WearConstants.ICON_TARGET_PX, shape.name)
-        memory.get(cacheKey)?.let { return@withContext it }
-        val bytes = iconStore.get(iconId)
-        if (bytes != null) decode(bytes, shape)?.also { memory.put(cacheKey, it) }?.let { return@withContext it }
+        if (overrideId != null) {
+            val bytes = customIcons.bytes(overrideId)
+            if (bytes != null) {
+                decode(bytes, targetPx, shape)?.let { bitmap ->
+                    memory.put(IconCacheKey(overrideId, targetPx, shape.name), bitmap)
+                    return@withContext bitmap
+                }
+            }
+            // Custom bytes unavailable: fall through and show the app's default icon.
+        }
+        val defaultId = entry.iconId
+        if (defaultId != null) {
+            val cacheKey = IconCacheKey(defaultId, targetPx, shape.name)
+            memory.get(cacheKey)?.let { return@withContext it }
+            val bytes = iconStore.get(defaultId)
+            if (bytes != null) decode(bytes, targetPx, shape)?.also { memory.put(cacheKey, it) }?.let { return@withContext it }
+        }
         val component = AppKey.parse(entry.key)?.let { ComponentName(it.packageName, it.className) }
             ?: return@withContext null
         val activity = launcherApps.getActivityList(component.packageName, Process.myUserHandle())
             .firstOrNull { it.componentName == component } ?: return@withContext null
-        val bitmap = drawableToBitmap(activity.getIcon(0), shape)
-        val encoded = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+        val generated = drawableToBitmap(activity.getIcon(0), shape)
+        val encoded = ByteArrayOutputStream().also { generated.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
         iconStore.put(IconId.of(encoded), encoded)
-        memory.put(cacheKey, bitmap)
-        bitmap
+        val display = if (generated.width == targetPx && generated.height == targetPx) generated
+        else generated.scale(targetPx, targetPx)
+        memory.put(IconCacheKey(IconId.of(encoded), targetPx, shape.name), display)
+        display
+    }
+
+    /** Pixels an icon occupies in the launcher, from the current layout's icon size preset. */
+    private fun displayTargetPx(config: LauncherConfig): Int {
+        val dp = HoneycombDefaults.iconDiameterDp(config.layout.iconSize)
+        return (dp * context.resources.displayMetrics.density).roundToInt().coerceAtLeast(1)
     }
 
     suspend fun launch(key: String, sourceBounds: RectF? = null): Boolean = withContext(Dispatchers.Main.immediate) {
@@ -139,10 +170,10 @@ class AppCatalogRepository(
         null
     }
 
-    private fun decode(bytes: ByteArray, shape: IconShape): Bitmap? = runCatching {
+    private fun decode(bytes: ByteArray, targetPx: Int, shape: IconShape): Bitmap? = runCatching {
         android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let {
-            val resized = if (it.width == WearConstants.ICON_TARGET_PX && it.height == WearConstants.ICON_TARGET_PX) it
-            else Bitmap.createScaledBitmap(it, WearConstants.ICON_TARGET_PX, WearConstants.ICON_TARGET_PX, true)
+            val resized = if (it.width == targetPx && it.height == targetPx) it
+            else it.scale(targetPx, targetPx)
             mask(resized, shape)
         }
     }.getOrNull()
@@ -155,7 +186,7 @@ class AppCatalogRepository(
 
     private fun mask(source: Bitmap, shape: IconShape): Bitmap {
         if (shape == IconShape.ORIGINAL) return source
-        val result = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        val result = createBitmap(source.width, source.height)
         val canvas = Canvas(result)
         val path = Path()
         val rect = RectF(0f, 0f, source.width.toFloat(), source.height.toFloat())

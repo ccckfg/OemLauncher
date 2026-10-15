@@ -40,7 +40,10 @@ object WearConstants {
     /** Horizontal margin that keeps tile content inside the round screen safe area. */
     const val TILE_HORIZONTAL_MARGIN_DP = 16f
 
+    /** Width of one cell in the 2x2 tile grid; two cells plus the gap fit the safe area. */
+    const val TILE_CELL_WIDTH_DP = 72f
+
     /** Font sizes of the tile header and of favorite labels. */
     const val TILE_HEADER_SP = 16f
-    const val TILE_LABEL_SP = 14f
+    const val TILE_LABEL_SP = 12f
 }

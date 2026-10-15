@@ -4,19 +4,20 @@ import android.app.Application
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.RectF
-import android.net.Uri
 import android.provider.Settings
+import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.n2.oemlauncher.shared.config.ConfigEditor
+import com.n2.oemlauncher.shared.model.ApplyResult
 import com.n2.oemlauncher.shared.model.CatalogEntry
 import com.n2.oemlauncher.shared.model.LayoutMode
 import com.n2.oemlauncher.shared.model.LauncherConfig
 import com.n2.oemlauncher.shared.model.SortMode
-import com.n2.oemlauncher.shared.protocol.RevisionPolicy
 import com.n2.oemlauncher.wear.BuildConfig
 import com.n2.oemlauncher.wear.App
 import com.n2.oemlauncher.wear.config.WearConstants
+import com.n2.oemlauncher.wear.domain.CatalogSignature
 import com.n2.oemlauncher.wear.domain.LauncherArranger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,10 +36,15 @@ data class LauncherUiState(
     val showSettings: Boolean = false,
     val menuKey: String? = null,
     val demoEnabled: Boolean = false,
-    val lastSyncMillis: Long = 0,
     val centerRequest: Int = 0,
     val message: String? = null,
     val rotaryTicks: Int = 0,
+    /** null until the first Data Layer attempt of this process; then whether it reached the phone. */
+    val syncConnected: Boolean? = null,
+    /** Formatted local time of the last successful send; null when nothing was sent yet. */
+    val syncLastText: String? = null,
+    val syncResult: ApplyResult = ApplyResult.NONE,
+    val syncMissingIcons: Int = 0,
 )
 
 class LauncherViewModel(application: Application) : AndroidViewModel(application) {
@@ -48,6 +54,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     private var active = true
     private var refreshJob: Job? = null
     private var refreshGeneration = 0L
+    private var lastCatalogSignature: String? = null
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -62,6 +69,16 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                 if (active) refresh(config)
             }
         }
+        viewModelScope.launch {
+            container.syncRepository.status.collect { status ->
+                mutable.value = state.value.copy(
+                    syncConnected = status.connected,
+                    syncLastText = if (status.lastSyncMillis > 0) formatSyncTime(status.lastSyncMillis) else null,
+                    syncResult = status.lastResult,
+                    syncMissingIcons = status.missingIconCount,
+                )
+            }
+        }
     }
 
     fun refresh(config: LauncherConfig = state.value.config) {
@@ -71,6 +88,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         refreshJob = viewModelScope.launch(Dispatchers.IO) {
             val usage = container.configRepository.usage.first()
             val catalog = runCatching { container.catalogRepository.refresh(config, usage) }.getOrNull()
+            if (catalog != null) publishCatalogWhenChanged(catalog)
             val entries = (catalog?.entries ?: state.value.entries).let { if (state.value.demoEnabled) withDemo(it) else it }
             val arranged = LauncherArranger.arrange(entries, config)
             val icons = buildMap {
@@ -86,6 +104,18 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                 }
             }
         }
+    }
+
+    /**
+     * Package events and icon-shape changes both funnel through [refresh]; a content change is
+     * what the phone needs to hear about. Publishing reads the snapshot written by this refresh,
+     * so it never rebuilds the icons again.
+     */
+    private suspend fun publishCatalogWhenChanged(catalog: com.n2.oemlauncher.shared.model.WatchCatalog) {
+        val signature = CatalogSignature.of(catalog)
+        val previous = lastCatalogSignature
+        lastCatalogSignature = signature
+        if (previous != null && previous != signature) container.syncRepository.requestCatalogPublish()
     }
 
     fun onVisible() { active = true; refresh() }
@@ -105,7 +135,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     fun launch(entry: CatalogEntry, sourceBounds: RectF? = null) {
         viewModelScope.launch {
             if (container.catalogRepository.launch(entry.key, sourceBounds)) {
-                container.configRepository.recordLaunch(entry.key, System.currentTimeMillis())
+                val count = container.configRepository.recordLaunch(entry.key, System.currentTimeMillis())
+                if (count % WearConstants.USAGE_PUBLISH_EVERY == 0) container.syncRepository.requestCatalogPublish()
                 mutable.value = state.value.copy(menuKey = null, message = null)
             } else {
                 mutable.value = state.value.copy(message = getApplication<Application>().getString(com.n2.oemlauncher.wear.R.string.launch_failed))
@@ -116,7 +147,10 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun openAppInfo(key: String) {
         val packageName = com.n2.oemlauncher.shared.model.AppKey.parse(key)?.packageName ?: return
-        getApplication<Application>().startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        // No NEW_TASK: the launcher activity is on screen when this runs.
+        getApplication<Application>().startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()),
+        )
         showMenu(null)
     }
 
@@ -144,13 +178,20 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     private fun edit(transform: (LauncherConfig) -> LauncherConfig) {
         viewModelScope.launch {
-            val current = state.value.config
-            val next = ConfigEditor.stamp(transform(current), RevisionPolicy.next(current.revision),
-                com.n2.oemlauncher.shared.model.ConfigOrigin.WATCH, System.currentTimeMillis())
-            container.configRepository.save(next)
-            container.syncRepository.publishState(next)
+            // One transaction with the sync repository: revision, persistence and the state
+            // receipt can no longer race with an incoming desired config.
+            val next = container.syncRepository.localEdit(transform)
             refresh(next)
         }
+    }
+
+    /** Local-time label for the last successful sync, e.g. "14:32" or "10/15 14:32". */
+    private fun formatSyncTime(millis: Long): String {
+        val context = getApplication<Application>()
+        val time = android.text.format.DateFormat.getTimeFormat(context).format(java.util.Date(millis))
+        val day = android.text.format.DateFormat.getDateFormat(context).format(java.util.Date(millis))
+        val today = android.text.format.DateFormat.getDateFormat(context).format(java.util.Date())
+        return if (day == today) time else "$day $time"
     }
 
     private fun withDemo(entries: List<CatalogEntry>): List<CatalogEntry> {
