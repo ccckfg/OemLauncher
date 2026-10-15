@@ -196,7 +196,7 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel, callback
                 }
             }
         }
-        HoneycombFocusLabel(labelOf(centerCell), visible = !dragging)
+        HoneycombFocusLabel(labelOf(centerCell), visible = !dragging && layout.showLabels)
         HoneycombA11yOverlay(
             nodes = a11yNodes,
             labelOf = ::labelOf,
