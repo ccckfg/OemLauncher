@@ -118,7 +118,7 @@ private fun DemoBanner() {
                 stringResource(R.string.demo_detail),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
-                maxLines = 1,
+                maxLines = UiDimensions.DETAIL_MAX_LINES,
                 overflow = TextOverflow.Ellipsis,
             )
         }
@@ -172,7 +172,7 @@ private fun ConnectionRow(state: CompanionState, refresh: () -> Unit) {
                 detail,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                maxLines = UiDimensions.DETAIL_MAX_LINES,
                 overflow = TextOverflow.Ellipsis,
             )
         }
@@ -205,7 +205,7 @@ private fun SyncRow(state: CompanionState, vm: CompanionViewModel) {
                 subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                maxLines = UiDimensions.DETAIL_MAX_LINES,
                 overflow = TextOverflow.Ellipsis,
             )
         }

@@ -159,6 +159,12 @@
     <string name="diag_error">Last API error</string>
     <string name="diag_error_none">None</string>
     <string name="diag_error_at">%1$s · %2$s</string>
+    <string name="diag_error_local">Local error</string>
+    <string name="diag_error_unavailable">Wear OS services unavailable</string>
+    <string name="diag_error_not_connected">Watch not connected</string>
+    <string name="diag_error_timeout">Connection timed out</string>
+    <string name="diag_error_too_large">Payload too large</string>
+    <string name="diag_error_unknown_code">Communication error (code %1$d)</string>
     <string name="request_catalog">Request catalog</string>
     <string name="resend">Send again</string>
     <string name="time_just_now">just now</string>

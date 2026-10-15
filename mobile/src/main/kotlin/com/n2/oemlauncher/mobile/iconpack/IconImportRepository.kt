@@ -24,6 +24,9 @@ class IconImportRepository(
     private val repository: CompanionRepository,
     private val processor: IconProcessor,
 ) {
+    /** Session of the preview the user is still reviewing; GC must not delete it. */
+    private var activeSession: String? = null
+
     suspend fun photo(uri: Uri): Bitmap = withContext(Dispatchers.IO) {
         val bytes = requireNotNull(resolver.openInputStream(uri)).use {
             it.readBounded(ImportLimits.PHOTO_MAX_BYTES)
@@ -61,6 +64,7 @@ class IconImportRepository(
                 IconMatch(app, normalized.getValue(name))
             }
             ImportPreview(session, matches, normalized.keys.filterNot { it in used })
+                .also { activeSession = session }
         } catch (e: Exception) {
             repository.icons.discard(session)
             throw e
@@ -78,6 +82,7 @@ class IconImportRepository(
             repository.icons.promote(preview.session, preview.matches.map { it.iconId })
             repository.iconsChanged()
         } finally {
+            if (activeSession == preview.session) activeSession = null
             repository.icons.discard(preview.session)
             collectGarbage()
         }
@@ -85,6 +90,7 @@ class IconImportRepository(
 
     /** User cancelled the review: drop every staged icon of this session. */
     suspend fun discard(preview: ImportPreview) = withContext(Dispatchers.IO) {
+        if (activeSession == preview.session) activeSession = null
         repository.icons.discard(preview.session)
         collectGarbage()
     }
@@ -110,7 +116,7 @@ class IconImportRepository(
         }
         snapshot.sent?.let { keep.addAll(it.iconOverrides.values) }
         snapshot.watch?.current?.let { keep.addAll(it.iconOverrides.values) }
-        repository.icons.collectGarbage(keep)
+        repository.icons.collectGarbage(keep, keepSessions = setOfNotNull(activeSession))
     }
 
     private fun checkLimit(keys: Set<String>) {

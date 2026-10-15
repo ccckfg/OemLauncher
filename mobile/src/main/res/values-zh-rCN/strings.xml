@@ -158,7 +158,13 @@
     <string name="diag_missing_none">无</string>
     <string name="diag_error">最近 API 错误</string>
     <string name="diag_error_none">无</string>
-    <string name="diag_error_at">%1$s（%2$s）</string>
+    <string name="diag_error_at">%1$s · %2$s</string>
+    <string name="diag_error_local">本地错误</string>
+    <string name="diag_error_unavailable">Wear OS 服务不可用</string>
+    <string name="diag_error_not_connected">手表未连接</string>
+    <string name="diag_error_timeout">连接超时</string>
+    <string name="diag_error_too_large">数据过大</string>
+    <string name="diag_error_unknown_code">通信错误（代码 %1$d）</string>
     <string name="request_catalog">重新请求目录</string>
     <string name="resend">重新发送</string>
     <string name="time_just_now">刚刚</string>
