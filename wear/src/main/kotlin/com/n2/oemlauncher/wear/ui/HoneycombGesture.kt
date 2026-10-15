@@ -5,6 +5,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.unit.dp
 import com.n2.oemlauncher.shared.layout.HoneycombDefaults
 import com.n2.oemlauncher.shared.layout.HoneycombFrame
 import com.n2.oemlauncher.shared.layout.HoneycombGeometry
@@ -19,8 +20,9 @@ const val LONG_PRESS_MILLIS = 500L
 private const val INERTIA_STOP = 8f
 
 /**
- * Drag, fling and tap handling for the honeycomb. Hit testing is nearest-center, and icons that
- * have faded out behind the bottom band are rejected so the settings entry never steals taps.
+ * Drag, fling and tap handling for the honeycomb. Hit testing is nearest-center over the cells
+ * that are still visible enough to tap. [onSettled] runs after every drag with the snapped cell,
+ * or -1 when snapping is off.
  */
 suspend fun PointerInputScope.honeycombPointerInput(
     geometry: HoneycombGeometry,
@@ -28,9 +30,8 @@ suspend fun PointerInputScope.honeycombPointerInput(
     frame: HoneycombFrame,
     bounds: PanBounds,
     iconRadius: Float,
+    fitRadius: Float,
     panScratch: FloatArray,
-    bandTopPx: Float,
-    bandFadePx: Float,
     getPanX: () -> Float,
     getPanY: () -> Float,
     setPan: (Float, Float) -> Unit,
@@ -42,6 +43,7 @@ suspend fun PointerInputScope.honeycombPointerInput(
     onLongPress: (index: Int) -> Unit,
 ) {
     val touchSlop = viewConfiguration.touchSlop
+    val minTouchRadius = HoneycombDefaults.MIN_TOUCH_DIAMETER_DP.dp.toPx() / 2f
     var inertia: Job? = null
     coroutineScope {
         awaitPointerEventScope {
@@ -62,21 +64,14 @@ suspend fun PointerInputScope.honeycombPointerInput(
                         val currentX = getPanX()
                         val currentY = getPanY()
                         if (!dragged) {
-                            projector.project(currentX, currentY, minOf(size.width, size.height) / 2f - 12f, frame)
+                            projector.project(currentX, currentY, fitRadius, frame)
                             val hit = honeycombHitIndex(
                                 frame,
                                 down.position.x - size.width / 2f,
                                 down.position.y - size.height / 2f,
                                 iconRadius,
-                                iconRadius.coerceAtLeast(24f),
+                                iconRadius.coerceAtLeast(minTouchRadius),
                             )
-                                // Icons faded out behind the bottom band are not there to tap.
-                                .takeIf {
-                                    it >= 0 &&
-                                        frame.alpha[it] * bandFade(size.height / 2f + frame.y[it], bandTopPx, bandFadePx) >=
-                                        HoneycombDefaults.MIN_TAPPABLE_ALPHA
-                                }
-                                ?: -1
                             val hitX = if (hit >= 0) size.width / 2f + frame.x[hit] else 0f
                             val hitY = if (hit >= 0) size.height / 2f + frame.y[hit] else 0f
                             if (duration >= LONG_PRESS_MILLIS) onLongPress(hit) else onTap(hit, hitX, hitY)
@@ -89,7 +84,7 @@ suspend fun PointerInputScope.honeycombPointerInput(
                             }
                             // Pan is committed before the callback so listeners see the final position.
                             setPan(panScratch[0], panScratch[1])
-                            if (settled >= 0) onSettled(settled)
+                            onSettled(settled)
                         } else {
                             inertia = this@coroutineScope.launch {
                                 var x = currentX
@@ -113,7 +108,7 @@ suspend fun PointerInputScope.honeycombPointerInput(
                                     -1
                                 }
                                 setPan(panScratch[0], panScratch[1])
-                                if (settled >= 0) onSettled(settled)
+                                onSettled(settled)
                             }
                         }
                         break

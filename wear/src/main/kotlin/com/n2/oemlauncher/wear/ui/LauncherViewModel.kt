@@ -32,9 +32,11 @@ data class LauncherUiState(
     val config: LauncherConfig = LauncherConfig(),
     val entries: List<CatalogEntry> = emptyList(),
     val icons: Map<String, Bitmap> = emptyMap(),
+    /** Apps the user hid; they are not in [entries] but settings lists them by name. */
+    val hiddenEntries: List<CatalogEntry> = emptyList(),
     val loading: Boolean = true,
-    val showSettings: Boolean = false,
-    val menuKey: String? = null,
+    /** Bumped when every screen above the launcher home must close (Home press, leaving the app). */
+    val homeRequest: Int = 0,
     val demoEnabled: Boolean = false,
     val centerRequest: Int = 0,
     val message: String? = null,
@@ -91,6 +93,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             if (catalog != null) publishCatalogWhenChanged(catalog)
             val entries = (catalog?.entries ?: state.value.entries).let { if (state.value.demoEnabled) withDemo(it) else it }
             val arranged = LauncherArranger.arrange(entries, config)
+            val hidden = entries.filter { it.key in config.hidden }
             val icons = buildMap {
                 arranged.forEach { entry ->
                     val bitmap = container.catalogRepository.loadIcon(entry, config)
@@ -100,7 +103,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             }
             withContext(Dispatchers.Main.immediate) {
                 if (generation == refreshGeneration) {
-                    mutable.value = state.value.copy(entries = arranged, icons = icons, loading = false)
+                    mutable.value = state.value.copy(entries = arranged, hiddenEntries = hidden, icons = icons, loading = false)
                 }
             }
         }
@@ -121,8 +124,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     fun onVisible() { active = true; refresh() }
     fun onHidden() { active = false; refreshJob?.cancel() }
 
-    fun openSettings(open: Boolean) { mutable.value = state.value.copy(showSettings = open, menuKey = null) }
-    fun showMenu(key: String?) { mutable.value = state.value.copy(menuKey = key) }
+    fun goHome() { mutable.value = state.value.copy(homeRequest = state.value.homeRequest + 1) }
     fun centerHoneycomb() { mutable.value = state.value.copy(centerRequest = state.value.centerRequest + 1) }
 
     fun toggleDemo() {
@@ -137,7 +139,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             if (container.catalogRepository.launch(entry.key, sourceBounds)) {
                 val count = container.configRepository.recordLaunch(entry.key, System.currentTimeMillis())
                 if (count % WearConstants.USAGE_PUBLISH_EVERY == 0) container.syncRepository.requestCatalogPublish()
-                mutable.value = state.value.copy(menuKey = null, message = null)
+                mutable.value = state.value.copy(message = null)
             } else {
                 mutable.value = state.value.copy(message = getApplication<Application>().getString(com.n2.oemlauncher.wear.R.string.launch_failed))
                 refresh()
@@ -151,7 +153,6 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         getApplication<Application>().startActivity(
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()),
         )
-        showMenu(null)
     }
 
     fun moveFavorite(key: String, delta: Int) {
@@ -172,6 +173,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun toggleFavorite(key: String) = edit { ConfigEditor.toggleFavorite(it, key).first }
     fun toggleHidden(key: String) = edit { ConfigEditor.setHidden(it, key, true) }
+    fun unhide(key: String) = edit { ConfigEditor.setHidden(it, key, false) }
     fun setLayout(mode: LayoutMode) = edit { ConfigEditor.updateLayout(it) { layout -> layout.copy(mode = mode) } }
     fun setSortMode(mode: SortMode) = edit { ConfigEditor.setSortMode(it, mode) }
     fun updateConfig(transform: (LauncherConfig) -> LauncherConfig) = edit(transform)
