@@ -4,19 +4,14 @@ import android.content.Context
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.wearable.Asset
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
-import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.n2.oemlauncher.mobile.data.ConnectionKind
 import com.n2.oemlauncher.mobile.data.NodeStatus
 import com.n2.oemlauncher.mobile.data.WatchConnection
 import com.n2.oemlauncher.shared.model.LauncherConfig
 import com.n2.oemlauncher.shared.protocol.Capabilities
-import com.n2.oemlauncher.shared.protocol.PayloadCodec
-import com.n2.oemlauncher.shared.protocol.ProtocolVersion
-import com.n2.oemlauncher.shared.protocol.SyncKeys
 import com.n2.oemlauncher.shared.protocol.SyncPaths
 import kotlinx.coroutines.tasks.await
 
@@ -71,14 +66,8 @@ class GoogleWearGateway(
     }
 
     override suspend fun publish(config: LauncherConfig, icons: Map<String, ByteArray>) {
-        val payload = PayloadCodec.encodeConfig(config)
-        require(PayloadCodec.fitsDataItem(payload))
-        val request = PutDataMapRequest.create(SyncPaths.CONFIG_DESIRED)
-        request.dataMap.putInt(SyncKeys.SCHEMA, ProtocolVersion.CURRENT)
-        request.dataMap.putByteArray(SyncKeys.PAYLOAD, payload)
-        for ((id, bytes) in icons) {
-            request.dataMap.putAsset(SyncKeys.iconAssetKey(id), Asset.createFromBytes(bytes))
-        }
+        // DesiredItem owns the DataMap keys (schema, payload, revision, assets); see DesiredItemTest.
+        val request = DesiredItem.request(config, icons)
         data.putDataItem(request.asPutDataRequest().setUrgent()).await()
     }
 

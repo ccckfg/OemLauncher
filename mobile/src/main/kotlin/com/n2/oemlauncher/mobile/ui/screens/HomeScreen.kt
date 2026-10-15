@@ -1,19 +1,20 @@
 package com.n2.oemlauncher.mobile.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.automirrored.outlined.Sort
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.automirrored.outlined.Sort
 import androidx.compose.material.icons.outlined.Watch
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material3.Button
@@ -26,11 +27,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.n2.oemlauncher.mobile.R
 import com.n2.oemlauncher.mobile.config.UiDimensions
@@ -38,9 +39,11 @@ import com.n2.oemlauncher.mobile.data.CompanionState
 import com.n2.oemlauncher.mobile.data.ConnectionKind
 import com.n2.oemlauncher.mobile.editor.CompanionViewModel
 import com.n2.oemlauncher.mobile.ui.components.WatchPreview
+import com.n2.oemlauncher.mobile.ui.components.icon
 import com.n2.oemlauncher.mobile.ui.components.label
-import java.text.DateFormat
-import java.util.Date
+import com.n2.oemlauncher.mobile.ui.components.relativeTime
+import com.n2.oemlauncher.mobile.ui.components.tint
+import com.n2.oemlauncher.mobile.ui.components.tone
 
 @Composable
 fun HomeScreen(state: CompanionState, vm: CompanionViewModel, navigate: (HomeDestination) -> Unit) {
@@ -51,45 +54,51 @@ fun HomeScreen(state: CompanionState, vm: CompanionViewModel, navigate: (HomeDes
         item {
             Column {
                 Text(stringResource(R.string.home), style = MaterialTheme.typography.headlineSmall)
-                Text(stringResource(R.string.home_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    stringResource(R.string.home_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
-        item { ConnectionCard(state, vm::refresh) }
-        item { SyncCard(state, vm) { navigate(HomeDestination.SYNC) } }
-        if (state.demo) item {
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-                Column(Modifier.padding(UiDimensions.GAP.dp)) {
-                    Text(stringResource(R.string.demo), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.demo_detail), style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-        if (state.catalog == null) item {
+        val catalog = state.catalog
+        if (catalog == null) item {
             Card {
-                Column(Modifier.padding(UiDimensions.PAGE_PADDING.dp), verticalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp)) {
+                Column(
+                    Modifier.padding(UiDimensions.PAGE_PADDING.dp),
+                    verticalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp),
+                ) {
                     Text(stringResource(R.string.empty_title), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.empty_detail))
+                    Text(stringResource(R.string.empty_detail), style = MaterialTheme.typography.bodyMedium)
                     Button(onClick = { vm.demo() }) { Text(stringResource(R.string.try_demo)) }
                 }
             }
         } else item {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 WatchPreview(state, vm, thumbnail = true, onOpen = { navigate(HomeDestination.PREVIEW) })
-                Text(stringResource(R.string.preview_tap), style = MaterialTheme.typography.bodySmall)
+                Text(
+                    stringResource(R.string.preview_tap),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
+        if (state.demo) item { DemoBanner() }
+        item { StatusCard(state, vm) { navigate(HomeDestination.SYNC) } }
         item {
-            NavigationEntry(R.string.layout_editor, R.string.layout_editor_detail, Icons.AutoMirrored.Outlined.Sort, state.catalog != null) {
-                navigate(HomeDestination.EDITOR)
-            }
-            NavigationEntry(R.string.appearance, R.string.appearance_detail, Icons.Outlined.Widgets, state.catalog != null) {
-                navigate(HomeDestination.APPEARANCE)
-            }
-            NavigationEntry(R.string.icons, R.string.icons_detail, Icons.Outlined.Palette, state.catalog != null) {
-                navigate(HomeDestination.ICONS)
-            }
-            NavigationEntry(R.string.help, R.string.help_detail, Icons.AutoMirrored.Outlined.HelpOutline, true) {
-                navigate(HomeDestination.HELP)
+            Column {
+                NavigationEntry(R.string.layout_editor, R.string.layout_editor_detail, Icons.AutoMirrored.Outlined.Sort, catalog != null) {
+                    navigate(HomeDestination.EDITOR)
+                }
+                NavigationEntry(R.string.appearance, R.string.appearance_detail, Icons.Outlined.Widgets, catalog != null) {
+                    navigate(HomeDestination.APPEARANCE)
+                }
+                NavigationEntry(R.string.icons, R.string.icons_detail, Icons.Outlined.Palette, catalog != null) {
+                    navigate(HomeDestination.ICONS)
+                }
+                NavigationEntry(R.string.help, R.string.help_detail, Icons.AutoMirrored.Outlined.HelpOutline, true) {
+                    navigate(HomeDestination.HELP)
+                }
             }
         }
         item { androidx.compose.foundation.layout.Spacer(Modifier.padding(UiDimensions.SMALL_GAP.dp)) }
@@ -99,83 +108,162 @@ fun HomeScreen(state: CompanionState, vm: CompanionViewModel, navigate: (HomeDes
 enum class HomeDestination { EDITOR, APPEARANCE, ICONS, PREVIEW, SYNC, HELP }
 
 @Composable
-private fun ConnectionCard(state: CompanionState, refresh: () -> Unit) {
-    val (title, detail) = when (state.connection.kind) {
-        ConnectionKind.UNDISCOVERED -> R.string.no_watch to R.string.no_watch_detail
-        ConnectionKind.CONNECTED -> R.string.connected to R.string.connected
-        ConnectionKind.APP_MISSING -> R.string.app_missing to R.string.app_missing_detail
-        ConnectionKind.PLAY_SERVICES_MISSING -> R.string.play_missing to R.string.play_missing_detail
+private fun DemoBanner() {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = UiDimensions.GAP.dp, vertical = UiDimensions.SMALL_GAP.dp),
+        ) {
+            Text(stringResource(R.string.demo), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.demo_detail),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
+}
+
+/** Connection and sync in one compact card; no disabled buttons, actions appear when useful. */
+@Composable
+private fun StatusCard(state: CompanionState, vm: CompanionViewModel, diagnostics: () -> Unit) {
     Card {
-        Row(Modifier.fillMaxWidth().padding(UiDimensions.GAP.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.Watch, null, tint = MaterialTheme.colorScheme.primary)
-            Column(Modifier.weight(1f).padding(horizontal = UiDimensions.GAP.dp)) {
-                Text(stringResource(title), style = MaterialTheme.typography.titleMedium)
-                if (state.connection.kind == ConnectionKind.CONNECTED && state.catalog != null) {
-                    val catalog = requireNotNull(state.catalog)
-                    Text(
-                        stringResource(R.string.watch_versions, catalog.deviceName, catalog.sdkInt, catalog.appVersionName),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                } else Text(stringResource(detail), style = MaterialTheme.typography.bodySmall)
-            }
-            IconButton(refresh) { Icon(Icons.Outlined.Refresh, stringResource(R.string.refresh)) }
+        Column(
+            Modifier.fillMaxWidth().padding(UiDimensions.GAP.dp),
+            verticalArrangement = Arrangement.spacedBy(UiDimensions.SMALL_GAP.dp),
+        ) {
+            ConnectionRow(state, vm::refresh)
+            SyncRow(state, vm)
+            if (state.conflict) ConflictRow(state, vm)
+            DiagnosticsRow(diagnostics)
         }
     }
 }
 
 @Composable
-private fun SyncCard(state: CompanionState, vm: CompanionViewModel, diagnostics: () -> Unit) {
-    val lastSync = remember(state.snapshot.lastSyncMillis) {
-        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(state.snapshot.lastSyncMillis))
+private fun ConnectionRow(state: CompanionState, refresh: () -> Unit) {
+    val title = when (state.connection.kind) {
+        ConnectionKind.UNDISCOVERED -> R.string.no_watch
+        ConnectionKind.CONNECTED -> R.string.connected
+        ConnectionKind.APP_MISSING -> R.string.app_missing
+        ConnectionKind.PLAY_SERVICES_MISSING -> R.string.play_missing
     }
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = if (state.draft?.dirty == true) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surfaceContainer,
-        ),
-    ) {
-        Column(
-            Modifier.fillMaxWidth().padding(UiDimensions.GAP.dp),
-            verticalArrangement = Arrangement.spacedBy(UiDimensions.SMALL_GAP.dp),
-        ) {
-            Text(stringResource(if (state.conflict) R.string.sync_conflict else state.phase.label()), style = MaterialTheme.typography.titleMedium)
+    val catalog = state.catalog
+    val detail = when {
+        state.connection.kind == ConnectionKind.CONNECTED && catalog != null -> stringResource(
+            R.string.watch_versions, catalog.deviceName, catalog.sdkInt, catalog.appVersionName,
+        )
+        state.connection.kind == ConnectionKind.CONNECTED -> stringResource(R.string.connected_detail)
+        state.connection.kind == ConnectionKind.APP_MISSING -> stringResource(R.string.app_missing_detail)
+        state.connection.kind == ConnectionKind.PLAY_SERVICES_MISSING -> stringResource(R.string.play_missing_detail)
+        else -> stringResource(R.string.no_watch_detail)
+    }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Outlined.Watch, null, tint = MaterialTheme.colorScheme.primary)
+        Column(Modifier.weight(1f).padding(horizontal = UiDimensions.GAP.dp)) {
             Text(
-                if (state.snapshot.lastSyncMillis == 0L) stringResource(R.string.never_synced)
-                else stringResource(R.string.last_sync, lastSync),
-                style = MaterialTheme.typography.bodySmall,
+                stringResource(title),
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            if (state.draft?.dirty == true) Text(stringResource(R.string.unsent_changes), style = MaterialTheme.typography.bodySmall)
-            Button(onClick = { vm.sync() }, enabled = state.canSync && !state.conflict, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(if (state.draft?.dirty == true) R.string.sync_changes else R.string.sync))
-            }
-            AnimatedVisibility(state.conflict) {
-                Column {
-                    Text(stringResource(R.string.conflict_detail))
-                    TextButton({ vm.loadWatch() }) { Text(stringResource(R.string.load_watch)) }
-                    OutlinedButton({ vm.sync(overwrite = true) }, enabled = state.canSync) {
-                        Text(stringResource(R.string.overwrite_watch))
-                    }
-                }
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(diagnostics) { Text(stringResource(R.string.sync_diagnostics)) }
+            Text(
+                detail,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        IconButton(refresh) { Icon(Icons.Outlined.Refresh, stringResource(R.string.refresh)) }
+    }
+}
+
+@Composable
+private fun SyncRow(state: CompanionState, vm: CompanionViewModel) {
+    val tone = state.phase.tone()
+    val dirty = state.draft?.dirty == true
+    val canSend = state.canSync && !state.conflict
+    val subtitle = when {
+        state.conflict -> null
+        dirty -> stringResource(R.string.unsent_changes)
+        state.canSync -> stringResource(R.string.up_to_date)
+        state.snapshot.lastSyncMillis == 0L -> stringResource(R.string.never_synced)
+        else -> stringResource(R.string.last_sync, relativeTime(state.snapshot.lastSyncMillis))
+    }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Icon(tone.icon(), null, tint = tone.tint())
+        Column(Modifier.weight(1f).padding(horizontal = UiDimensions.GAP.dp)) {
+            Text(
+                stringResource(if (state.conflict) R.string.sync_conflict else state.phase.label()),
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (subtitle != null) Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (canSend && dirty) TextButton({ vm.sync() }) {
+            Text(stringResource(R.string.sync_changes), maxLines = 1, softWrap = false)
+        }
+    }
+}
+
+@Composable
+private fun ConflictRow(state: CompanionState, vm: CompanionViewModel) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(UiDimensions.SMALL_GAP.dp)) {
+        Text(
+            stringResource(R.string.conflict_detail),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(UiDimensions.SMALL_GAP.dp)) {
+            TextButton({ vm.loadWatch() }) { Text(stringResource(R.string.load_watch), maxLines = 1, softWrap = false) }
+            OutlinedButton({ vm.sync(overwrite = true) }, enabled = state.canSync) {
+                Text(stringResource(R.string.overwrite_watch), maxLines = 1, softWrap = false)
             }
         }
+    }
+}
+
+@Composable
+private fun DiagnosticsRow(open: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = open).padding(vertical = UiDimensions.GAP.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Outlined.Insights, null, tint = MaterialTheme.colorScheme.primary)
+        Text(
+            stringResource(R.string.sync_diagnostics),
+            Modifier.weight(1f).padding(horizontal = UiDimensions.GAP.dp),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Icon(Icons.Outlined.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
 private fun NavigationEntry(title: Int, detail: Int, icon: ImageVector, enabled: Boolean, action: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = action).padding(vertical = UiDimensions.GAP.dp),
+        Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = action)
+            .padding(vertical = UiDimensions.SMALL_GAP.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
         Column(Modifier.weight(1f).padding(horizontal = UiDimensions.GAP.dp)) {
-            Text(stringResource(title), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(detail), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(detail),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Icon(Icons.Outlined.ChevronRight, null)
+        Icon(Icons.Outlined.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

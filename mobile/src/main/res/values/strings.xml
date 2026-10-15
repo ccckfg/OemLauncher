@@ -6,13 +6,13 @@
     <string name="no_watch">No watch connected</string>
     <string name="no_watch_detail">Pair your watch in the Wear OS app. You can keep editing offline.</string>
     <string name="connected">Connected</string>
+    <string name="connected_detail">Waiting for the watch catalog.</string>
     <string name="app_missing">Install N2 Launcher on your watch</string>
     <string name="app_missing_detail">A paired device was found, but the watch app is not available.</string>
     <string name="play_missing">Google Play services unavailable</string>
     <string name="play_missing_detail">Install or update Google Play services to sync. Offline editing still works.</string>
     <string name="watch_versions">%1$s · Android API %2$d · N2 %3$s</string>
     <string name="refresh">Refresh watch</string>
-    <string name="sync">Sync to watch</string>
     <string name="sync_changes">Sync your changes</string>
     <string name="sync_not_sent">Not sent yet</string>
     <string name="sync_waiting">Sent, waiting for watch</string>
@@ -24,6 +24,7 @@
     <string name="last_sync">Last applied: %1$s</string>
     <string name="never_synced">No completed sync yet</string>
     <string name="unsent_changes">Changes saved on this phone</string>
+    <string name="up_to_date">Nothing to send</string>
     <string name="load_watch">Load watch configuration</string>
     <string name="overwrite_watch">Overwrite with my changes</string>
     <string name="conflict_detail">Your draft is based on an older watch configuration. Choose which changes to keep.</string>
@@ -145,8 +146,8 @@
     <string name="diag_node_ready">Watch app reachable</string>
     <string name="diag_node_missing">Watch app not found</string>
     <string name="diag_received">Last received</string>
-    <string name="diag_catalog_at">Catalog: %1$s</string>
-    <string name="diag_state_at">State: %1$s</string>
+    <string name="diag_catalog_label">Catalog</string>
+    <string name="diag_state_label">State</string>
     <string name="diag_never">Never</string>
     <string name="diag_sent">Last sent</string>
     <string name="diag_revision">Revision %1$d</string>
@@ -157,9 +158,22 @@
     <string name="diag_missing_none">None</string>
     <string name="diag_error">Last API error</string>
     <string name="diag_error_none">None</string>
-    <string name="diag_error_at">%1$s at %2$s</string>
-    <string name="request_catalog">Request catalog again</string>
+    <string name="diag_error_at">%1$s · %2$s</string>
+    <string name="request_catalog">Request catalog</string>
     <string name="resend">Send again</string>
+    <string name="time_just_now">just now</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d minute ago</item>
+        <item quantity="other">%d minutes ago</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d hour ago</item>
+        <item quantity="other">%d hours ago</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
     <string-array name="demo_apps">
         <item>Phone</item><item>Contacts</item><item>Messages</item><item>Weather</item>
         <item>Calendar</item><item>Health</item><item>Music</item><item>Settings</item>

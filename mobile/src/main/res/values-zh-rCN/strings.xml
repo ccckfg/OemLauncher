@@ -6,13 +6,13 @@
     <string name="no_watch">未连接手表</string>
     <string name="no_watch_detail">请通过 Wear OS 配套应用配对手表。离线时也能继续编辑。</string>
     <string name="connected">已连接</string>
+    <string name="connected_detail">正在等待手表目录。</string>
     <string name="app_missing">请在手表上安装 N2 桌面</string>
     <string name="app_missing_detail">已发现配对设备，但未发现手表端应用。</string>
     <string name="play_missing">Google Play 服务不可用</string>
     <string name="play_missing_detail">请安装或更新 Google Play 服务以同步。离线编辑仍可使用。</string>
     <string name="watch_versions">%1$s · Android API %2$d · N2 %3$s</string>
     <string name="refresh">刷新手表</string>
-    <string name="sync">同步到手表</string>
     <string name="sync_changes">同步我的修改</string>
     <string name="sync_not_sent">尚未发送</string>
     <string name="sync_waiting">已发送，等待手表确认</string>
@@ -24,6 +24,7 @@
     <string name="last_sync">上次应用：%1$s</string>
     <string name="never_synced">尚未完成过同步</string>
     <string name="unsent_changes">修改已保存在本手机</string>
+    <string name="up_to_date">没有需要发送的内容</string>
     <string name="load_watch">载入手表配置</string>
     <string name="overwrite_watch">用我的修改覆盖</string>
     <string name="conflict_detail">手表配置已更新，而草稿仍基于旧配置。请选择保留哪一端的修改。</string>
@@ -145,8 +146,8 @@
     <string name="diag_node_ready">手表应用可达</string>
     <string name="diag_node_missing">未找到手表应用</string>
     <string name="diag_received">最近接收</string>
-    <string name="diag_catalog_at">目录：%1$s</string>
-    <string name="diag_state_at">状态：%1$s</string>
+    <string name="diag_catalog_label">目录</string>
+    <string name="diag_state_label">状态</string>
     <string name="diag_never">从未</string>
     <string name="diag_sent">最近发送</string>
     <string name="diag_revision">修订号 %1$d</string>
@@ -160,6 +161,16 @@
     <string name="diag_error_at">%1$s（%2$s）</string>
     <string name="request_catalog">重新请求目录</string>
     <string name="resend">重新发送</string>
+    <string name="time_just_now">刚刚</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="other">%d 分钟前</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="other">%d 小时前</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="other">%d 天前</item>
+    </plurals>
     <string-array name="demo_apps">
         <item>电话</item><item>联系人</item><item>信息</item><item>天气</item>
         <item>日历</item><item>健康</item><item>音乐</item><item>设置</item>

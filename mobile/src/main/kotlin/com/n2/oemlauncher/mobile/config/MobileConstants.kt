@@ -54,6 +54,8 @@ object UiDimensions {
     const val ANIMATION_MS = 180
     const val LABEL_INSET_RATIO = 0.10f
     const val LABEL_BAND_LINES = 2.6f
+    /** Icons faded below this alpha count as invisible; the label band hides the rest. */
+    const val LABEL_BAND_ALPHA_THRESHOLD = 0.05f
     const val CROP_SCRIM_ALPHA = 0.65f
 }
 
