@@ -1,10 +1,12 @@
 package com.n2.oemlauncher.wear.ui
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -49,13 +51,20 @@ fun ListView(state: LauncherUiState, viewModel: LauncherViewModel) {
     TransformingLazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 30.dp, vertical = 100.dp),
+        // Top padding puts the first row's center on the screen center for the medium icon size,
+        // which is what the transforming scale is measured from.
+        contentPadding = PaddingValues(start = 30.dp, top = 84.dp, end = 30.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(state.entries, key = { it.key }) { entry ->
             val iconDp = HoneycombDefaults.iconDiameterDp(state.config.layout.iconSize).dp
             Row(
-                Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    .combinedClickable(
+                        onClick = { viewModel.launch(entry) },
+                        onLongClick = { viewModel.showMenu(entry.key) },
+                    )
+                    .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AppGlyph(entry, state, Modifier.size(iconDp), state.icons[entry.key])
@@ -71,5 +80,7 @@ fun ListView(state: LauncherUiState, viewModel: LauncherViewModel) {
                 }
             }
         }
+        // Last item instead of a floating button: nothing can ever be covered while scrolling.
+        item { SettingsRow(onClick = { viewModel.openSettings(true) }) }
     }
 }

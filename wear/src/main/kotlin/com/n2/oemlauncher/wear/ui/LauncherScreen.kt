@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,12 +25,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -57,18 +57,6 @@ fun LauncherScreen(viewModel: LauncherViewModel) {
                     LayoutMode.HONEYCOMB -> HoneycombView(state, viewModel)
                     LayoutMode.GRID -> GridView(state, viewModel)
                     LayoutMode.LIST -> ListView(state, viewModel)
-                }
-                if (state.config.layout.mode != LayoutMode.HONEYCOMB) {
-                    // Scrim so scrolled rows fade out behind the settings entry instead of being cut.
-                    Box(
-                        Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(88.dp).background(
-                            Brush.verticalGradient(listOf(Color.Transparent, Color.Black)),
-                        ),
-                    )
-                    SettingsEntry(
-                        onClick = { viewModel.openSettings(true) },
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp),
-                    )
                 }
                 if (state.loading && state.entries.isEmpty()) Text(stringResource(R.string.loading), Modifier.align(Alignment.Center))
                 if (!state.loading && state.entries.isEmpty()) Text(stringResource(R.string.empty_state), Modifier.align(Alignment.Center), color = Color.LightGray)
@@ -102,7 +90,7 @@ private fun GridView(state: LauncherUiState, viewModel: LauncherViewModel) {
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = GRID_HORIZONTAL_PADDING, end = GRID_HORIZONTAL_PADDING, top = 26.dp, bottom = 100.dp),
+            contentPadding = PaddingValues(start = GRID_HORIZONTAL_PADDING, end = GRID_HORIZONTAL_PADDING, top = 26.dp, bottom = 48.dp),
             verticalArrangement = Arrangement.spacedBy(GRID_SPACING),
         ) {
             itemsIndexed(rows, key = { _, row -> row.firstOrNull()?.key ?: row.hashCode() }) { _, row ->
@@ -112,6 +100,8 @@ private fun GridView(state: LauncherUiState, viewModel: LauncherViewModel) {
                     }
                 }
             }
+            // Last item instead of a floating button: nothing can ever be covered while scrolling.
+            item { SettingsRow(onClick = { viewModel.openSettings(true) }) }
         }
     }
 }
@@ -133,16 +123,19 @@ private fun AppChip(
     ) {
         AppGlyph(entry, state, Modifier.size(iconSize), state.icons[entry.key])
         if (showLabel) {
-            // Two lines at this size fit typical app names ("Find my phone") inside a grid cell.
+            // Heading line breaking never splits a word; a word that cannot fit ellipsizes.
             Text(
                 entry.label,
                 Modifier.fillMaxWidth().padding(top = 2.dp),
                 color = Color.White,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                fontSize = 11.sp,
-                lineHeight = 13.sp,
-                textAlign = TextAlign.Center,
+                style = TextStyle(
+                    fontSize = 11.sp,
+                    lineHeight = 13.sp,
+                    textAlign = TextAlign.Center,
+                    lineBreak = LineBreak.Heading,
+                ),
             )
         }
     }
