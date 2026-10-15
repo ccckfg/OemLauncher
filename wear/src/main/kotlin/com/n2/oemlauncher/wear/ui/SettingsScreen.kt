@@ -28,16 +28,22 @@ fun SettingsScreen(state: LauncherUiState, viewModel: LauncherViewModel) {
     val config = state.config
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 28.dp, vertical = 34.dp)) {
         item { Text(stringResource(R.string.settings), color = Color.White, fontSize = 16.sp) }
-        item { SettingRow(stringResource(R.string.layout_mode, config.layout.mode.name)) { viewModel.setLayout(nextMode(config.layout.mode)) } }
-        item { SettingRow(stringResource(R.string.icon_size, config.layout.iconSize.name)) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(iconSize = nextSize(l.iconSize)) } } } }
-        item { SettingRow(stringResource(R.string.icon_shape, config.layout.iconShape.name)) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(iconShape = nextShape(l.iconShape)) } } } }
+        item { SettingRow(stringResource(R.string.layout_mode, layoutLabel(config.layout.mode))) { viewModel.setLayout(nextMode(config.layout.mode)) } }
+        item { SettingRow(stringResource(R.string.icon_size, sizeLabel(config.layout.iconSize))) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(iconSize = nextSize(l.iconSize)) } } } }
+        item { SettingRow(stringResource(R.string.icon_shape, shapeLabel(config.layout.iconShape))) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(iconShape = nextShape(l.iconShape)) } } } }
         item { SettingRow(stringResource(R.string.fisheye, (config.layout.fisheyeStrength * 100).toInt())) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(fisheyeStrength = (l.fisheyeStrength + 0.1f).let { if (it > LauncherDefaults.FISHEYE_MAX) 0f else it }) } } } }
         item { SettingRow(stringResource(R.string.grid_columns, config.layout.gridColumns)) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(gridColumns = if (l.gridColumns >= LauncherDefaults.GRID_COLUMNS_MAX) LauncherDefaults.GRID_COLUMNS_MIN else l.gridColumns + 1) } } } }
-        item { SettingRow(stringResource(R.string.show_labels, config.layout.showLabels)) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(showLabels = !l.showLabels) } } } }
-        item { SettingRow(stringResource(R.string.snap_center, config.layout.snapToCenter)) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(snapToCenter = !l.snapToCenter) } } } }
-        item { SettingRow(stringResource(R.string.haptics, config.layout.hapticsEnabled)) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(hapticsEnabled = !l.hapticsEnabled) } } } }
-        item { SettingRow(stringResource(R.string.reduce_motion, config.layout.reduceMotion)) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(reduceMotion = !l.reduceMotion) } } } }
-        item { SettingRow(stringResource(R.string.sort_mode, config.sortMode.name)) { viewModel.setSortMode(nextSort(config.sortMode)) } }
+        item { SettingRow(stringResource(R.string.show_labels, boolLabel(config.layout.showLabels))) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(showLabels = !l.showLabels) } } } }
+        item { SettingRow(stringResource(R.string.snap_center, boolLabel(config.layout.snapToCenter))) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(snapToCenter = !l.snapToCenter) } } } }
+        item { SettingRow(stringResource(R.string.haptics, boolLabel(config.layout.hapticsEnabled))) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(hapticsEnabled = !l.hapticsEnabled) } } } }
+        item { SettingRow(stringResource(R.string.reduce_motion, boolLabel(config.layout.reduceMotion))) { viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(reduceMotion = !l.reduceMotion) } } } }
+        item { SettingRow(stringResource(R.string.sort_mode, sortLabel(config.sortMode))) { viewModel.setSortMode(nextSort(config.sortMode)) } }
+        if (config.favorites.isNotEmpty()) {
+            item { Text(stringResource(R.string.favorite_order), color = Color.LightGray, fontSize = 14.sp) }
+            items(config.favorites, key = { it }) { key ->
+                SettingRow(stringResource(R.string.favorite_entry, key.substringAfterLast('/'))) { viewModel.moveFavorite(key, 1) }
+            }
+        }
         if (config.hidden.isNotEmpty()) {
             item { Text(stringResource(R.string.hidden_apps), color = Color.LightGray, fontSize = 14.sp) }
             items(config.hidden, key = { it }) { key ->
@@ -47,7 +53,7 @@ fun SettingsScreen(state: LauncherUiState, viewModel: LauncherViewModel) {
             }
         }
         item { SettingRow(stringResource(R.string.restore_defaults)) { viewModel.updateConfig { com.n2.oemlauncher.shared.model.LauncherConfig() } } }
-        if (BuildConfig.DEBUG) item { SettingRow(stringResource(R.string.demo_data, state.demoEnabled)) { viewModel.toggleDemo() } }
+        if (BuildConfig.DEBUG) item { SettingRow(stringResource(R.string.demo_data, boolLabel(state.demoEnabled))) { viewModel.toggleDemo() } }
         item { Text(stringResource(R.string.about_version, BuildConfig.VERSION_NAME), Modifier.padding(top = 16.dp), color = Color.LightGray) }
         item { Text(stringResource(R.string.sync_time, state.lastSyncMillis), color = Color.LightGray) }
         item { SettingRow(stringResource(R.string.done)) { viewModel.openSettings(false) } }
@@ -62,3 +68,9 @@ private fun nextMode(mode: LayoutMode) = when (mode) { LayoutMode.HONEYCOMB -> L
 private fun nextSize(size: IconSize) = when (size) { IconSize.SMALL -> IconSize.MEDIUM; IconSize.MEDIUM -> IconSize.LARGE; IconSize.LARGE -> IconSize.SMALL }
 private fun nextShape(shape: IconShape) = when (shape) { IconShape.CIRCLE -> IconShape.SQUIRCLE; IconShape.SQUIRCLE -> IconShape.ORIGINAL; IconShape.ORIGINAL -> IconShape.CIRCLE }
 private fun nextSort(mode: SortMode) = when (mode) { SortMode.CUSTOM -> SortMode.ALPHABETICAL; SortMode.ALPHABETICAL -> SortMode.MOST_USED; SortMode.MOST_USED -> SortMode.RECENTLY_USED; SortMode.RECENTLY_USED -> SortMode.CUSTOM }
+
+@Composable private fun boolLabel(value: Boolean) = stringResource(if (value) R.string.value_on else R.string.value_off)
+@Composable private fun layoutLabel(value: LayoutMode) = stringResource(when (value) { LayoutMode.HONEYCOMB -> R.string.layout_honeycomb; LayoutMode.GRID -> R.string.layout_grid; LayoutMode.LIST -> R.string.layout_list })
+@Composable private fun sizeLabel(value: IconSize) = stringResource(when (value) { IconSize.SMALL -> R.string.size_small; IconSize.MEDIUM -> R.string.size_medium; IconSize.LARGE -> R.string.size_large })
+@Composable private fun shapeLabel(value: IconShape) = stringResource(when (value) { IconShape.CIRCLE -> R.string.shape_circle; IconShape.SQUIRCLE -> R.string.shape_squircle; IconShape.ORIGINAL -> R.string.shape_original })
+@Composable private fun sortLabel(value: SortMode) = stringResource(when (value) { SortMode.CUSTOM -> R.string.sort_custom; SortMode.ALPHABETICAL -> R.string.sort_alphabetical; SortMode.MOST_USED -> R.string.sort_most_used; SortMode.RECENTLY_USED -> R.string.sort_recent })

@@ -1,6 +1,7 @@
 package com.n2.oemlauncher.wear
 
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -32,9 +33,11 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         appsObserver.start()
+        viewModel.onVisible()
     }
 
     override fun onStop() {
+        viewModel.onHidden()
         appsObserver.stop()
         super.onStop()
     }
@@ -43,6 +46,14 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         viewModel.openSettings(false)
         viewModel.centerHoneycomb()
+    }
+
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_SCROLL) {
+            viewModel.onRotary(event.getAxisValue(MotionEvent.AXIS_SCROLL))
+            return true
+        }
+        return super.dispatchGenericMotionEvent(event)
     }
 
 }

@@ -4,9 +4,9 @@
     <string name="tile_name">N2 常用应用</string>
     <string name="settings">设置</string>
     <string name="loading">正在加载应用…</string>
-    <string name="favorite_toggle">加入或移出常用</string>
-    <string name="hide_app">隐藏应用</string>
-    <string name="app_info">应用信息</string>
+    <string name="favorite_toggle">常用</string>
+    <string name="hide_app">隐藏</string>
+    <string name="app_info">信息</string>
     <string name="cancel">取消</string>
     <string name="layout_mode">布局：%1$s</string>
     <string name="icon_size">图标大小：%1$s</string>
@@ -28,4 +28,23 @@
     <string name="tile_header">常用应用</string>
     <string name="tile_empty">还没有常用应用</string>
     <string name="tile_open_launcher">打开启动器</string>
+    <string name="empty_state">没有可启动的应用</string>
+    <string name="launch_failed">应用已不可用，目录已刷新</string>
+    <string name="value_on">开启</string>
+    <string name="value_off">关闭</string>
+    <string name="layout_honeycomb">蜂窝</string>
+    <string name="layout_grid">网格</string>
+    <string name="layout_list">列表</string>
+    <string name="size_small">小</string>
+    <string name="size_medium">中</string>
+    <string name="size_large">大</string>
+    <string name="shape_circle">圆形</string>
+    <string name="shape_squircle">圆角方形</string>
+    <string name="shape_original">原始</string>
+    <string name="sort_custom">自定义</string>
+    <string name="sort_alphabetical">按名称</string>
+    <string name="sort_most_used">最常用</string>
+    <string name="sort_recent">最近使用</string>
+    <string name="favorite_order">常用顺序</string>
+    <string name="favorite_entry">后移 %1$s</string>
 </resources>

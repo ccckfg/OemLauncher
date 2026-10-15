@@ -140,7 +140,11 @@ class AppCatalogRepository(
     }
 
     private fun decode(bytes: ByteArray, shape: IconShape): Bitmap? = runCatching {
-        android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { mask(it, shape) }
+        android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let {
+            val resized = if (it.width == WearConstants.ICON_TARGET_PX && it.height == WearConstants.ICON_TARGET_PX) it
+            else Bitmap.createScaledBitmap(it, WearConstants.ICON_TARGET_PX, WearConstants.ICON_TARGET_PX, true)
+            mask(resized, shape)
+        }
     }.getOrNull()
 
     private fun drawableToBitmap(drawable: Drawable, shape: IconShape): Bitmap {
