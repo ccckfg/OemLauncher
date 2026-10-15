@@ -24,6 +24,11 @@ class DemoCatalogFactory(
     private val icons: IconStore,
     private val processor: IconProcessor,
 ) {
+    /** Demo labels come from resources, so they go stale when the app language changes. */
+    fun matchesLanguage(catalog: WatchCatalog): Boolean =
+        catalog.entries.map { it.label } ==
+            context.resources.getStringArray(R.array.demo_apps).take(DemoConstants.SIZE)
+
     suspend fun create(): Pair<WatchCatalog, LauncherConfig> = withContext(Dispatchers.IO) {
         val labels = context.resources.getStringArray(R.array.demo_apps)
         val entries = labels.take(DemoConstants.SIZE).mapIndexed { index, label ->

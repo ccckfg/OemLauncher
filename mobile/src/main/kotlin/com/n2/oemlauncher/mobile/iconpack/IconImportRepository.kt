@@ -105,7 +105,7 @@ class IconImportRepository(
     }.also { collectGarbage() }
 
     /** Referenced icons include the catalog, every draft history entry and the outbox. */
-    private suspend fun collectGarbage() {
+    suspend fun collectGarbage() {
         val snapshot = repository.state.value.snapshot
         val keep = HashSet<String>()
         snapshot.catalog?.entries?.forEach { it.iconId?.let(keep::add) }

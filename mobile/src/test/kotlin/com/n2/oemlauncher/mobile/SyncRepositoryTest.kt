@@ -118,6 +118,27 @@ class SyncRepositoryTest {
         assertTrue(repo.state.value.demo)
     }
 
+    @Test fun relabelingDemoKeepsDemoEdits() = runTest {
+        val store = MemoryStore()
+        val repo = CompanionRepository(store, IconStore(temporary.root), this)
+        advanceUntilIdle()
+        repo.demo(catalog, LauncherConfig())
+        repo.toggleFavorite(key)
+        val relabeled = catalog.copy(entries = listOf(CatalogEntry(key, "应用")))
+        repo.relabelDemo(relabeled)
+        assertEquals(relabeled, repo.state.value.catalog)
+        assertEquals(relabeled, store.snapshot.catalog)
+        assertEquals(listOf(key), repo.state.value.config.favorites)
+    }
+
+    @Test fun relabelingIsIgnoredOnceARealWatchIsKnown() = runTest {
+        val repo = CompanionRepository(MemoryStore(), IconStore(temporary.root), this)
+        advanceUntilIdle()
+        repo.receiveCatalog(catalog)
+        repo.relabelDemo(catalog.copy(entries = emptyList()))
+        assertEquals(catalog, repo.state.value.catalog)
+    }
+
     @Test fun failedPublishPreservesDraftAndRevisionForRetry() = runTest {
         val repo = CompanionRepository(MemoryStore(), IconStore(temporary.root), this)
         advanceUntilIdle()

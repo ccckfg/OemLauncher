@@ -75,6 +75,17 @@ class CompanionRepository(
         config
     }
 
+    /** Snapshot once the initial load from storage has finished. */
+    suspend fun loaded(): CompanionSnapshot {
+        ready.await()
+        return mutable.value.snapshot
+    }
+
+    /** Swap in regenerated demo apps; their keys are stable, so demo edits survive. */
+    suspend fun relabelDemo(catalog: WatchCatalog) = update {
+        if (it.demo) it.copy(catalog = catalog) else it
+    }
+
     suspend fun demo(catalog: WatchCatalog, config: LauncherConfig) = update {
         if (it.catalog != null && !it.demo) it else CompanionSnapshot(
             catalog = catalog, draft = DraftHistory(config), demo = true,

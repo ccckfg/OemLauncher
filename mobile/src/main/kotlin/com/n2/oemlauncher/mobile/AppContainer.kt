@@ -7,6 +7,8 @@ import com.n2.oemlauncher.mobile.data.IconStore
 import com.n2.oemlauncher.mobile.data.PreferencesSnapshotStore
 import com.n2.oemlauncher.mobile.iconpack.IconImportRepository
 import com.n2.oemlauncher.mobile.iconpack.IconProcessor
+import com.n2.oemlauncher.mobile.search.PinyinRomanizer
+import com.n2.oemlauncher.mobile.search.Romanizer
 import com.n2.oemlauncher.mobile.sync.GoogleWearGateway
 import com.n2.oemlauncher.mobile.sync.WearDataReceiver
 import com.n2.oemlauncher.mobile.sync.WearGateway
@@ -23,4 +25,5 @@ class AppContainer(context: Context) {
     private val processor = IconProcessor()
     val importer = IconImportRepository(context.contentResolver, repository, processor)
     val demo = DemoCatalogFactory(context, icons, processor)
+    val romanizer: Romanizer = PinyinRomanizer()
 }

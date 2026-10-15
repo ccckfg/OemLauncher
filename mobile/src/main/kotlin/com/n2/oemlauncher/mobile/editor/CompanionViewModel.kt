@@ -14,14 +14,18 @@ import com.n2.oemlauncher.mobile.data.WatchConnection
 import com.n2.oemlauncher.mobile.iconpack.CropTransform
 import com.n2.oemlauncher.mobile.iconpack.ImportPreview
 import com.n2.oemlauncher.mobile.iconpack.IconOverrideLimitException
+import com.n2.oemlauncher.mobile.search.AppSearchIndex
 import com.n2.oemlauncher.shared.config.ConfigEditor
 import com.n2.oemlauncher.shared.model.LayoutSettings
 import com.n2.oemlauncher.shared.model.SortMode
 import com.n2.oemlauncher.shared.ordering.AppOrdering
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -38,14 +42,35 @@ class CompanionViewModel(val container: AppContainer) : ViewModel() {
     val importState = mutableImport.asStateFlow()
     private val mutableImages = MutableStateFlow<Map<String, ImageBitmap>>(emptyMap())
     val iconImages = mutableImages.asStateFlow()
+    private val mutableSearch = MutableStateFlow(AppSearchIndex.EMPTY)
+    val searchIndex = mutableSearch.asStateFlow()
     private var discovery: Job? = null
     private var operation: Job? = null
     private var foreground = false
+
+    init {
+        viewModelScope.launch(Dispatchers.Default) {
+            state.map { it.catalog?.entries.orEmpty() }.distinctUntilChanged().collect { entries ->
+                mutableSearch.value = AppSearchIndex.build(entries, container.romanizer)
+            }
+        }
+    }
 
     fun start() {
         foreground = true
         container.gateway.observe { if (foreground) refresh() }
         refresh()
+        relabelDemo()
+    }
+
+    /** A language change recreates the activity, so every start rechecks the demo labels. */
+    private fun relabelDemo() = launch {
+        val snapshot = repository.loaded()
+        val catalog = snapshot.catalog
+        if (!snapshot.demo || catalog == null || container.demo.matchesLanguage(catalog)) return@launch
+        repository.relabelDemo(container.demo.create().first)
+        repository.iconsChanged()
+        container.importer.collectGarbage()
     }
     fun stop() {
         foreground = false

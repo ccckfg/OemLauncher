@@ -76,3 +76,8 @@ object DemoConstants {
     const val PALETTE_SATURATION = 0.58f
     const val PALETTE_VALUE = 0.83f
 }
+
+object SearchConstants {
+    /** Polyphonic labels multiply spellings per character; cap them so one label stays cheap. */
+    const val MAX_SPELLINGS = 16
+}

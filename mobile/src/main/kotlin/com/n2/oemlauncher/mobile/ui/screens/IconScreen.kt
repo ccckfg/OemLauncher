@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.n2.oemlauncher.mobile.R
 import com.n2.oemlauncher.mobile.config.ImportLimits
 import com.n2.oemlauncher.mobile.config.UiDimensions
@@ -49,9 +50,10 @@ fun IconScreen(
     val zip = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) { vm.importZip(uri); importResult() }
     }
-    val apps = remember(state.catalog, query, initialKey) {
+    val search by vm.searchIndex.collectAsStateWithLifecycle()
+    val apps = remember(state.catalog, query, initialKey, search) {
         state.catalog?.entries.orEmpty().filter {
-            it.label.contains(query, true) && (initialKey == null || it.key == initialKey)
+            search.matches(it, query) && (initialKey == null || it.key == initialKey)
         }
     }
     LazyColumn(

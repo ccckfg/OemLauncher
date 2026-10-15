@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.n2.oemlauncher.mobile.R
 import com.n2.oemlauncher.mobile.config.UiDimensions
 import com.n2.oemlauncher.mobile.data.CompanionState
@@ -42,10 +43,11 @@ fun EditorScreen(state: CompanionState, vm: CompanionViewModel, chooseIcon: (Str
     val arranged = remember(state.catalog, state.config) {
         AppOrdering.arrange(state.catalog?.entries.orEmpty(), state.config)
     }
-    val favorites = remember(arranged, query) { arranged.favorites.filter { it.label.contains(query, true) } }
-    val others = remember(arranged, query) { arranged.others.filter { it.label.contains(query, true) } }
-    val hidden = remember(state.catalog, state.config.hidden, query) {
-        state.catalog?.entries.orEmpty().filter { it.key in state.config.hidden && it.label.contains(query, true) }
+    val search by vm.searchIndex.collectAsStateWithLifecycle()
+    val favorites = remember(arranged, query, search) { arranged.favorites.filter { search.matches(it, query) } }
+    val others = remember(arranged, query, search) { arranged.others.filter { search.matches(it, query) } }
+    val hidden = remember(state.catalog, state.config.hidden, query, search) {
+        state.catalog?.entries.orEmpty().filter { it.key in state.config.hidden && search.matches(it, query) }
     }
     BoxWithConstraints {
         val wide = maxWidth >= UiDimensions.WIDE_BREAKPOINT.dp
