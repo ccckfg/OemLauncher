@@ -18,7 +18,7 @@ import kotlinx.coroutines.tasks.await
 class GoogleWearGateway(
     private val context: Context,
     private val receiver: WearDataReceiver,
-    private val onError: (String) -> Unit = {},
+    private val onError: (Int?) -> Unit = {},
 ) : WearGateway {
     private val capability = Wearable.getCapabilityClient(context)
     private val nodes = Wearable.getNodeClient(context)
@@ -44,8 +44,8 @@ class GoogleWearGateway(
                 connected.isNotEmpty() -> WatchConnection(ConnectionKind.APP_MISSING, all)
                 else -> WatchConnection()
             }
-        } catch (_: ApiException) {
-            onError(API_EXCEPTION)
+        } catch (e: ApiException) {
+            onError(e.statusCode)
             WatchConnection()
         }
     }
@@ -60,8 +60,8 @@ class GoogleWearGateway(
                     node.id, SyncPaths.MESSAGE_REQUEST_CATALOG, byteArrayOf(),
                 ).await()
             }
-        } catch (_: ApiException) {
-            onError(API_EXCEPTION)
+        } catch (e: ApiException) {
+            onError(e.statusCode)
         }
     }
 
@@ -90,9 +90,5 @@ class GoogleWearGateway(
         } finally {
             buffer.release()
         }
-    }
-
-    private companion object {
-        const val API_EXCEPTION = "ApiException"
     }
 }

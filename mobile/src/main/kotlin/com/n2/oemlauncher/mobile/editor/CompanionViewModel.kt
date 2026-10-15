@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.common.api.ApiException
 import com.n2.oemlauncher.mobile.AppContainer
 import com.n2.oemlauncher.mobile.data.UserNotice
 import com.n2.oemlauncher.mobile.data.ConnectionKind
@@ -65,7 +66,7 @@ class CompanionViewModel(val container: AppContainer) : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                repository.apiError(e::class.java.simpleName)
+                repository.apiError((e as? ApiException)?.statusCode)
                 repository.connection(WatchConnection())
             }
         }
@@ -76,7 +77,7 @@ class CompanionViewModel(val container: AppContainer) : ViewModel() {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            repository.apiError(e::class.java.simpleName)
+            repository.apiError((e as? ApiException)?.statusCode)
             repository.notice(UserNotice.SYNC_FAILED)
         }
     }

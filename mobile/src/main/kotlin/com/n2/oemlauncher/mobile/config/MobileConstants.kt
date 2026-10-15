@@ -35,6 +35,8 @@ object UiDimensions {
     const val PAGE_PADDING = 20
     const val GAP = 12
     const val SMALL_GAP = 8
+    /** Detail lines get room to wrap; titles stay single line. */
+    const val DETAIL_MAX_LINES = 3
     const val TOUCH_TARGET = 48
     const val APP_ICON = 44
     const val PREVIEW = 280

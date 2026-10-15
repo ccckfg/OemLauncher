@@ -117,4 +117,31 @@ class IconImportRepositoryTest {
         assertTrue(File(temporary.root, "icons-staging").listFiles().orEmpty().isEmpty())
         assertEquals(result.matches.single().iconId, repository.state.value.config.iconOverrides[app.key])
     }
+    /** The review screen previews staged matches before the user confirms; they must be readable. */
+    @Test fun stagedIconsAreReadableBeforeApplyAndGoneAfterDiscard() = runTest {
+        val repository = CompanionRepository(MemoryStore(), IconStore(temporary.root), this)
+        advanceUntilIdle()
+        repository.receiveCatalog(catalog())
+        val importer = importer(repository)
+        val result = importer.import(zip(mapOf("com.example.app.png" to png())))
+        val stagedId = result.matches.single().iconId
+        assertTrue(File(temporary.root, "icons").listFiles().orEmpty().isEmpty())
+        assertNotNull(repository.icons.bytes(stagedId))
+        assertNotNull(repository.icons.bitmap(stagedId))
+        importer.discard(result)
+        assertNull(repository.icons.bytes(stagedId))
+    }
+    /** A GC from an unrelated action (restore defaults) must not delete the session under review. */
+    @Test fun garbageCollectionKeepsTheSessionUnderReview() = runTest {
+        val repository = CompanionRepository(MemoryStore(), IconStore(temporary.root), this)
+        advanceUntilIdle()
+        repository.receiveCatalog(catalog())
+        val importer = importer(repository)
+        val result = importer.import(zip(mapOf("com.example.app.png" to png())))
+        importer.resetAll()
+        assertNotNull(repository.icons.bytes(result.matches.single().iconId))
+        importer.discard(result)
+        assertTrue(File(temporary.root, "icons-staging").listFiles().orEmpty().isEmpty())
+        assertNull(repository.icons.bytes(result.matches.single().iconId))
+    }
 }

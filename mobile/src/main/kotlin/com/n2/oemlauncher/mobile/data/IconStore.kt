@@ -59,17 +59,23 @@ class IconStore(filesDir: File) {
         Unit
     }
 
-    /** Delete icons nothing references anymore, stale temp files and leftover import sessions. */
-    suspend fun collectGarbage(keep: Set<String>) = withContext(Dispatchers.IO) {
-        directory.listFiles()?.forEach { candidate ->
-            val id = candidate.name.removeSuffix(StorageConstants.ICON_SUFFIX)
-            val kept = candidate.name.endsWith(StorageConstants.ICON_SUFFIX) &&
-                IconId.isValid(id) && id in keep
-            if (!kept) candidate.delete()
+    /**
+     * Delete icons nothing references anymore, stale temp files and leftover import sessions.
+     * [keepSessions] names import sessions that are still being reviewed and must survive.
+     */
+    suspend fun collectGarbage(keep: Set<String>, keepSessions: Set<String> = emptySet()) =
+        withContext(Dispatchers.IO) {
+            directory.listFiles()?.forEach { candidate ->
+                val id = candidate.name.removeSuffix(StorageConstants.ICON_SUFFIX)
+                val kept = candidate.name.endsWith(StorageConstants.ICON_SUFFIX) &&
+                    IconId.isValid(id) && id in keep
+                if (!kept) candidate.delete()
+            }
+            staging.listFiles()?.forEach { session ->
+                if (session.name !in keepSessions) session.deleteRecursively()
+            }
+            Unit
         }
-        staging.listFiles()?.forEach { it.deleteRecursively() }
-        Unit
-    }
 
     private fun write(target: File, bytes: ByteArray, expectedId: String) {
         if (!target.exists()) {
@@ -79,10 +85,22 @@ class IconStore(filesDir: File) {
         }
     }
 
+    /**
+     * Staged icons stay readable: the ZIP review screen must show the matches before the user
+     * confirms, and a sync racing the promote would otherwise drop a just-picked icon.
+     */
+    private fun stagedFile(id: String): File? {
+        val name = id + StorageConstants.ICON_SUFFIX
+        return staging.listFiles()?.asSequence()
+            ?.mapNotNull { session -> session.listFiles()?.firstOrNull { it.name == name } }
+            ?.firstOrNull()
+    }
+
     suspend fun bytes(id: String): ByteArray? = withContext(Dispatchers.IO) {
         val target = file(id) ?: return@withContext null
-        if (!target.exists() || target.length() > ProtocolLimits.MAX_ICON_BYTES) return@withContext null
-        target.readBytes().takeIf { IconId.of(it) == id }
+        val source = if (target.exists()) target else stagedFile(id) ?: return@withContext null
+        if (source.length() > ProtocolLimits.MAX_ICON_BYTES) return@withContext null
+        source.readBytes().takeIf { IconId.of(it) == id }
     }
 
     suspend fun bitmap(id: String): ImageBitmap? = withContext(Dispatchers.IO) {

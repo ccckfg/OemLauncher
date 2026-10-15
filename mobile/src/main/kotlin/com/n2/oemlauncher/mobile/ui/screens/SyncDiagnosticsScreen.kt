@@ -31,6 +31,7 @@ import com.n2.oemlauncher.mobile.data.CompanionState
 import com.n2.oemlauncher.mobile.data.NodeStatus
 import com.n2.oemlauncher.mobile.data.SyncDiagnostics
 import com.n2.oemlauncher.mobile.editor.CompanionViewModel
+import com.n2.oemlauncher.mobile.ui.components.ApiErrorLabels
 import com.n2.oemlauncher.mobile.ui.components.StatusTone
 import com.n2.oemlauncher.mobile.ui.components.icon
 import com.n2.oemlauncher.mobile.ui.components.relativeTime
@@ -191,7 +192,12 @@ private fun ErrorCard(error: ApiError?) {
         if (error == null) {
             InfoLine(stringResource(R.string.diag_error_none))
         } else {
-            InfoLine(stringResource(R.string.diag_error_at, error.type, relativeTime(error.atMillis)))
+            val phrase = if (ApiErrorLabels.needsCode(error.statusCode)) {
+                stringResource(R.string.diag_error_unknown_code, requireNotNull(error.statusCode))
+            } else {
+                stringResource(ApiErrorLabels.labelRes(error.statusCode))
+            }
+            InfoLine(stringResource(R.string.diag_error_at, phrase, relativeTime(error.atMillis)))
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.n2.oemlauncher.mobile.data
 
 import android.util.Log
+import com.google.android.gms.common.api.ApiException
 import com.n2.oemlauncher.mobile.config.StorageConstants
 import com.n2.oemlauncher.mobile.editor.DraftHistory
 import com.n2.oemlauncher.mobile.sync.WearGateway
@@ -157,7 +158,7 @@ class CompanionRepository(
                 d.copy(
                     lastSentRevision = outgoing?.revision ?: d.lastSentRevision,
                     lastSendSucceeded = false,
-                    lastError = ApiError(e::class.java.simpleName, System.currentTimeMillis()),
+                    lastError = ApiError((e as? ApiException)?.statusCode, System.currentTimeMillis()),
                 )
             }
             connection(WatchConnection())
@@ -177,8 +178,9 @@ class CompanionRepository(
     fun iconsChanged() {
         mutable.update { it.copy(iconGeneration = it.iconGeneration + 1) }
     }
-    fun apiError(type: String) {
-        diagnose { it.copy(lastError = ApiError(type, System.currentTimeMillis())) }
+    /** [statusCode] is the ApiException code, or null for non-API failures. */
+    fun apiError(statusCode: Int?) {
+        diagnose { it.copy(lastError = ApiError(statusCode, System.currentTimeMillis())) }
     }
     fun invalidPayload() {
         Log.w(StorageConstants.TAG, "Rejected wearable payload")

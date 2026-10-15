@@ -50,11 +50,11 @@ class WearDataReceiver(context: Context, private val repository: CompanionReposi
                     is DecodeResult.Success -> repository.receiveState(result.value)
                 }
             }
-        } catch (_: ApiException) {
-            repository.apiError(API_EXCEPTION)
+        } catch (e: ApiException) {
+            repository.apiError(e.statusCode)
             repository.connection(WatchConnection())
         } catch (_: java.io.IOException) {
-            repository.apiError(IO_EXCEPTION)
+            repository.apiError(null)
             repository.invalidPayload()
         } catch (_: IllegalArgumentException) {
             repository.invalidPayload()
@@ -81,10 +81,5 @@ class WearDataReceiver(context: Context, private val repository: CompanionReposi
         } finally {
             response.release()
         }
-    }
-
-    private companion object {
-        const val API_EXCEPTION = "ApiException"
-        const val IO_EXCEPTION = "IOException"
     }
 }

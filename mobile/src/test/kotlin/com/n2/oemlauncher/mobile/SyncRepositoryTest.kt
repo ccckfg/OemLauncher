@@ -245,7 +245,9 @@ class SyncRepositoryTest {
         val failed = repo.state.value.diagnostics
         assertEquals(false, failed.lastSendSucceeded)
         assertEquals(4L, failed.lastSentRevision)
-        assertEquals("IllegalStateException", failed.lastError?.type)
+        // A non-ApiException failure keeps no code; the UI phrases it as a local error.
+        assertNull(failed.lastError?.statusCode)
+        assertTrue(requireNotNull(failed.lastError).atMillis > 0L)
         repo.connection(WatchConnection(ConnectionKind.CONNECTED))
         repo.sync(FakeGateway())
         val sent = repo.state.value.diagnostics

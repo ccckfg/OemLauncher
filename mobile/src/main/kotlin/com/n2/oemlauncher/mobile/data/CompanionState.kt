@@ -19,8 +19,11 @@ data class WatchConnection(
 
 enum class UserNotice { NONE, FAVORITE_LIMIT, ICON_LIMIT, IMPORT_FAILED, ICON_FAILED, SYNC_FAILED, DATA_INVALID, ICONS_MISSING }
 
-/** Type and time only, never payloads or node identifiers. */
-data class ApiError(val type: String, val atMillis: Long)
+/**
+ * Kind and time only, never payloads or node identifiers. [statusCode] is the ApiException
+ * status code, or null when the failure was not an API call (the UI maps it to a phrase).
+ */
+data class ApiError(val statusCode: Int?, val atMillis: Long)
 
 /** Session-scoped sync facts for the diagnostics page; not persisted. */
 data class SyncDiagnostics(
