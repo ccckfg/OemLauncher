@@ -206,4 +206,35 @@ class WearSyncRepositoryTest {
         assertEquals(ApplyResult.REJECTED_INVALID, outcome.state.lastResult)
         assertEquals(1, client.statePuts().size)
     }
+
+    @Test
+    fun missingPayloadPublishesRejectedInvalidWithTheReportedRevision() = runTest {
+        val client = RecordingClient()
+        val repository = testRepository(client = client, scope = this)
+
+        val outcome = repository.handleDesired(
+            ProtocolVersion.CURRENT,
+            payload = null,
+            assets = emptyMap(),
+            reportedRevision = 9L,
+        )
+
+        assertEquals(ApplyResult.REJECTED_INVALID, outcome.state.lastResult)
+        assertEquals(9L, outcome.state.lastDesiredRevision)
+        val receipt = (PayloadCodec.decodeState(ProtocolVersion.CURRENT, client.statePuts().single().payload) as DecodeResult.Success).value
+        assertEquals(ApplyResult.REJECTED_INVALID, receipt.lastResult)
+        assertEquals(9L, receipt.lastDesiredRevision)
+    }
+
+    @Test
+    fun unsupportedSchemaAdoptsTheReportedRevisionWhenPresent() = runTest {
+        val client = RecordingClient()
+        val repository = testRepository(client = client, scope = this)
+
+        val outcome = repository.handleDesired(99, byteArrayOf(1), emptyMap(), reportedRevision = 12L)
+
+        assertEquals(ApplyResult.REJECTED_SCHEMA, outcome.state.lastResult)
+        assertEquals(12L, outcome.state.lastDesiredRevision)
+        assertEquals(1, client.statePuts().size)
+    }
 }

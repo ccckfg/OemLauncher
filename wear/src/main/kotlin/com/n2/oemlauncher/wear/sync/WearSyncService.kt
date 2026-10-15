@@ -20,7 +20,14 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /** One desired config as read off the Data Layer, with its icon assets keyed by icon id. */
-private class DesiredMessage(val schema: Int, val payload: ByteArray, val assets: Map<String, Asset>)
+private class DesiredMessage(
+    val schema: Int,
+    /** Null when the DataMap has no payload; the receipt is still published as invalid. */
+    val payload: ByteArray?,
+    /** `SyncKeys.REVISION`, the revision the phone is waiting for; optional. */
+    val revision: Long?,
+    val assets: Map<String, Asset>,
+)
 
 class WearSyncService : WearableListenerService() {
     // Cancelled in onDestroy. Work that must survive is durable elsewhere: unprocessed DataItems
@@ -39,9 +46,14 @@ class WearSyncService : WearableListenerService() {
             for (event in events) {
                 if (event.type != DataEvent.TYPE_CHANGED) continue
                 if (event.dataItem.uri.path != SyncPaths.CONFIG_DESIRED) continue
-                val desired = readDesired(event.dataItem) ?: continue
+                val desired = readDesired(event.dataItem)
                 launchSafely {
-                    container.syncRepository.handleDesired(desired.schema, desired.payload, desired.assets)
+                    container.syncRepository.handleDesired(
+                        desired.schema,
+                        desired.payload,
+                        desired.assets,
+                        desired.revision,
+                    )
                 }
             }
         }
@@ -58,18 +70,19 @@ class WearSyncService : WearableListenerService() {
 
     /**
      * The DataMap is parsed while the buffer is still open; asset bytes are only fetched later,
-     * inside the coroutine, so the callback never blocks on the network.
+     * inside the coroutine, so the callback never blocks on the network. A missing payload is
+     * still returned so the rejection receipt can carry the reported revision.
      */
-    private fun readDesired(dataItem: DataItem): DesiredMessage? {
+    private fun readDesired(dataItem: DataItem): DesiredMessage {
         val map: DataMap = DataMapItem.fromDataItem(dataItem).dataMap
-        val payload = map.getByteArray(SyncKeys.PAYLOAD) ?: return null
+        val revision = if (map.containsKey(SyncKeys.REVISION)) map.getLong(SyncKeys.REVISION) else null
         val assets = buildMap {
             for (key in map.keySet()) {
                 val iconId = SyncKeys.iconIdFromAssetKey(key) ?: continue
                 map.getAsset(key)?.let { put(iconId, it) }
             }
         }
-        return DesiredMessage(map.getInt(SyncKeys.SCHEMA, -1), payload, assets)
+        return DesiredMessage(map.getInt(SyncKeys.SCHEMA, -1), map.getByteArray(SyncKeys.PAYLOAD), revision, assets)
     }
 
     private fun launchSafely(block: suspend () -> Unit) {

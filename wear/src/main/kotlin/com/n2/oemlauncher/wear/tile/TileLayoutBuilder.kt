@@ -7,6 +7,7 @@ import androidx.wear.protolayout.DimensionBuilders.expand
 import androidx.wear.protolayout.DimensionBuilders.sp
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ModifiersBuilders
+import androidx.wear.protolayout.ProtoLayoutScope
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.TimelineBuilders
 import androidx.wear.tiles.TileBuilders
@@ -22,7 +23,13 @@ data class TileContent(
     val launcherComponent: AppKey?,
 )
 
-/** Builds the ProtoLayout tile and its icon resources from [TileContent]. */
+/**
+ * Builds the ProtoLayout tile and its icon resources from [TileContent].
+ *
+ * Icons are registered as inline resources on the request's [ProtoLayoutScope] (the current
+ * image API), so the framework ships them together with the tile; [buildResources] remains the
+ * fallback for hosts that request a resource version outside the scope flow.
+ */
 object TileLayoutBuilder {
 
     fun buildTile(
@@ -30,11 +37,12 @@ object TileLayoutBuilder {
         header: String,
         emptyText: String,
         openLauncherText: String,
+        scope: ProtoLayoutScope,
     ): TileBuilders.Tile {
         val root = if (content.favorites.isEmpty()) {
             emptyState(content, emptyText, openLauncherText)
         } else {
-            favoritesColumn(content, header)
+            favoritesColumn(content, header, scope)
         }
         val layout = LayoutElementBuilders.Layout.Builder().setRoot(root).build()
         val timeline = TimelineBuilders.Timeline.Builder()
@@ -52,32 +60,45 @@ object TileLayoutBuilder {
         content.favorites.forEach { favorite ->
             val iconId = favorite.iconId ?: return@forEach
             val bytes = content.iconBytes[iconId] ?: return@forEach
-            builder.addIdToImageMapping(
-                iconId,
-                ResourceBuilders.ImageResource.Builder()
-                    .setInlineResource(
-                        ResourceBuilders.InlineImageResource.Builder()
-                            .setData(bytes)
-                            .setWidthPx(WearConstants.TILE_ICON_PX)
-                            .setHeightPx(WearConstants.TILE_ICON_PX)
-                            .setFormat(ResourceBuilders.IMAGE_FORMAT_ARGB_8888)
-                            .build(),
-                    )
-                    .build(),
-            )
+            builder.addIdToImageMapping(iconId, inlineImageResource(bytes))
         }
         return builder.build()
     }
 
-    private fun favoritesColumn(content: TileContent, header: String): LayoutElementBuilders.Column {
+    /**
+     * The icon files are PNG/WebP; the format stays undefined so the renderer detects it from
+     * the encoded bytes. Only raw pixel buffers would be declared as a pixel format.
+     */
+    private fun inlineImageResource(bytes: ByteArray): ResourceBuilders.ImageResource =
+        ResourceBuilders.ImageResource.Builder()
+            .setInlineResource(
+                ResourceBuilders.InlineImageResource.Builder()
+                    .setData(bytes)
+                    .setWidthPx(WearConstants.TILE_ICON_PX)
+                    .setHeightPx(WearConstants.TILE_ICON_PX)
+                    .setFormat(ResourceBuilders.IMAGE_FORMAT_UNDEFINED)
+                    .build(),
+            )
+            .build()
+
+    private fun favoritesColumn(
+        content: TileContent,
+        header: String,
+        scope: ProtoLayoutScope,
+    ): LayoutElementBuilders.Column {
         val column = LayoutElementBuilders.Column.Builder()
             .setWidth(expand())
+            .setModifiers(safeAreaModifiers())
             .addContent(title(header))
-        content.favorites.forEach { favorite -> column.addContent(favoriteRow(content, favorite)) }
+        content.favorites.forEach { favorite -> column.addContent(favoriteRow(content, favorite, scope)) }
         return column.build()
     }
 
-    private fun favoriteRow(content: TileContent, favorite: TileFavorite): LayoutElementBuilders.Row {
+    private fun favoriteRow(
+        content: TileContent,
+        favorite: TileFavorite,
+        scope: ProtoLayoutScope,
+    ): LayoutElementBuilders.Row {
         val modifiers = ModifiersBuilders.Modifiers.Builder()
             .setSemantics(
                 ModifiersBuilders.Semantics.Builder()
@@ -99,9 +120,11 @@ object TileLayoutBuilder {
             .setHeight(dp(WearConstants.TILE_TOUCH_TARGET_DP))
             .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
             .setModifiers(modifiers.build())
-        favorite.iconId?.takeIf { it in content.iconBytes }?.let { iconId ->
-            row.addContent(icon(iconId))
-            row.addContent(LayoutElementBuilders.Spacer.Builder().setWidth(dp(8f)).build())
+        favorite.iconId?.let { iconId ->
+            content.iconBytes[iconId]?.let { bytes ->
+                row.addContent(icon(bytes, iconId, scope))
+                row.addContent(LayoutElementBuilders.Spacer.Builder().setWidth(dp(8f)).build())
+            }
         }
         row.addContent(label(favorite.label))
         return row.build()
@@ -115,12 +138,24 @@ object TileLayoutBuilder {
         val column = LayoutElementBuilders.Column.Builder()
             .setWidth(expand())
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .setModifiers(safeAreaModifiers())
             .addContent(title(emptyText))
         content.launcherComponent?.let { component ->
             column.addContent(openLauncherButton(component, openLauncherText))
         }
         return column.build()
     }
+
+    /** Keeps content off the edge of the round display. */
+    private fun safeAreaModifiers(): ModifiersBuilders.Modifiers =
+        ModifiersBuilders.Modifiers.Builder()
+            .setPadding(
+                ModifiersBuilders.Padding.Builder()
+                    .setStart(dp(WearConstants.TILE_HORIZONTAL_MARGIN_DP))
+                    .setEnd(dp(WearConstants.TILE_HORIZONTAL_MARGIN_DP))
+                    .build(),
+            )
+            .build()
 
     private fun openLauncherButton(component: AppKey, text: String): LayoutElementBuilders.Box {
         val action = launchAction(component.flatten()) ?: return LayoutElementBuilders.Box.Builder().build()
@@ -162,7 +197,7 @@ object TileLayoutBuilder {
         LayoutElementBuilders.Text.Builder()
             .setText(text)
             .setMaxLines(1)
-            .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
+            .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
             .setFontStyle(
                 LayoutElementBuilders.FontStyle.Builder()
                     .setSize(sp(WearConstants.TILE_HEADER_SP))
@@ -174,7 +209,7 @@ object TileLayoutBuilder {
         LayoutElementBuilders.Text.Builder()
             .setText(text)
             .setMaxLines(1)
-            .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
+            .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
             .setFontStyle(
                 LayoutElementBuilders.FontStyle.Builder()
                     .setSize(sp(WearConstants.TILE_LABEL_SP))
@@ -182,9 +217,9 @@ object TileLayoutBuilder {
             )
             .build()
 
-    private fun icon(iconId: String): LayoutElementBuilders.Image =
-        LayoutElementBuilders.Image.Builder()
-            .setResourceId(iconId)
+    private fun icon(bytes: ByteArray, iconId: String, scope: ProtoLayoutScope): LayoutElementBuilders.Image =
+        LayoutElementBuilders.Image.Builder(scope)
+            .setImageResource(inlineImageResource(bytes), iconId)
             .setWidth(dp(WearConstants.TILE_ICON_DP))
             .setHeight(dp(WearConstants.TILE_ICON_DP))
             .setContentScaleMode(LayoutElementBuilders.CONTENT_SCALE_MODE_FIT)

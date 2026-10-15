@@ -19,9 +19,9 @@ class DesiredProcessorTest {
     @Test
     fun decideRejectsUnsupportedSchemaAndMalformedPayload() {
         val state = testState(revision = 0)
-        val schema = processor.decide(99, byteArrayOf(), state, 1L) as DesiredDecision.Rejected
+        val schema = processor.decide(99, byteArrayOf(), null, state, 1L) as DesiredDecision.Rejected
         assertEquals(ApplyResult.REJECTED_SCHEMA, schema.state.lastResult)
-        val malformed = processor.decide(ProtocolVersion.CURRENT, byteArrayOf(1), state, 1L) as DesiredDecision.Rejected
+        val malformed = processor.decide(ProtocolVersion.CURRENT, byteArrayOf(1), null, state, 1L) as DesiredDecision.Rejected
         assertEquals(ApplyResult.REJECTED_INVALID, malformed.state.lastResult)
     }
 
@@ -31,6 +31,7 @@ class DesiredProcessorTest {
         val redelivery = processor.decide(
             ProtocolVersion.CURRENT,
             PayloadCodec.encodeConfig(LauncherConfig(revision = 4)),
+            null,
             state,
             1L,
         )
@@ -39,6 +40,7 @@ class DesiredProcessorTest {
         val stale = processor.decide(
             ProtocolVersion.CURRENT,
             PayloadCodec.encodeConfig(LauncherConfig(revision = 3)),
+            null,
             testState(revision = 4),
             1L,
         ) as DesiredDecision.Rejected
@@ -53,11 +55,85 @@ class DesiredProcessorTest {
         val decision = processor.decide(
             ProtocolVersion.CURRENT,
             PayloadCodec.encodeConfig(desired),
+            null,
             testState(revision = 5),
             1L,
         ) as DesiredDecision.Apply
         assertEquals(listOf(iconId), decision.referencedIconIds)
         assertEquals(6L, decision.desired.revision)
+    }
+
+    @Test
+    fun rejectionsAdoptTheReportedRevisionWhenTheKeyIsPresent() {
+        val state = testState(revision = 5, lastDesired = 5)
+
+        val schema = processor.decide(99, null, 9L, state, 1L) as DesiredDecision.Rejected
+        assertEquals(ApplyResult.REJECTED_SCHEMA, schema.state.lastResult)
+        assertEquals(9L, schema.state.lastDesiredRevision)
+
+        val missingPayload = processor.decide(ProtocolVersion.CURRENT, null, 9L, state, 1L) as DesiredDecision.Rejected
+        assertEquals(ApplyResult.REJECTED_INVALID, missingPayload.state.lastResult)
+        assertEquals(9L, missingPayload.state.lastDesiredRevision)
+
+        val malformed = processor.decide(ProtocolVersion.CURRENT, byteArrayOf(1), 9L, state, 1L) as DesiredDecision.Rejected
+        assertEquals(ApplyResult.REJECTED_INVALID, malformed.state.lastResult)
+        assertEquals(9L, malformed.state.lastDesiredRevision)
+    }
+
+    @Test
+    fun rejectionsKeepTheRevisionWhenTheKeyIsMissing() {
+        val state = testState(revision = 5, lastDesired = 3)
+
+        val schema = processor.decide(99, null, null, state, 1L) as DesiredDecision.Rejected
+        assertEquals(3L, schema.state.lastDesiredRevision)
+
+        val missingPayload = processor.decide(ProtocolVersion.CURRENT, null, null, state, 1L) as DesiredDecision.Rejected
+        assertEquals(3L, missingPayload.state.lastDesiredRevision)
+
+        val malformed = processor.decide(ProtocolVersion.CURRENT, byteArrayOf(1), null, state, 1L) as DesiredDecision.Rejected
+        assertEquals(3L, malformed.state.lastDesiredRevision)
+    }
+
+    @Test
+    fun rejectionsNeverLowerTheLastDesiredRevision() {
+        val state = testState(revision = 5, lastDesired = 7)
+        val rejected = processor.decide(99, null, 3L, state, 1L) as DesiredDecision.Rejected
+        assertEquals(7L, rejected.state.lastDesiredRevision)
+    }
+
+    @Test
+    fun redeliveryIsUnchangedByTheReportedRevision() {
+        val state = testState(revision = 4, lastDesired = 4)
+        val decision = processor.decide(
+            ProtocolVersion.CURRENT,
+            PayloadCodec.encodeConfig(LauncherConfig(revision = 4)),
+            9L,
+            state,
+            1L,
+        )
+        assertEquals(DesiredDecision.Redelivery, decision)
+    }
+
+    @Test
+    fun decodablePayloadKeepsItsOwnRevisionOverTheReportedOne() {
+        val applied = processor.decide(
+            ProtocolVersion.CURRENT,
+            PayloadCodec.encodeConfig(LauncherConfig(revision = 6)),
+            9L,
+            testState(revision = 5),
+            1L,
+        ) as DesiredDecision.Apply
+        assertEquals(6L, applied.desired.revision)
+
+        val stale = processor.decide(
+            ProtocolVersion.CURRENT,
+            PayloadCodec.encodeConfig(LauncherConfig(revision = 5)),
+            9L,
+            testState(revision = 5, lastDesired = 2),
+            1L,
+        ) as DesiredDecision.Rejected
+        assertEquals(ApplyResult.REJECTED_STALE, stale.state.lastResult)
+        assertEquals(5L, stale.state.lastDesiredRevision)
     }
 
     @Test

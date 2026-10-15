@@ -37,6 +37,7 @@ class FavoritesTileService : TileService() {
                 header = getString(R.string.tile_header),
                 emptyText = getString(R.string.tile_empty),
                 openLauncherText = getString(R.string.tile_open_launcher),
+                scope = requestParams.scope,
             )
         }
 
@@ -47,14 +48,15 @@ class FavoritesTileService : TileService() {
     private fun <T> load(build: (TileContent) -> T): ListenableFuture<T> =
         CallbackToFutureAdapter.getFuture<T> { completer ->
             scope.launch {
-                val content = try {
-                    content()
+                val result = try {
+                    build(content())
                 } catch (e: CancellationException) {
                     throw e
                 } catch (_: Exception) {
-                    fallbackContent()
+                    // Never crash the tile host over missing data or a render failure.
+                    build(fallbackContent())
                 }
-                completer.set(build(content))
+                completer.set(result)
             }
             null
         }
