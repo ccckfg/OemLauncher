@@ -7,6 +7,7 @@
     <string name="favorite_toggle">Favorite</string>
     <string name="hide_app">Hide</string>
     <string name="app_info">Info</string>
+    <string name="app_menu">App menu</string>
     <string name="cancel">Cancel</string>
     <string name="layout_mode">Layout: %1$s</string>
     <string name="icon_size">Icon size: %1$s</string>

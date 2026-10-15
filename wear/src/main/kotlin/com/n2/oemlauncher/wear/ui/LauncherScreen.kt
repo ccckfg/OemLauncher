@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -57,6 +59,12 @@ fun LauncherScreen(viewModel: LauncherViewModel) {
                     LayoutMode.LIST -> ListView(state, viewModel)
                 }
                 if (state.config.layout.mode != LayoutMode.HONEYCOMB) {
+                    // Scrim so scrolled rows fade out behind the settings entry instead of being cut.
+                    Box(
+                        Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(88.dp).background(
+                            Brush.verticalGradient(listOf(Color.Transparent, Color.Black)),
+                        ),
+                    )
                     SettingsEntry(
                         onClick = { viewModel.openSettings(true) },
                         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp),
@@ -125,13 +133,15 @@ private fun AppChip(
     ) {
         AppGlyph(entry, state, Modifier.size(iconSize), state.icons[entry.key])
         if (showLabel) {
+            // Two lines at this size fit typical app names ("Find my phone") inside a grid cell.
             Text(
                 entry.label,
                 Modifier.fillMaxWidth().padding(top = 2.dp),
                 color = Color.White,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 fontSize = 11.sp,
+                lineHeight = 13.sp,
                 textAlign = TextAlign.Center,
             )
         }

@@ -12,6 +12,7 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.os.UserHandle
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.scale
 import com.n2.oemlauncher.shared.model.AppKey
@@ -172,7 +173,7 @@ class AppCatalogRepository(
     private fun decode(bytes: ByteArray, targetPx: Int, shape: IconShape): Bitmap? = runCatching {
         android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let {
             val resized = if (it.width == targetPx && it.height == targetPx) it
-            else Bitmap.createScaledBitmap(it, targetPx, targetPx, true)
+            else it.scale(targetPx, targetPx)
             mask(resized, shape)
         }
     }.getOrNull()
@@ -185,7 +186,7 @@ class AppCatalogRepository(
 
     private fun mask(source: Bitmap, shape: IconShape): Bitmap {
         if (shape == IconShape.ORIGINAL) return source
-        val result = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        val result = createBitmap(source.width, source.height)
         val canvas = Canvas(result)
         val path = Path()
         val rect = RectF(0f, 0f, source.width.toFloat(), source.height.toFloat())
