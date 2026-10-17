@@ -33,4 +33,28 @@ class HomeDecisionTest {
         HomeAction.DELEGATE_TO_SYSTEM,
         decideHomeAction(ForegroundKind.UNKNOWN, launcherResumed = false, LastHomeAction.OPENED_APP),
     )
+
+    @Test fun disconnectedServiceUsesHeuristicAfterReturningFromWatchFace() {
+        val holder = ForegroundStateHolder("com.n2.oemlauncher")
+        holder.setLauncherResumed(false)
+        holder.recordHomeAction(HomeAction.DELEGATE_TO_SYSTEM)
+        assertEquals(HomeAction.SHOW_LAUNCHER, decide(holder))
+        holder.setLauncherResumed(true)
+        holder.recordHomeAction(HomeAction.DELEGATE_TO_SYSTEM)
+        holder.setLauncherResumed(false)
+        assertEquals(HomeAction.SHOW_LAUNCHER, decide(holder))
+    }
+
+    @Test fun disconnectingServiceClearsStaleForegroundKind() {
+        val holder = ForegroundStateHolder("com.n2.oemlauncher")
+        holder.setServiceConnected(true)
+        holder.updateForeground("com.n2.oemlauncher")
+        holder.setServiceConnected(false)
+        assertEquals(ForegroundKind.UNKNOWN, holder.snapshot().kind)
+    }
+
+    private fun decide(holder: ForegroundStateHolder): HomeAction {
+        val snapshot = holder.snapshot()
+        return decideHomeAction(snapshot.kind, snapshot.launcherResumed, snapshot.lastAction)
+    }
 }

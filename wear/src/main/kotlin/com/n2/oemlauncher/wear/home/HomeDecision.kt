@@ -47,6 +47,9 @@ class ForegroundStateHolder(private val launcherPackage: String) {
     @Volatile
     private var lastAction: LastHomeAction = LastHomeAction.NONE
 
+    @Volatile
+    private var serviceConnected: Boolean = false
+
     fun updateForeground(packageName: String, inputMethodPackage: String? = null) {
         if (packageName.isBlank() || packageName == "android" || packageName == "com.android.systemui" ||
             packageName == inputMethodPackage
@@ -60,6 +63,11 @@ class ForegroundStateHolder(private val launcherPackage: String) {
 
     fun markServiceConnectedOnSystemHome() {
         if (!launcherResumed && kind == ForegroundKind.UNKNOWN) kind = ForegroundKind.WATCH_FACE
+    }
+
+    fun setServiceConnected(connected: Boolean) {
+        serviceConnected = connected
+        if (!connected) kind = ForegroundKind.UNKNOWN
     }
 
     fun setLauncherResumed(resumed: Boolean) {
@@ -76,5 +84,9 @@ class ForegroundStateHolder(private val launcherPackage: String) {
         kind = ForegroundKind.APP
     }
 
-    fun snapshot(): ForegroundSnapshot = ForegroundSnapshot(kind, launcherResumed, lastAction)
+    fun snapshot(): ForegroundSnapshot = ForegroundSnapshot(
+        kind = if (serviceConnected) kind else ForegroundKind.UNKNOWN,
+        launcherResumed = launcherResumed,
+        lastAction = lastAction,
+    )
 }

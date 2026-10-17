@@ -8,7 +8,7 @@ import android.content.pm.PackageManager
 
 class SystemHomeResolver(private val context: Context) {
     @SuppressLint("WearRecents")
-    fun resolveIntent(): Intent? {
+    fun resolveIntent(sourceIntent: Intent? = null): Intent? {
         val homeIntent = Intent(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_HOME)
             .addCategory(Intent.CATEGORY_DEFAULT)
@@ -26,8 +26,10 @@ class SystemHomeResolver(private val context: Context) {
                 )
             }
         val selected = selectSystemHome(candidates, context.packageName) ?: return null
-        return homeIntent.setComponent(ComponentName(selected.packageName, selected.className))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        return (sourceIntent?.let(::Intent) ?: homeIntent)
+            .setPackage(null)
+            .setComponent(ComponentName(selected.packageName, selected.className))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
     fun packageName(): String? = resolveIntent()?.component?.packageName

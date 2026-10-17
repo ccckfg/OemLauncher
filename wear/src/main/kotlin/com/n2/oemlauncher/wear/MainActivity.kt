@@ -12,7 +12,6 @@ import androidx.core.net.toUri
 import com.n2.oemlauncher.wear.catalog.LauncherAppsObserver
 import com.n2.oemlauncher.wear.catalog.AppListPermissionController
 import com.n2.oemlauncher.wear.catalog.SAMSUNG_APP_LIST_PERMISSION
-import com.n2.oemlauncher.wear.home.removeOtherLauncherTasks
 import com.n2.oemlauncher.wear.ui.LauncherViewModel
 import com.n2.oemlauncher.wear.ui.navigation.LauncherNavHost
 import com.n2.oemlauncher.wear.ui.navigation.LauncherNavCallbacks
@@ -21,7 +20,6 @@ import com.n2.oemlauncher.wear.ui.theme.OemTheme
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<LauncherViewModel>()
     private lateinit var appsObserver: LauncherAppsObserver
-    private var hiddenByHome = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,27 +53,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (hiddenByHome && (application as App).container.foregroundState.snapshot().kind ==
-            com.n2.oemlauncher.wear.home.ForegroundKind.WATCH_FACE
-        ) {
-            hiddenByHome = false
-            (application as App).container.systemHomeResolver.resolveIntent()?.let { startActivity(it) }
-            finishAndRemoveTask()
-            return
-        }
-        hiddenByHome = false
         (application as App).container.foregroundState.setLauncherResumed(true)
         viewModel.refreshPlatformStatus(shouldShowPermissionRationale())
     }
 
     override fun onPause() {
-        hiddenByHome = true
         super.onPause()
-        if (!isChangingConfigurations) {
-            removeOtherLauncherTasks(taskId)
-            finish()
-            finishAndRemoveTask()
-        }
     }
 
     override fun onUserLeaveHint() {
@@ -99,7 +82,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
-        hiddenByHome = false
         viewModel.goHome()
         viewModel.centerHoneycomb()
     }

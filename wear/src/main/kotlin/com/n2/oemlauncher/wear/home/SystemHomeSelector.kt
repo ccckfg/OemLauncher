@@ -12,9 +12,9 @@ data class HomeCandidate(
 fun selectSystemHome(
     candidates: List<HomeCandidate>,
     ownPackage: String,
-    fallbackPackage: String = "com.android.settings.FallbackHome",
+    fallbackClassName: String = "com.android.settings.FallbackHome",
 ): HomeCandidate? = candidates.firstOrNull { candidate ->
     candidate.packageName != ownPackage &&
-        candidate.packageName != fallbackPackage &&
+        candidate.className != fallbackClassName &&
         candidate.isSystemApp && candidate.exported && candidate.enabled
 }

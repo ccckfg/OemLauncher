@@ -1,6 +1,7 @@
 package com.n2.oemlauncher.wear.home
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 import android.provider.Settings
 import com.n2.oemlauncher.wear.App
@@ -9,12 +10,23 @@ class ForegroundAccessibilityService : AccessibilityService() {
     private val holder get() = (application as App).container.foregroundState
 
     override fun onServiceConnected() {
+        holder.setServiceConnected(true)
         holder.markServiceConnectedOnSystemHome()
         serviceInfo = serviceInfo.apply {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
             feedbackType = android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_GENERIC
             flags = 0
         }
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        holder.setServiceConnected(false)
+        return super.onUnbind(intent)
+    }
+
+    override fun onDestroy() {
+        holder.setServiceConnected(false)
+        super.onDestroy()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
