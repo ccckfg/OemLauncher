@@ -53,12 +53,14 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel, callback
     val settingsLabel = stringResource(R.string.settings)
     val menuLabel = stringResource(R.string.app_menu)
     val switchLabel = stringResource(R.string.switch_layout)
-    val gear = rememberGearGlyph()
     val layout = state.config.layout
+    val layoutFavorites = state.config.favorites
     val latestState by rememberUpdatedState(state)
     val latestCallbacks by rememberUpdatedState(callbacks)
 
     val iconDiameter = with(density) { HoneycombDefaults.iconDiameterDp(layout.iconSize).dp.toPx() }
+    val gearRadius = iconDiameter / 2f
+    val gear = rememberGearGlyph(gearRadius, layout.visualTier)
     val viewportRadius = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() } / 2f
     val fitRadius = max(viewportRadius - with(density) { WearUiTokens.HONEYCOMB_EDGE_INSET_DP.dp.toPx() }, 1f)
     val cells = HoneycombSlots.cellCount(state.entries.size)
@@ -143,7 +145,7 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel, callback
         Canvas(
             Modifier.fillMaxSize()
                 .onSizeChanged { canvasSize = it }
-                .edgeVignette()
+                .edgeVignette(layout.visualTier)
                 .semantics { contentDescription = labelOf(centerCell) }
                 .pointerInput(geometry, projector, bounds, fitRadius, layout.reduceMotion, layout.snapToCenter) {
                     honeycombPointerInput(
@@ -189,10 +191,17 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel, callback
                 val y = centerY + frame.y[cell]
                 val radius = baseRadius * frame.scale[cell]
                 if (HoneycombSlots.isSettings(cell)) {
-                    drawGearCell(gear, x, y, radius, alpha)
+                    drawGearCell(gear, x, y, radius, alpha, pressed = dragging)
                 } else {
                     val entry = state.entries.getOrNull(HoneycombSlots.appAt(cell)) ?: continue
-                    drawAppCell(imageIcons[entry.key], x, y, radius, alpha)
+                    drawAppCell(
+                        imageIcons[entry.key],
+                        x,
+                        y,
+                        radius,
+                        alpha,
+                        favorite = entry.key in layoutFavorites,
+                    )
                 }
             }
         }

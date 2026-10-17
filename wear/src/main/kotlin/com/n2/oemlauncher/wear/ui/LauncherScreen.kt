@@ -51,8 +51,11 @@ class HomeCallbacks(
 fun LauncherHome(state: LauncherUiState, viewModel: LauncherViewModel, actions: HomeActions) {
     var switcherOpen by rememberSaveable { mutableStateOf(false) }
     val callbacks = HomeCallbacks(actions.openSettings, actions.openMenu) { switcherOpen = true }
-    val blur = if (switcherOpen) WearUiTokens.SWITCHER_BLUR_DP.dp else 0.dp
-    Box(Modifier.fillMaxSize().oemBackdrop()) {
+    val tier = state.config.layout.visualTier
+    val blur = if (switcherOpen && tier == com.n2.oemlauncher.shared.model.VisualTier.REFINED) {
+        com.n2.oemlauncher.shared.design.GlassSpecs.watch(tier).overlayBlurDp.dp
+    } else 0.dp
+    Box(Modifier.fillMaxSize().oemBackdrop(tier)) {
         Box(Modifier.fillMaxSize().blur(blur)) {
             when (state.config.layout.mode) {
                 LayoutMode.HONEYCOMB -> HoneycombView(state, viewModel, callbacks)
@@ -116,6 +119,7 @@ fun LauncherHome(state: LauncherUiState, viewModel: LauncherViewModel, actions: 
         if (switcherOpen) {
             LayoutSwitcher(
                 current = state.config.layout.mode,
+                tier = tier,
                 onSelect = { mode ->
                     viewModel.setLayout(mode)
                     switcherOpen = false

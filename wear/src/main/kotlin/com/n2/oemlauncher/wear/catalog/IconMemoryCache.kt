@@ -3,7 +3,7 @@ package com.n2.oemlauncher.wear.catalog
 import android.graphics.Bitmap
 import java.util.LinkedHashMap
 
-data class IconCacheKey(val iconId: String, val sizePx: Int, val shape: String)
+data class IconCacheKey(val iconId: String, val sizePx: Int, val shape: String, val style: String = "ORIGINAL")
 
 class IconMemoryCache(private val maxBytes: Long) {
     private val values = object : LinkedHashMap<IconCacheKey, Bitmap>(16, 0.75f, true) {

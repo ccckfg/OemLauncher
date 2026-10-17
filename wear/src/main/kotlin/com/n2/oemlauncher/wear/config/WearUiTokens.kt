@@ -12,6 +12,16 @@ object WearUiTokens {
     /** Size of the gear glyph relative to its honeycomb cell, and its ring stroke. */
     const val GEAR_GLYPH_FRACTION = 0.52f
     const val GEAR_RING_DP = 1.5f
+    const val COOKIE_RADIUS_DP = 52f
+    const val COOKIE_GEAR_FRACTION = 0.5f
+    const val COOKIE_PRESS_SCALE = 0.94f
+    const val APP_RIM_DP = 1f
+    const val FAVORITE_RIM_DP = 1.5f
+    const val GLASS_ROW_HEIGHT_DP = 52f
+    const val GLASS_RIM_FADE = 0.55f
+    const val MOTION_SHORT_MS = 150
+    const val MOTION_STANDARD_MS = 260
+    const val MOTION_EMPHASIS_MS = 380
 
     /** Curved name of the centered honeycomb cell along the bottom bezel. */
     const val FOCUS_LABEL_SP = 13f

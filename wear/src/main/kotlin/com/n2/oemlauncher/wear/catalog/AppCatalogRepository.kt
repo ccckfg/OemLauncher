@@ -18,6 +18,7 @@ import androidx.core.graphics.scale
 import com.n2.oemlauncher.shared.model.AppKey
 import com.n2.oemlauncher.shared.model.CatalogEntry
 import com.n2.oemlauncher.shared.model.IconShape
+import com.n2.oemlauncher.shared.model.IconStyle
 import com.n2.oemlauncher.shared.model.LauncherConfig
 import com.n2.oemlauncher.shared.model.WatchCatalog
 import com.n2.oemlauncher.shared.model.WatchDisplay
@@ -33,6 +34,8 @@ import com.n2.oemlauncher.wear.data.UsageRecord
 import com.n2.oemlauncher.wear.data.UsageStats
 import com.n2.oemlauncher.wear.sync.CatalogSource
 import com.n2.oemlauncher.shared.layout.HoneycombDefaults
+import com.n2.oemlauncher.shared.design.ColorMath
+import com.n2.oemlauncher.shared.design.Palettes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -121,7 +124,7 @@ class AppCatalogRepository(
             val bytes = customIcons.bytes(overrideId)
             if (bytes != null) {
                 decode(bytes, targetPx, shape)?.let { bitmap ->
-                    memory.put(IconCacheKey(overrideId, targetPx, shape.name), bitmap)
+                    memory.put(IconCacheKey(overrideId, targetPx, shape.name, config.layout.iconStyle.name), bitmap)
                     return@withContext bitmap
                 }
             }
@@ -129,7 +132,7 @@ class AppCatalogRepository(
         }
         val defaultId = entry.iconId
         if (defaultId != null) {
-            val cacheKey = IconCacheKey(defaultId, targetPx, shape.name)
+            val cacheKey = IconCacheKey(defaultId, targetPx, shape.name, config.layout.iconStyle.name)
             memory.get(cacheKey)?.let { return@withContext it }
             val bytes = iconStore.get(defaultId)
             if (bytes != null) decode(bytes, targetPx, shape)?.also { memory.put(cacheKey, it) }?.let { return@withContext it }
@@ -138,13 +141,36 @@ class AppCatalogRepository(
             ?: return@withContext null
         val activity = launcherApps.getActivityList(component.packageName, Process.myUserHandle())
             .firstOrNull { it.componentName == component } ?: return@withContext null
+        if (config.layout.iconStyle == IconStyle.THEMED) {
+            themedIconBitmap(activity.getIcon(0), targetPx)?.let { themed ->
+                memory.put(IconCacheKey(entry.key, targetPx, shape.name, IconStyle.THEMED.name), themed)
+                return@withContext themed
+            }
+        }
         val generated = drawableToBitmap(activity.getIcon(0), shape)
         val encoded = ByteArrayOutputStream().also { generated.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
         iconStore.put(IconId.of(encoded), encoded)
         val display = if (generated.width == targetPx && generated.height == targetPx) generated
         else generated.scale(targetPx, targetPx)
-        memory.put(IconCacheKey(IconId.of(encoded), targetPx, shape.name), display)
+        memory.put(IconCacheKey(IconId.of(encoded), targetPx, shape.name, config.layout.iconStyle.name), display)
         display
+    }
+
+    /** Builds a circular glass disc only when the platform supplies a monochrome adaptive layer. */
+    private fun themedIconBitmap(drawable: Drawable, targetPx: Int): Bitmap? {
+        val adaptive = drawable as? AdaptiveIconDrawable ?: return null
+        val monochrome = adaptive.monochrome ?: return null
+        if (iconRenderMode(IconStyle.THEMED, hasMonochromeLayer = true) != IconRenderMode.THEMED) return null
+        val bitmap = androidx.core.graphics.createBitmap(targetPx, targetPx)
+        val canvas = Canvas(bitmap)
+        val glass = ColorMath.compositeOver(Palettes.Mocha.glass, Palettes.Mocha.background).toInt()
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint.color = glass
+        canvas.drawCircle(targetPx / 2f, targetPx / 2f, targetPx / 2f, paint)
+        monochrome.setTint(Palettes.Mocha.textPrimary.toInt())
+        monochrome.setBounds(0, 0, targetPx, targetPx)
+        monochrome.draw(canvas)
+        return bitmap
     }
 
     /** Pixels an icon occupies in the launcher, from the current layout's icon size preset. */

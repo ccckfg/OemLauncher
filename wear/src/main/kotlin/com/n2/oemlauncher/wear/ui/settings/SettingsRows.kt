@@ -28,6 +28,7 @@ import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.lazy.TransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
+import com.n2.oemlauncher.wear.ui.theme.OemColors
 
 /** Decorative leading icon for a settings row; the row's label already describes it. */
 fun vectorIcon(icon: ImageVector): @Composable BoxScope.() -> Unit = { Icon(icon, contentDescription = null) }
@@ -37,7 +38,7 @@ fun TransformingLazyColumnItemScope.SectionHeader(text: String, spec: Transforma
     ListSubHeader(
         modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
         transformation = SurfaceTransformation(spec),
-        label = { Text(text) },
+        label = { Text(text, color = OemColors.AccentText) },
     )
 }
 
@@ -48,7 +49,11 @@ fun TransformingLazyColumnItemScope.ActionRow(
     label: String,
     value: String?,
     spec: TransformationSpec,
-    colors: ButtonColors = ButtonDefaults.filledTonalButtonColors(),
+    colors: ButtonColors = ButtonDefaults.filledTonalButtonColors(
+        containerColor = OemColors.Glass,
+        contentColor = OemColors.TextPrimary,
+        iconColor = OemColors.TextPrimary,
+    ),
     onClick: () -> Unit,
 ) {
     FilledTonalButton(
@@ -100,7 +105,7 @@ fun TransformingLazyColumnItemScope.SliderRow(
                 valueText,
                 Modifier.padding(start = 6.dp),
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
+            color = OemColors.Accent,
                 textAlign = TextAlign.End,
             )
         }

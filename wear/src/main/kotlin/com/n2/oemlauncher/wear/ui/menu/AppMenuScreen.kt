@@ -50,7 +50,7 @@ fun AppMenuScreen(key: String, state: LauncherUiState, viewModel: LauncherViewMo
     val listState = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
     RotaryTicksScroll(listState, state.rotaryTicks, state.config.layout.hapticsEnabled)
-    ScreenScaffold(scrollState = listState, modifier = Modifier.oemBackdrop()) { contentPadding ->
+    ScreenScaffold(scrollState = listState, modifier = Modifier.oemBackdrop(state.config.layout.visualTier)) { contentPadding ->
         TransformingLazyColumn(state = listState, contentPadding = contentPadding) {
             item {
                 Column(

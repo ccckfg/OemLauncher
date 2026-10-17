@@ -26,22 +26,32 @@ import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.IconButton
 import androidx.wear.compose.material3.MaterialTheme
 import com.n2.oemlauncher.shared.model.LayoutMode
+import com.n2.oemlauncher.shared.model.VisualTier
 import com.n2.oemlauncher.wear.R
 import com.n2.oemlauncher.wear.config.WearUiTokens
 import com.n2.oemlauncher.wear.ui.theme.OemColors
 
 /** Quick switch between the three layouts; tapping outside the capsule or Back closes it. */
 @Composable
-fun LayoutSwitcher(current: LayoutMode, onSelect: (LayoutMode) -> Unit, onDismiss: () -> Unit) {
+fun LayoutSwitcher(
+    current: LayoutMode,
+    tier: VisualTier,
+    onSelect: (LayoutMode) -> Unit,
+    onDismiss: () -> Unit,
+) {
     BackHandler(onBack = onDismiss)
     Box(
         Modifier.fillMaxSize()
-            .background(OemColors.Scrim.copy(alpha = WearUiTokens.SCRIM_ALPHA))
+            .background(
+                OemColors.Scrim.copy(
+                    alpha = if (tier == VisualTier.LITE) 0.70f else WearUiTokens.SCRIM_ALPHA,
+                ),
+            )
             .pointerInput(Unit) { detectTapGestures { onDismiss() } },
         contentAlignment = Alignment.Center,
     ) {
         Row(
-            Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
+            Modifier.background(OemColors.GlassStrong, CircleShape)
                 .padding(WearUiTokens.SWITCHER_PADDING_DP.dp),
             horizontalArrangement = Arrangement.spacedBy(WearUiTokens.SWITCHER_GAP_DP.dp),
         ) {
@@ -52,7 +62,9 @@ fun LayoutSwitcher(current: LayoutMode, onSelect: (LayoutMode) -> Unit, onDismis
                 if (mode == current) {
                     FilledIconButton(onClick = { onSelect(mode) }, modifier = size) { Icon(icon, label) }
                 } else {
-                    IconButton(onClick = { onSelect(mode) }, modifier = size) { Icon(icon, label) }
+                    IconButton(onClick = { onSelect(mode) }, modifier = size) {
+                        Icon(icon, label, tint = OemColors.TextPrimary)
+                    }
                 }
             }
         }

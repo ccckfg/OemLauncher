@@ -12,8 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
@@ -32,30 +34,82 @@ import androidx.wear.compose.foundation.CurvedLayout
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.curvedText
 import com.n2.oemlauncher.wear.config.WearUiTokens
+import com.n2.oemlauncher.shared.design.CookieOutline
+import com.n2.oemlauncher.shared.model.VisualTier
 import com.n2.oemlauncher.wear.ui.theme.OemColors
 import kotlin.math.roundToInt
 
 /** Gear resources prepared once, so drawing the gear cell allocates nothing per frame. */
-class GearGlyph(val painter: VectorPainter, val tint: ColorFilter, val ring: Stroke)
+class GearGlyph(
+    val painter: VectorPainter,
+    val tint: ColorFilter,
+    val ring: Stroke,
+    val cookiePath: Path,
+    val cookieFill: Brush?,
+    val cookieColor: androidx.compose.ui.graphics.Color,
+    val shadow: Boolean,
+)
 
 @Composable
-fun rememberGearGlyph(): GearGlyph {
+fun rememberGearGlyph(radiusPx: Float, tier: VisualTier): GearGlyph {
     val painter = rememberVectorPainter(Icons.Rounded.Settings)
     val ringPx = with(LocalDensity.current) { WearUiTokens.GEAR_RING_DP.dp.toPx() }
-    return remember(painter, ringPx) { GearGlyph(painter, ColorFilter.tint(OemColors.GearGlyph), Stroke(ringPx)) }
-}
-
-internal fun DrawScope.drawGearCell(glyph: GearGlyph, x: Float, y: Float, radius: Float, alpha: Float) {
-    val center = Offset(x, y)
-    drawCircle(OemColors.GearDisc, radius, center, alpha)
-    drawCircle(OemColors.GearRing, radius - glyph.ring.width / 2f, center, alpha, style = glyph.ring)
-    val edge = radius * 2f * WearUiTokens.GEAR_GLYPH_FRACTION
-    translate(x - edge / 2f, y - edge / 2f) {
-        with(glyph.painter) { draw(Size(edge, edge), alpha, glyph.tint) }
+    return remember(painter, ringPx, radiusPx, tier) {
+        val points = CookieOutline.points(radiusPx)
+        val path = Path().apply {
+            moveTo(points[0], points[1])
+            var index = 2
+            while (index < points.size) {
+                lineTo(points[index], points[index + 1])
+                index += 2
+            }
+            close()
+        }
+        GearGlyph(
+            painter = painter,
+            tint = ColorFilter.tint(OemColors.OnAccent),
+            ring = Stroke(ringPx),
+            cookiePath = path,
+            cookieFill = if (tier == VisualTier.REFINED) {
+                Brush.verticalGradient(listOf(OemColors.AccentLight, OemColors.AccentDeep), -radiusPx, radiusPx)
+            } else null,
+            cookieColor = OemColors.Accent,
+            shadow = tier == VisualTier.REFINED,
+        )
     }
 }
 
-internal fun DrawScope.drawAppCell(icon: ImageBitmap?, x: Float, y: Float, radius: Float, alpha: Float) {
+internal fun DrawScope.drawGearCell(
+    glyph: GearGlyph,
+    x: Float,
+    y: Float,
+    radius: Float,
+    alpha: Float,
+    pressed: Boolean = false,
+) {
+    val scale = if (pressed) WearUiTokens.COOKIE_PRESS_SCALE else 1f
+    translate(x, y) {
+        if (glyph.shadow) {
+            translate(0f, radius * 0.08f) { drawPath(glyph.cookiePath, OemColors.Background.copy(alpha = 0.35f * alpha)) }
+        }
+        if (glyph.cookieFill != null) drawPath(glyph.cookiePath, glyph.cookieFill, alpha)
+        else drawPath(glyph.cookiePath, glyph.cookieColor, alpha)
+        drawPath(glyph.cookiePath, OemColors.RimLight, alpha, style = glyph.ring)
+        val edge = radius * 2f * WearUiTokens.COOKIE_GEAR_FRACTION * scale
+        translate(-edge / 2f, -edge / 2f) {
+            with(glyph.painter) { draw(Size(edge, edge), alpha, glyph.tint) }
+        }
+    }
+}
+
+internal fun DrawScope.drawAppCell(
+    icon: ImageBitmap?,
+    x: Float,
+    y: Float,
+    radius: Float,
+    alpha: Float,
+    favorite: Boolean = false,
+) {
     if (icon == null) {
         drawCircle(OemColors.Placeholder, radius, Offset(x, y), alpha)
         return
@@ -70,6 +124,10 @@ internal fun DrawScope.drawAppCell(icon: ImageBitmap?, x: Float, y: Float, radiu
         alpha = alpha,
         filterQuality = FilterQuality.Medium,
     )
+    drawCircle(OemColors.RimLight, radius - WearUiTokens.APP_RIM_DP / 2f, Offset(x, y), alpha, style = Stroke(WearUiTokens.APP_RIM_DP))
+    if (favorite) {
+        drawCircle(OemColors.Accent, radius - WearUiTokens.FAVORITE_RIM_DP / 2f, Offset(x, y), alpha, style = Stroke(WearUiTokens.FAVORITE_RIM_DP))
+    }
 }
 
 /** Name of the centered cell, curved along the bottom bezel; it fades out while dragging. */
@@ -80,7 +138,7 @@ fun HoneycombFocusLabel(text: String, visible: Boolean) {
         tween(WearUiTokens.FOCUS_LABEL_FADE_MS),
         label = "focusLabel",
     )
-    val color = MaterialTheme.colorScheme.onSurface
+    val color = OemColors.TextSecondary
     CurvedLayout(
         // Decorative: every cell already has its own accessibility node with the same name.
         Modifier.fillMaxSize().clearAndSetSemantics {}.graphicsLayer { this.alpha = alpha },

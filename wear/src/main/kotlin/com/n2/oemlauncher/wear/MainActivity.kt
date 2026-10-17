@@ -6,11 +6,11 @@ import android.view.MotionEvent
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.net.toUri
 import com.n2.oemlauncher.wear.catalog.LauncherAppsObserver
-import com.n2.oemlauncher.wear.catalog.AppListPermissionController
 import com.n2.oemlauncher.wear.catalog.SAMSUNG_APP_LIST_PERMISSION
 import com.n2.oemlauncher.wear.ui.LauncherViewModel
 import com.n2.oemlauncher.wear.ui.navigation.LauncherNavHost
@@ -21,6 +21,12 @@ import com.n2.oemlauncher.wear.config.WearDebugLog
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<LauncherViewModel>()
     private lateinit var appsObserver: LauncherAppsObserver
+    private val appListPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) {
+        viewModel.refreshPlatformStatus(shouldShowPermissionRationale())
+        viewModel.refresh()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,20 +106,13 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == AppListPermissionController.REQUEST_CODE) {
-            viewModel.refreshPlatformStatus(shouldShowPermissionRationale())
-            viewModel.refresh()
-        }
-    }
-
     private fun shouldShowPermissionRationale(): Boolean =
         shouldShowRequestPermissionRationale(SAMSUNG_APP_LIST_PERMISSION)
 
     private fun requestAppListPermission() {
         viewModel.markAppListPermissionRequested(shouldShowPermissionRationale())
-        (application as App).container.appListPermission.request(this)
+        val controller = (application as App).container.appListPermission
+        if (controller.isAvailable()) appListPermissionLauncher.launch(SAMSUNG_APP_LIST_PERMISSION)
     }
 
     private fun openAppListPermissionSettings() {

@@ -12,6 +12,8 @@ import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.TimelineBuilders
 import androidx.wear.tiles.TileBuilders
 import com.n2.oemlauncher.shared.model.AppKey
+import com.n2.oemlauncher.shared.design.ColorMath
+import com.n2.oemlauncher.shared.design.Palettes
 import com.n2.oemlauncher.wear.config.WearConstants
 
 /** Everything one tile render needs. */
@@ -120,6 +122,14 @@ object TileLayoutBuilder {
         scope: ProtoLayoutScope,
     ): LayoutElementBuilders.Column {
         val modifiers = ModifiersBuilders.Modifiers.Builder()
+            .setBackground(
+                ModifiersBuilders.Background.Builder()
+                    .setColor(argb(GLASS_COLOR))
+                    .setCorner(
+                        ModifiersBuilders.Corner.Builder().setRadius(dp(WearConstants.TILE_CELL_WIDTH_DP / 2f)).build(),
+                    )
+                    .build(),
+            )
             .setSemantics(
                 ModifiersBuilders.Semantics.Builder()
                     .setContentDescription(favorite.label)
@@ -253,6 +263,7 @@ object TileLayoutBuilder {
     }
 
     private const val OPEN_LAUNCHER_ID = "open_launcher"
-    private const val BUTTON_COLOR = 0xFF2A3A55.toInt()
+    private val GLASS_COLOR = ColorMath.compositeOver(Palettes.Mocha.glass, Palettes.Mocha.background).toInt()
+    private val BUTTON_COLOR = Palettes.Mocha.accent.toInt()
     private const val TILE_GRID_COLUMNS = 2
 }
