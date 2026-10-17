@@ -33,12 +33,19 @@ private object Routes {
     fun menu(key: String) = "menu/${Uri.encode(key)}"
 }
 
+data class LauncherNavCallbacks(
+    val openDefaultHomeSettings: () -> Unit,
+    val openAccessibilitySettings: () -> Unit,
+    val requestAppListPermission: () -> Unit,
+    val openAppListPermissionSettings: () -> Unit,
+)
+
 /**
  * Every screen above the launcher home lives in a swipe-to-dismiss container: a swipe to the
  * right from anywhere goes back, which also works with a mouse on the emulator.
  */
 @Composable
-fun LauncherNavHost(viewModel: LauncherViewModel) {
+fun LauncherNavHost(viewModel: LauncherViewModel, callbacks: LauncherNavCallbacks) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val nav = rememberSwipeDismissableNavController()
     LaunchedEffect(state.homeRequest) { nav.popToHome() }
@@ -46,6 +53,8 @@ fun LauncherNavHost(viewModel: LauncherViewModel) {
         HomeActions(
             openSettings = { nav.navigate(Routes.SETTINGS) { launchSingleTop = true } },
             openMenu = { key -> nav.navigate(Routes.menu(key)) { launchSingleTop = true } },
+            requestAppListPermission = callbacks.requestAppListPermission,
+            openAppListPermissionSettings = callbacks.openAppListPermissionSettings,
         )
     }
     AppScaffold(timeText = { TimeText() }) {
@@ -57,6 +66,8 @@ fun LauncherNavHost(viewModel: LauncherViewModel) {
                     viewModel = viewModel,
                     onChoice = { nav.navigate(Routes.choice(it)) { launchSingleTop = true } },
                     onDone = { nav.popBackStack() },
+                    onDefaultHomeSettings = callbacks.openDefaultHomeSettings,
+                    onAccessibilitySettings = callbacks.openAccessibilitySettings,
                 )
             }
             composable(Routes.CHOICE) { entry ->

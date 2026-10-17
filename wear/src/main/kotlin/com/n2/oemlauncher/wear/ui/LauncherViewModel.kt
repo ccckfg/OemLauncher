@@ -16,9 +16,12 @@ import com.n2.oemlauncher.shared.model.LauncherConfig
 import com.n2.oemlauncher.shared.model.SortMode
 import com.n2.oemlauncher.wear.BuildConfig
 import com.n2.oemlauncher.wear.App
+import com.n2.oemlauncher.wear.catalog.AppListPermissionStatus
+import com.n2.oemlauncher.wear.catalog.shouldRetryEmptyCatalog
 import com.n2.oemlauncher.wear.config.WearConstants
 import com.n2.oemlauncher.wear.domain.CatalogSignature
 import com.n2.oemlauncher.wear.domain.LauncherArranger
+import com.n2.oemlauncher.wear.home.HomeSettingsState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,6 +50,8 @@ data class LauncherUiState(
     val syncLastText: String? = null,
     val syncResult: ApplyResult = ApplyResult.NONE,
     val syncMissingIcons: Int = 0,
+    val homeSettings: HomeSettingsState = HomeSettingsState(),
+    val appListPermission: AppListPermissionStatus = AppListPermissionStatus(false, false, false, false),
 )
 
 class LauncherViewModel(application: Application) : AndroidViewModel(application) {
@@ -57,6 +62,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     private var refreshJob: Job? = null
     private var refreshGeneration = 0L
     private var lastCatalogSignature: String? = null
+    private var appListPermissionRequested = false
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -71,6 +77,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                 if (active) refresh(config)
             }
         }
+        refreshPlatformStatus()
         viewModelScope.launch {
             container.syncRepository.status.collect { status ->
                 mutable.value = state.value.copy(
@@ -89,7 +96,12 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         val generation = ++refreshGeneration
         refreshJob = viewModelScope.launch(Dispatchers.IO) {
             val usage = container.configRepository.usage.first()
-            val catalog = runCatching { container.catalogRepository.refresh(config, usage) }.getOrNull()
+            var catalog = runCatching { container.catalogRepository.refresh(config, usage) }.getOrNull()
+            if (catalog != null && shouldRetryEmptyCatalog(catalog.entries.size)) {
+                kotlinx.coroutines.delay(WearConstants.CATALOG_EMPTY_RETRY_DELAY_MS)
+                val retry = runCatching { container.catalogRepository.refresh(config, usage) }.getOrNull()
+                if (retry != null) catalog = retry
+            }
             if (catalog != null) publishCatalogWhenChanged(catalog)
             val entries = (catalog?.entries ?: state.value.entries).let { if (state.value.demoEnabled) withDemo(it) else it }
             val arranged = LauncherArranger.arrange(entries, config)
@@ -121,7 +133,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         if (previous != null && previous != signature) container.syncRepository.requestCatalogPublish()
     }
 
-    fun onVisible() { active = true; refresh() }
+    fun onVisible() { active = true; refreshPlatformStatus(); refresh() }
     fun onHidden() { active = false; refreshJob?.cancel() }
 
     fun goHome() { mutable.value = state.value.copy(homeRequest = state.value.homeRequest + 1) }
@@ -137,6 +149,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     fun launch(entry: CatalogEntry, sourceBounds: RectF? = null) {
         viewModelScope.launch {
             if (container.catalogRepository.launch(entry.key, sourceBounds)) {
+                container.foregroundState.recordAppLaunch()
                 val count = container.configRepository.recordLaunch(entry.key, System.currentTimeMillis())
                 if (count % WearConstants.USAGE_PUBLISH_EVERY == 0) container.syncRepository.requestCatalogPublish()
                 mutable.value = state.value.copy(message = null)
@@ -153,6 +166,25 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         getApplication<Application>().startActivity(
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()),
         )
+    }
+
+    fun refreshPlatformStatus(shouldShowPermissionRationale: Boolean = false) {
+        mutable.value = state.value.copy(
+            homeSettings = container.homeSettingsRepository.read(),
+            appListPermission = container.appListPermission.status(
+                requestAttempted = appListPermissionRequested,
+                shouldShowRationale = shouldShowPermissionRationale,
+            ),
+        )
+    }
+
+    fun markAppListPermissionRequested(shouldShowPermissionRationale: Boolean = false) {
+        appListPermissionRequested = true
+        refreshPlatformStatus(shouldShowPermissionRationale)
+    }
+
+    fun setHomeSettingsMessage(message: String?) {
+        mutable.value = state.value.copy(homeSettings = state.value.homeSettings.copy(message = message))
     }
 
     fun moveFavorite(key: String, delta: Int) {

@@ -7,6 +7,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Label
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.CenterFocusStrong
+import androidx.compose.material.icons.rounded.Accessibility
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.MotionPhotosOff
@@ -65,6 +67,8 @@ fun SettingsScreen(
     viewModel: LauncherViewModel,
     onChoice: (SettingChoice) -> Unit,
     onDone: () -> Unit,
+    onDefaultHomeSettings: () -> Unit,
+    onAccessibilitySettings: () -> Unit,
 ) {
     val config = state.config
     val layout = config.layout
@@ -154,6 +158,46 @@ fun SettingsScreen(
             item {
                 ToggleRow(Icons.Rounded.MotionPhotosOff, stringResource(R.string.label_reduce_motion), layout.reduceMotion, spec) { on ->
                     updateLayout { it.copy(reduceMotion = on) }
+                }
+            }
+
+            item { SectionHeader(stringResource(R.string.section_home), spec) }
+            item {
+                ActionRow(
+                    vectorIcon(Icons.Rounded.Home),
+                    stringResource(R.string.label_default_home),
+                    stringResource(if (state.homeSettings.isDefaultHome) R.string.status_set else R.string.status_not_set),
+                    spec,
+                    onClick = onDefaultHomeSettings,
+                )
+            }
+            item {
+                ActionRow(
+                    vectorIcon(Icons.Rounded.Accessibility),
+                    stringResource(R.string.label_home_key),
+                    stringResource(if (state.homeSettings.accessibilityEnabled) R.string.status_enabled else R.string.status_disabled),
+                    spec,
+                    onClick = onAccessibilitySettings,
+                )
+            }
+            item {
+                Text(
+                    stringResource(R.string.home_key_explanation),
+                    Modifier.fillMaxWidth().transformedHeight(this, spec).padding(horizontal = 12.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            state.homeSettings.message?.let { message ->
+                item {
+                    Text(
+                        message,
+                        Modifier.fillMaxWidth().transformedHeight(this, spec).padding(horizontal = 12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                    )
                 }
             }
 

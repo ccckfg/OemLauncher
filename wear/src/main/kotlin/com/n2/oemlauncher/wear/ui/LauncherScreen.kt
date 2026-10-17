@@ -2,6 +2,7 @@ package com.n2.oemlauncher.wear.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -20,16 +21,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.FilledTonalIconButton
+import androidx.wear.compose.material3.FilledTonalButton
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import com.n2.oemlauncher.shared.model.LayoutMode
 import com.n2.oemlauncher.wear.R
 import com.n2.oemlauncher.wear.config.WearUiTokens
+import com.n2.oemlauncher.wear.catalog.EmptyCatalogState
+import com.n2.oemlauncher.wear.catalog.emptyCatalogState
 import com.n2.oemlauncher.wear.ui.theme.oemBackdrop
 
 /** Navigation out of the launcher home, provided by the navigation host. */
-class HomeActions(val openSettings: () -> Unit, val openMenu: (String) -> Unit)
+class HomeActions(
+    val openSettings: () -> Unit,
+    val openMenu: (String) -> Unit,
+    val requestAppListPermission: () -> Unit,
+    val openAppListPermissionSettings: () -> Unit,
+)
 
 /** Callbacks every home layout needs: launching is on the view model, the rest is navigation. */
 class HomeCallbacks(
@@ -54,12 +63,43 @@ fun LauncherHome(state: LauncherUiState, viewModel: LauncherViewModel, actions: 
         if (state.loading && state.entries.isEmpty()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         } else if (!state.loading && state.entries.isEmpty()) {
-            Text(
-                stringResource(R.string.empty_state),
+            val emptyState = emptyCatalogState(state.appListPermission)
+            Column(
                 Modifier.align(Alignment.Center).padding(horizontal = 32.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    if (emptyState == EmptyCatalogState.NEEDS_PERMISSION) {
+                        stringResource(R.string.app_list_permission_message)
+                    } else if (emptyState == EmptyCatalogState.PERMISSION_BLOCKED) {
+                        stringResource(R.string.app_list_permission_blocked)
+                    } else {
+                        stringResource(R.string.empty_state)
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                if (emptyState != EmptyCatalogState.GENERIC) {
+                    FilledTonalButton(
+                        onClick = if (emptyState == EmptyCatalogState.NEEDS_PERMISSION) {
+                            actions.requestAppListPermission
+                        } else {
+                            actions.openAppListPermissionSettings
+                        },
+                        modifier = Modifier.padding(top = 8.dp),
+                    ) {
+                        Text(
+                            stringResource(
+                                if (emptyState == EmptyCatalogState.NEEDS_PERMISSION) {
+                                    R.string.app_list_permission_grant
+                                } else {
+                                    R.string.app_list_permission_settings
+                                },
+                            ),
+                        )
+                    }
+                }
+            }
         }
         state.message?.let {
             Text(
