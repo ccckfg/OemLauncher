@@ -19,7 +19,7 @@ v1.0.0 已在 `master` 交付，但在用户的 Galaxy Watch 上实测几乎没�
 | 编号 | 内容 | 状态 |
 | --- | --- | --- |
 | M0 | 整理仓库：进度和决策文档、设计参考图入库、忽略 `kcys/`、归档未提交代码 | 完成 |
-| M1 | 手表能用：Home 键转交保留表盘、无障碍开启引导、修复“没有可启动的应用”、拒绝“读取应用列表”权限时给出引导、国行声明；装到真机由用户试用 | 进行中（droid） |
+| M1 | 手表能用：Home 键转交保留表盘、无障碍开启引导、修复“没有可启动的应用”、拒绝“读取应用列表”权限时给出引导、国行声明；装到真机由用户试用 | 进行中（codex） |
 | M2 | 设计规范：`docs/design/` 规范 + `shared` 设计参数 + 一页视觉样张，用户确认 | 规范和样张完成，等用户确认 |
 | M3 | 手表界面按规范重做，精致 / 轻量两档 | 等 M2 |
 | M4 | 手机界面按规范重做，预览跟上新手表界面 | 等 M2 |
@@ -29,7 +29,7 @@ M1 和 M2 并行。
 
 ## 进行中
 
-- M1：droid（DeepSeek V4.1 Flash max）在 worktree `orch-20261017-131204-57ed-wear` 里实现，分支 `orch/20261017-131204-57ed-wear`。
+- M1：codex（gpt-6.1-sol xhigh）在 worktree `orch-20261017-133453-f494-wear` 里实现，分支 `orch/20261017-133453-f494-wear`，起点 `1dd3334`。先前派给 DeepSeek 的一轮（`orch-20261017-131204-57ed-wear`）没有产出代码，只留下 10 张复现截图。
 - M2：规范 `docs/design/README.md`；`shared/design/` 已有配色（Mocha / Latte）、玻璃规格、饼干轮廓和对比度测试；`LayoutSettings` 新增 `visualTier`、`iconStyle`（老版本两端兼容）。视觉样张：https://claude.ai/artifact/K1AfAPhxSm4QmuJommPdok ，等用户确认后再派 M3、M4。
 
 ## 待办与已知问题

@@ -9,7 +9,12 @@
 
 ## D5 分工：droid 实现，编排者审查（2026-10-17）
 
-- **决定**：具体实现交给 droid（DeepSeek V4.1 Flash，推理强度 max），每个 agent 在独立的 worktree 和分支里工作。编排者负责设计规范、`shared/` 契约、任务卡、代码审查、合并和真机验证。
+- **决定**：具体实现交给子 agent，每个 agent 在独立的 worktree 和分支里工作。编排者负责设计规范、`shared/` 契约、任务卡、代码审查、合并和真机验证。
+- **选型**（编排者按任务判断）：
+  - 简单、说明清楚的任务（文档、截图、字符串和资源、机械式重构、跑测试）→ droid 的 DeepSeek V4.1 Flash，强度 max；
+  - 复杂任务（平台行为、架构、性能敏感的界面、难 bug），或 DeepSeek 卡住时 → codex 的 gpt-6.1-sol，强度 xhigh（优先），或 droid 的 gpt-6.1-sol xhigh；
+  - 交叉审查时，审查者和写代码的不用同一家。
+- **记录**：M1 先派给 DeepSeek，20 分钟停在第一步、没有写代码，改派 codex。
 - **设备**：用户的 Galaxy Watch（SM-R920，国行）只由编排者装包和截图；droid 只用模拟器 `emulator-5554`（手表）和 `emulator-5556`（手机）。
 - **分支**：集成分支是 `feat/wear-redesign`。每个里程碑验证通过后，再快进合并到 `master`。
 
