@@ -39,6 +39,9 @@ class ForegroundStateHolder(private val launcherPackage: String) {
     var systemHomePackage: String? = null
 
     @Volatile
+    var watchFacePackage: String? = null
+
+    @Volatile
     private var kind: ForegroundKind = ForegroundKind.UNKNOWN
 
     @Volatile
@@ -50,15 +53,16 @@ class ForegroundStateHolder(private val launcherPackage: String) {
     @Volatile
     private var serviceConnected: Boolean = false
 
-    fun updateForeground(packageName: String, inputMethodPackage: String? = null) {
+    fun updateForeground(packageName: String, inputMethodPackage: String? = null): ForegroundKind? {
         if (packageName.isBlank() || packageName == "android" || packageName == "com.android.systemui" ||
             packageName == inputMethodPackage
-        ) return
+        ) return null
         kind = when {
-            packageName == systemHomePackage -> ForegroundKind.WATCH_FACE
+            packageName == systemHomePackage || packageName == watchFacePackage -> ForegroundKind.WATCH_FACE
             packageName == launcherPackage -> ForegroundKind.LAUNCHER
             else -> ForegroundKind.APP
         }
+        return kind
     }
 
     fun markServiceConnectedOnSystemHome() {
@@ -70,13 +74,22 @@ class ForegroundStateHolder(private val launcherPackage: String) {
         if (!connected) kind = ForegroundKind.UNKNOWN
     }
 
+    fun setHomePackages(systemPackage: String?, wallpaperPackage: String?) {
+        systemHomePackage = systemPackage
+        watchFacePackage = wallpaperPackage
+        markServiceConnectedOnSystemHome()
+    }
+
     fun setLauncherResumed(resumed: Boolean) {
         launcherResumed = resumed
         if (resumed) kind = ForegroundKind.LAUNCHER
     }
 
     fun recordHomeAction(action: HomeAction) {
-        if (action == HomeAction.DELEGATE_TO_SYSTEM) lastAction = LastHomeAction.DELEGATED_TO_SYSTEM
+        if (action == HomeAction.DELEGATE_TO_SYSTEM) {
+            lastAction = LastHomeAction.DELEGATED_TO_SYSTEM
+            kind = ForegroundKind.WATCH_FACE
+        }
     }
 
     fun recordAppLaunch() {

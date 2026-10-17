@@ -16,6 +16,7 @@ import com.n2.oemlauncher.wear.ui.LauncherViewModel
 import com.n2.oemlauncher.wear.ui.navigation.LauncherNavHost
 import com.n2.oemlauncher.wear.ui.navigation.LauncherNavCallbacks
 import com.n2.oemlauncher.wear.ui.theme.OemTheme
+import com.n2.oemlauncher.wear.config.WearDebugLog
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<LauncherViewModel>()
@@ -23,6 +24,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WearDebugLog.d { "activity onCreate saved=${savedInstanceState != null}" }
         appsObserver = LauncherAppsObserver(this) { viewModel.refresh() }
         // Registered before the navigation host, so it only runs on the home screen, where
         // the navigation host has nothing left to pop.
@@ -46,6 +48,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        WearDebugLog.d { "activity onStart" }
         appsObserver.start()
         viewModel.onVisible()
         viewModel.refreshPlatformStatus(shouldShowPermissionRationale())
@@ -53,20 +56,26 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        (application as App).container.foregroundState.setLauncherResumed(true)
+        WearDebugLog.d { "activity onResume" }
+        val appContainer = (application as App).container
+        appContainer.foregroundState.setLauncherResumed(true)
+        appContainer.refreshSystemHomePackage()
         viewModel.refreshPlatformStatus(shouldShowPermissionRationale())
     }
 
     override fun onPause() {
+        WearDebugLog.d { "activity onPause" }
         super.onPause()
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
+        WearDebugLog.d { "activity onUserLeaveHint finish=home" }
         finishAndRemoveTask()
     }
 
     override fun onStop() {
+        WearDebugLog.d { "activity onStop finish=transient-launcher" }
         (application as App).container.foregroundState.setLauncherResumed(false)
         viewModel.onHidden()
         appsObserver.stop()
@@ -84,6 +93,11 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         viewModel.goHome()
         viewModel.centerHoneycomb()
+    }
+
+    override fun onDestroy() {
+        WearDebugLog.d { "activity onDestroy finishing=$isFinishing" }
+        super.onDestroy()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {

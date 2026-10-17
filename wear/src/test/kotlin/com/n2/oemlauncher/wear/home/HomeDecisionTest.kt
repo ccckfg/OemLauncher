@@ -53,6 +53,24 @@ class HomeDecisionTest {
         assertEquals(ForegroundKind.UNKNOWN, holder.snapshot().kind)
     }
 
+    @Test fun delegatedSystemHomeResetsStuckAppToWatchFace() {
+        val holder = ForegroundStateHolder("com.n2.oemlauncher")
+        holder.setServiceConnected(true)
+        holder.updateForeground("com.example.app")
+        assertEquals(ForegroundKind.APP, holder.snapshot().kind)
+        holder.recordHomeAction(HomeAction.DELEGATE_TO_SYSTEM)
+        assertEquals(ForegroundKind.WATCH_FACE, holder.snapshot().kind)
+        assertEquals(HomeAction.SHOW_LAUNCHER, decide(holder))
+    }
+
+    @Test fun wallpaperPackageIsClassifiedAsWatchFace() {
+        val holder = ForegroundStateHolder("com.n2.oemlauncher")
+        holder.setServiceConnected(true)
+        holder.setHomePackages(null, "com.example.watchface")
+        holder.updateForeground("com.example.watchface")
+        assertEquals(ForegroundKind.WATCH_FACE, holder.snapshot().kind)
+    }
+
     private fun decide(holder: ForegroundStateHolder): HomeAction {
         val snapshot = holder.snapshot()
         return decideHomeAction(snapshot.kind, snapshot.launcherResumed, snapshot.lastAction)

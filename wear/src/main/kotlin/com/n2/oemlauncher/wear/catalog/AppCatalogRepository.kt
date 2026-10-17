@@ -24,6 +24,7 @@ import com.n2.oemlauncher.shared.model.WatchDisplay
 import com.n2.oemlauncher.shared.protocol.IconId
 import com.n2.oemlauncher.shared.protocol.ProtocolLimits
 import com.n2.oemlauncher.wear.config.WearConstants
+import com.n2.oemlauncher.wear.config.WearDebugLog
 import com.n2.oemlauncher.wear.data.CatalogSnapshotStore
 import com.n2.oemlauncher.wear.data.ConfigRepository
 import com.n2.oemlauncher.wear.data.CustomIconRepository
@@ -47,6 +48,7 @@ class AppCatalogRepository(
     private val snapshotStore: CatalogSnapshotStore,
     private val iconStore: IconFileStore,
     private val customIcons: CustomIconRepository,
+    private val appListPermission: AppListPermissionController,
 ) : CatalogSource {
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
     private val packageManager = context.packageManager
@@ -66,8 +68,17 @@ class AppCatalogRepository(
         }
 
     suspend fun refresh(config: LauncherConfig, usage: UsageStats): WatchCatalog = withContext(Dispatchers.IO) {
-        val activities = launcherApps.getActivityList(null, Process.myUserHandle())
-            .filter { it.applicationInfo.packageName != context.packageName }
+        val permission = appListPermission.status(requestAttempted = false, shouldShowRationale = false)
+        val activities = runCatching {
+            launcherApps.getActivityList(null, Process.myUserHandle())
+                .filter { it.applicationInfo.packageName != context.packageName }
+        }.getOrElse { error ->
+            WearDebugLog.d {
+                "catalog refresh entries=0 permissionAvailable=${permission.available} " +
+                    "permissionGranted=${permission.granted} error=${error.javaClass.simpleName}"
+            }
+            throw error
+        }
         val entries = activities.mapNotNull { activity ->
             val key = activity.componentName.flattenToString()
             val record = usage[key] ?: UsageRecord()
@@ -93,7 +104,13 @@ class AppCatalogRepository(
                 isRound = context.resources.configuration.isScreenRound,
             ),
             entries = entries,
-        ).also(snapshotStore::write)
+        ).also {
+            snapshotStore.write(it)
+            WearDebugLog.d {
+                "catalog refresh entries=${entries.size} permissionAvailable=${permission.available} " +
+                    "permissionGranted=${permission.granted}"
+            }
+        }
     }
 
     suspend fun loadIcon(entry: CatalogEntry, config: LauncherConfig): Bitmap? = withContext(Dispatchers.IO) {
