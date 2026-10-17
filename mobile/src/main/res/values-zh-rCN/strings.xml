@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">N2 桌面</string>
-    <string name="home">你的手表，你的桌面</string>
-    <string name="home_subtitle">在手机上编辑，在手腕上使用。</string>
     <string name="no_watch">未连接手表</string>
     <string name="no_watch_detail">请通过 Wear OS 配套应用配对手表。离线时也能继续编辑。</string>
     <string name="connected">已连接</string>
@@ -22,9 +20,6 @@
     <string name="sync_rejected">手表未能应用此配置</string>
     <string name="sync_outdated">请更新手表端应用后同步</string>
     <string name="last_sync">上次应用：%1$s</string>
-    <string name="never_synced">尚未完成过同步</string>
-    <string name="unsent_changes">修改已保存在本手机</string>
-    <string name="up_to_date">没有需要发送的内容</string>
     <string name="load_watch">载入手表配置</string>
     <string name="overwrite_watch">用我的修改覆盖</string>
     <string name="conflict_detail">手表配置已更新，而草稿仍基于旧配置。请选择保留哪一端的修改。</string>
@@ -32,7 +27,6 @@
     <string name="demo_detail">包含 40 个应用的示例手表，不会向你的手表发送任何配置。</string>
     <string name="try_demo">体验演示</string>
     <string name="demo_watch">演示手表</string>
-    <string name="empty_title">从你的手表开始</string>
     <string name="empty_detail">刷新以获取手表应用，或体验演示，探索全部编辑功能。</string>
     <string name="preview">手表预览</string>
     <string name="preview_detail">拖动查看，按手表的实际屏幕尺寸与密度绘制。</string>
@@ -51,7 +45,6 @@
     <string name="search">搜索应用</string>
     <string name="clear_search">清空搜索</string>
     <string name="favorites">常用应用（%1$d/7）</string>
-    <string name="favorites_hint">固定在中心，拖动手柄可排序。</string>
     <string name="all_apps">全部应用（%1$d）</string>
     <string name="hidden_apps">已隐藏应用（%1$d）</string>
     <string name="no_results">没有匹配的应用</string>
@@ -65,9 +58,22 @@
     <string name="move_down">将%1$s下移</string>
     <string name="drag_app">拖动排序%1$s</string>
     <string name="custom">自定义</string>
-    <string name="alphabetical">按名称</string>
+    <string name="alphabetical">字母</string>
     <string name="most_used">最常用</string>
-    <string name="recently_used">最近使用</string>
+    <string name="recently_used">最近</string>
+    <string name="sort_by">排序方式</string>
+    <string name="group_layout">布局</string>
+    <string name="group_icons">图标</string>
+    <string name="settings_label">设置</string>
+    <string name="connection_chip">%1$s · %2$s</string>
+    <string name="visual_tier">手表画质</string>
+    <string name="tier_refined">精致</string>
+    <string name="tier_lite">轻量</string>
+    <string name="tier_lite_note">轻量档关闭模糊、光晕和动画，更流畅、更省电。</string>
+    <string name="icon_style">图标风格</string>
+    <string name="icon_style_original">原色</string>
+    <string name="icon_style_themed">主题单色</string>
+    <string name="icon_style_note">预览为近似效果，以手表为准。</string>
     <string name="undo">撤销</string>
     <string name="redo">重做</string>
     <string name="saved_automatically">草稿自动保存，所有修改均可撤销。</string>
@@ -101,6 +107,7 @@
     <string name="crop">裁剪图标</string>
     <string name="crop_hint">拖动和双指缩放以填满遮罩，保存为 192 像素 PNG。</string>
     <string name="zoom">缩放</string>
+    <string name="percent">%1$d%%</string>
     <string name="save_icon">使用此图标</string>
     <string name="cancel">取消</string>
     <string name="processing">正在安全处理…</string>
@@ -122,6 +129,8 @@
     <string name="help_install_body">在手机和手表上安装 N2 桌面，两端的包名和签名必须一致。配对后，先打开一次手表端应用，再点击手机上的刷新。</string>
     <string name="help_home">设为默认主屏</string>
     <string name="help_home_body">在手表的设置 → 应用 → 默认应用 → 主屏应用中选择 N2 桌面（如果系统提供此选项）。部分手表不允许替换主屏，可以通过 N2 桌面的 Tile 或应用图标进入。</string>
+    <string name="help_home_key">设为主屏与 Home 键</string>
+    <string name="help_home_key_body">N2 会保留系统表盘：在表盘上按 Home 打开 N2，在应用里按 Home 回到表盘。要让这个判断更准确，请在手表的“设置 → 辅助功能”中开启“N2 桌面”服务。未开启时，仍可从应用图标、Tile 和表盘快捷方式打开 N2。</string>
     <string name="help_pair">同步前检查</string>
     <string name="help_pair_body">通过手表的 Wear OS 配套应用完成配对，保持蓝牙或 Wi-Fi 连接，启用 Google Play 服务，并在两端安装 N2 桌面。“已发送”表示手机已发布草稿，“已应用”表示手表已确认。</string>
     <string name="help_offline">能离线编辑吗？</string>

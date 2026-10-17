@@ -5,10 +5,10 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.n2.oemlauncher.mobile.ui.theme.GlassTheme
 import com.n2.oemlauncher.shared.protocol.SyncPhase
 
 /** One icon/color language for every status surface (home card, sync diagnostics). */
@@ -23,10 +23,10 @@ fun StatusTone.icon(): ImageVector = when (this) {
 
 @Composable
 fun StatusTone.tint(): Color = when (this) {
-    StatusTone.GOOD -> MaterialTheme.colorScheme.primary
-    StatusTone.WAITING -> MaterialTheme.colorScheme.onSurfaceVariant
-    StatusTone.WARNING -> MaterialTheme.colorScheme.tertiary
-    StatusTone.ERROR -> MaterialTheme.colorScheme.error
+    StatusTone.GOOD -> GlassTheme.palette.positive
+    StatusTone.WAITING -> GlassTheme.palette.textTertiary
+    StatusTone.WARNING -> GlassTheme.palette.highlight
+    StatusTone.ERROR -> GlassTheme.palette.negative
 }
 
 fun SyncPhase.tone(): StatusTone = when (this) {
