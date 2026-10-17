@@ -31,9 +31,14 @@ class HomeDispatchActivity : Activity() {
             .setAction(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_LAUNCHER)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        removeOtherLauncherTasks(taskId)
         container.foregroundState.recordHomeAction(actualAction)
         startActivity(target)
         overridePendingTransition(0, 0)
-        finish()
+        if (actualAction == HomeAction.DELEGATE_TO_SYSTEM) {
+            finishAndRemoveTask()
+        } else {
+            finish()
+        }
     }
 }

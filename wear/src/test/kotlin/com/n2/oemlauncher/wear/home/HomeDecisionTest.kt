@@ -9,6 +9,11 @@ class HomeDecisionTest {
         decideHomeAction(ForegroundKind.WATCH_FACE, launcherResumed = false, LastHomeAction.NONE),
     )
 
+    @Test fun watchFaceDuringLauncherTransitionDelegates() = assertEquals(
+        HomeAction.DELEGATE_TO_SYSTEM,
+        decideHomeAction(ForegroundKind.WATCH_FACE, launcherResumed = true, LastHomeAction.NONE),
+    )
+
     @Test fun launcherOrAppDelegates() {
         assertEquals(HomeAction.DELEGATE_TO_SYSTEM, decideHomeAction(ForegroundKind.LAUNCHER, false, LastHomeAction.NONE))
         assertEquals(HomeAction.DELEGATE_TO_SYSTEM, decideHomeAction(ForegroundKind.APP, false, LastHomeAction.NONE))

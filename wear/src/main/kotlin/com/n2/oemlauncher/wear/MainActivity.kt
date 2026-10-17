@@ -58,11 +58,20 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
-        (application as App).container.foregroundState.setLauncherResumed(false)
         super.onPause()
+        if (!isChangingConfigurations) {
+            finish()
+            finishAndRemoveTask()
+        }
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        finishAndRemoveTask()
     }
 
     override fun onStop() {
+        (application as App).container.foregroundState.setLauncherResumed(false)
         viewModel.onHidden()
         appsObserver.stop()
         // The crown button opens the system's recents over the launcher; coming back must not
@@ -70,6 +79,7 @@ class MainActivity : ComponentActivity() {
         viewModel.goHome()
         // The launcher is a transient application-list layer. Removing its task prevents Back on
         // the stock watch face from revealing a stale honeycomb underneath the system home task.
+        finish()
         finishAndRemoveTask()
         super.onStop()
     }

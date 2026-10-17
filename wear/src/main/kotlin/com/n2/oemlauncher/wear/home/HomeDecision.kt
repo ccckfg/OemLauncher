@@ -16,7 +16,9 @@ fun decideHomeAction(
     launcherResumed: Boolean,
     lastAction: LastHomeAction,
 ): HomeAction = when (foreground) {
-    ForegroundKind.WATCH_FACE -> HomeAction.SHOW_LAUNCHER
+    // During the Home transition the accessibility service can report SystemUI before the
+    // launcher has received onStop; the lifecycle signal keeps that race on the system home.
+    ForegroundKind.WATCH_FACE -> if (launcherResumed) HomeAction.DELEGATE_TO_SYSTEM else HomeAction.SHOW_LAUNCHER
     ForegroundKind.LAUNCHER, ForegroundKind.APP -> HomeAction.DELEGATE_TO_SYSTEM
     ForegroundKind.UNKNOWN -> when {
         launcherResumed -> HomeAction.DELEGATE_TO_SYSTEM
