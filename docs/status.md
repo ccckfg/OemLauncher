@@ -19,7 +19,7 @@ v1.0.0 已在 `master` 交付，但在用户的 Galaxy Watch 上实测几乎没�
 | 编号 | 内容 | 状态 |
 | --- | --- | --- |
 | M0 | 整理仓库：进度和决策文档、设计参考图入库、忽略 `kcys/`、归档未提交代码 | 完成 |
-| M1 | 手表能用：Home 键转交保留表盘、无障碍开启引导、修复“没有可启动的应用”、拒绝“读取应用列表”权限时给出引导、国行声明；装到真机由用户试用 | 进行中（codex） |
+| M1 | 手表能用：Home 键转交保留表盘、无障碍开启引导、修复“没有可启动的应用”、拒绝“读取应用列表”权限时给出引导、国行声明；装到真机由用户试用 | 已合并（`c1dc1ee`），真机 Home 路径通过；权限引导待真机确认 |
 | M2 | 设计规范：`docs/design/` 规范 + `shared` 设计参数 + 一页视觉样张，用户确认 | 规范和样张完成，等用户确认 |
 | M3 | 手表界面按规范重做，精致 / 轻量两档 | 等 M2 |
 | M4 | 手机界面按规范重做，预览跟上新手表界面 | 等 M2 |
@@ -29,14 +29,21 @@ M1 和 M2 并行。
 
 ## 进行中
 
-- M1：codex（gpt-6.1-sol xhigh）在 worktree `orch-20261017-133453-f494-wear` 里实现，分支 `orch/20261017-133453-f494-wear`，起点 `1dd3334`。先前派给 DeepSeek 的一轮（`orch-20261017-131204-57ed-wear`）没有产出代码，只留下 10 张复现截图。
+- M1：codex（gpt-6.1-sol xhigh）两轮完成，已合并进集成分支（`c1dc1ee`）。在用户的 Galaxy Watch5 Pro 上实测（截图 `.screenshots/galaxy/m1*`）：
+  - 无障碍开：表盘按 Home → 蜂窝；蜂窝按 Home → 表盘；从蜂窝打开应用后按 Home → 表盘；表盘按返回 → 仍是表盘。
+  - 无障碍关：表盘第一次按 Home 停在表盘，第二次进蜂窝，之后蜂窝和表盘交替；从蜂窝打开应用后按 Home → 表盘。
+  - 回蜂窝约 285ms（启动器每次重建）。
+  - 待确认：撤销“读取应用列表”权限后的引导和授权流程（手表 Wi-Fi 休眠，没测完；权限目前处于撤销状态）。
 - M2：规范 `docs/design/README.md`；`shared/design/` 已有配色（Mocha / Latte）、玻璃规格、饼干轮廓和对比度测试；`LayoutSettings` 新增 `visualTier`、`iconStyle`（老版本两端兼容）。视觉样张：https://claude.ai/artifact/K1AfAPhxSm4QmuJommPdok ，等用户确认后再派 M3、M4。
 
 ## 待办与已知问题
 
-- [ ] 停工时手表模拟器主屏只有中心齿轮，提示“没有可启动的应用”，原因未查（M1）。
-- [ ] 三星国行会弹“读取应用列表”权限（`com.samsung.android.permission.GET_APP_LIST`，系统自动加的，我们的清单里没有），用户拒绝时现在会显示空列表、没有提示（M1）。
-- [ ] 清单缺少国行版声明 `com.google.android.wearable.local_edition_compatible`（M1）。
+- [x] “没有可启动的应用”：两位 agent 共试了十几种情况都没复现，加了一次空目录延迟重试兜底（M1）。
+- [ ] 三星“读取应用列表”权限被拒时的引导已实现，待真机确认授权流程（M1）。
+- [x] 清单加了国行版声明 `local_edition_compatible`（M1）。
+- [ ] Tile 页按 Home 会打开蜂窝（三星原生是回表盘）；无障碍事件里分不出 Tile 和表盘，暂时保持。
+- [ ] 三星 sysui 会记住上次停留的页面：如果用户之前停在三星自带的应用列表，转交 Home 时会显示它，而不是表盘。设 N2 为主屏后基本不会出现。
+- [ ] Android Studio 提示 `onRequestPermissionsResult` 已废弃，M3 时改用 Activity Result API。
 - [ ] 国行手表的 Data Layer 经过 `com.google.android.wearable.app.cn`，手机和手表的同步从没在真机上跑过；需要一部能开 adb 的配对手机才能实测（M5，等用户确认手机）。
 - [ ] 文档和截图还是 v1.0 的旧界面（M5）。
 
