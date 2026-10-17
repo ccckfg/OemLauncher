@@ -1,33 +1,22 @@
 package com.n2.oemlauncher.mobile.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import com.n2.oemlauncher.mobile.config.ThemeTokens
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 
-private val Light = lightColorScheme(
-    primary = Color(ThemeTokens.PRIMARY_LIGHT), onPrimary = Color.White,
-    background = Color(ThemeTokens.SURFACE_LIGHT), surface = Color(ThemeTokens.SURFACE_LIGHT),
-    onBackground = Color(ThemeTokens.TEXT_LIGHT), onSurface = Color(ThemeTokens.TEXT_LIGHT),
-)
-private val Dark = darkColorScheme(
-    primary = Color(ThemeTokens.PRIMARY_DARK), background = Color(ThemeTokens.SURFACE_DARK),
-    surface = Color(ThemeTokens.SURFACE_DARK), onSurface = Color(ThemeTokens.TEXT_DARK),
-)
-
+/**
+ * The phone follows the system theme and never the wallpaper: Mocha in the dark, Latte in the
+ * light (design section 2). [darkOverride] is the manual switch in the top bar; null means
+ * "follow the system".
+ */
 @Composable
 fun CompanionTheme(darkOverride: Boolean?, content: @Composable () -> Unit) {
     val dark = darkOverride ?: isSystemInDarkTheme()
-    val context = LocalContext.current
-    val colors = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    } else if (dark) Dark else Light
-    MaterialTheme(colorScheme = colors, content = content)
+    val palette = remember(dark) { GlassPalette(PaletteMapping.palette(dark)) }
+    val colors = remember(palette, dark) { PaletteMapping.colorScheme(palette.design, dark) }
+    CompositionLocalProvider(LocalGlassPalette provides palette) {
+        MaterialTheme(colorScheme = colors, typography = CompanionTypography, content = content)
+    }
 }
