@@ -1,6 +1,7 @@
 package com.n2.oemlauncher.wear.config
 
 object WearConstants {
+    const val DEBUG_LOG_TAG = "N2Home"
     const val ICON_CACHE_BYTES = 8L * 1024L * 1024L
     const val ICON_CACHE_DIR = "icons"
     const val ICON_TARGET_PX = 128
