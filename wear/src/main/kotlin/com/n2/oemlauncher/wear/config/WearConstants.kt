@@ -5,6 +5,7 @@ object WearConstants {
     const val ICON_CACHE_DIR = "icons"
     const val ICON_TARGET_PX = 128
     const val CATALOG_THROTTLE_MS = 10_000L
+    const val CATALOG_EMPTY_RETRY_DELAY_MS = 250L
     const val USAGE_PUBLISH_EVERY = 5
     const val DEMO_ENTRY_COUNT = 128
     const val SNAPSHOT_FILE = "catalog.json"

@@ -64,4 +64,18 @@
     <string name="sort_alphabetical">Alphabetical</string>
     <string name="sort_most_used">Most used</string>
     <string name="sort_recent">Recently used</string>
+    <string name="section_home">Home screen &amp; Home key</string>
+    <string name="label_default_home">Default home screen</string>
+    <string name="status_set">Set</string>
+    <string name="status_not_set">Not set</string>
+    <string name="label_home_key">Home key recognition</string>
+    <string name="status_enabled">Enabled</string>
+    <string name="status_disabled">Disabled</string>
+    <string name="home_key_explanation">Used only to tell the watch face from an app; screen content is never read.</string>
+    <string name="home_settings_unavailable">Home screen settings are unavailable on this watch.</string>
+    <string name="accessibility_service_description">Used only to tell the watch face from an app; screen content is never read.</string>
+    <string name="app_list_permission_message">Allow app list access so N2 Launcher can show your apps.</string>
+    <string name="app_list_permission_blocked">App list access is blocked. Allow it in N2 Launcher app settings.</string>
+    <string name="app_list_permission_grant">Go to authorization</string>
+    <string name="app_list_permission_settings">Open app settings</string>
 </resources>
