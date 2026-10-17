@@ -29,3 +29,6 @@ dist/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Third-party reference APKs and decompiled output (not ours, never commit)
+kcys/
