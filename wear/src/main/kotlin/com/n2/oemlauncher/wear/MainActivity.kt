@@ -17,6 +17,7 @@ import com.n2.oemlauncher.wear.ui.navigation.LauncherNavHost
 import com.n2.oemlauncher.wear.ui.navigation.LauncherNavCallbacks
 import com.n2.oemlauncher.wear.ui.theme.OemTheme
 import com.n2.oemlauncher.wear.config.WearDebugLog
+import com.n2.oemlauncher.wear.home.isCoveredInOwnTask
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<LauncherViewModel>()
@@ -75,7 +76,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        WearDebugLog.d { "activity onStop finish=transient-launcher" }
+        val covered = isCoveredInOwnTask()
+        WearDebugLog.d { "activity onStop finish=${if (covered) "skip-covered" else "transient-launcher"}" }
         (application as App).container.foregroundState.setLauncherResumed(false)
         viewModel.onHidden()
         appsObserver.stop()
@@ -84,8 +86,10 @@ class MainActivity : ComponentActivity() {
         viewModel.goHome()
         // The launcher is a transient application-list layer. Removing its task prevents Back on
         // the stock watch face from revealing a stale honeycomb underneath the system home task.
-        finish()
-        finishAndRemoveTask()
+        if (!covered) {
+            finish()
+            finishAndRemoveTask()
+        }
         super.onStop()
     }
 
