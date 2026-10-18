@@ -33,10 +33,12 @@
             android:name="com.google.android.wearable.local_edition_compatible"
             android:value="true" />
 
+        <!-- Home dispatch relies on both singleTask entries retaining their shared affinity. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            tools:ignore="WearRecents">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -49,7 +51,8 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:noHistory="true"
-            android:theme="@style/Theme.OemLauncher.Transparent">
+            android:theme="@style/Theme.OemLauncher.Transparent"
+            tools:ignore="WearRecents">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />

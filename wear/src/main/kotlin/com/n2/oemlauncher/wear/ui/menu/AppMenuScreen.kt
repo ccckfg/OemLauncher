@@ -58,7 +58,7 @@ fun AppMenuScreen(key: String, state: LauncherUiState, viewModel: LauncherViewMo
                     Modifier.fillMaxWidth().transformedHeight(this, spec).padding(bottom = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    AppGlyph(state.icons[key], Modifier.size(WearUiTokens.MENU_ICON_DP.dp))
+                    AppGlyph(state.icons[key], Modifier.size(WearUiTokens.MENU_ICON_DP.dp), state.config.layout.iconShape)
                     Text(
                         entry.label,
                         Modifier.padding(top = 6.dp),

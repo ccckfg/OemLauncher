@@ -61,6 +61,11 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel, callback
     val iconDiameter = with(density) { HoneycombDefaults.iconDiameterDp(layout.iconSize).dp.toPx() }
     val gearRadius = iconDiameter / 2f
     val gear = rememberGearGlyph(gearRadius, layout.visualTier)
+    val rimPx = with(density) { WearUiTokens.APP_RIM_DP.dp.toPx() }
+    val favoritePx = with(density) { WearUiTokens.FAVORITE_RIM_DP.dp.toPx() }
+    val appGlyph = remember(layout.iconShape, iconDiameter, rimPx, favoritePx) {
+        AppGlyphDrawing(layout.iconShape, iconDiameter, rimPx, favoritePx)
+    }
     val viewportRadius = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() } / 2f
     val fitRadius = max(viewportRadius - with(density) { WearUiTokens.HONEYCOMB_EDGE_INSET_DP.dp.toPx() }, 1f)
     val cells = HoneycombSlots.cellCount(state.entries.size)
@@ -185,16 +190,19 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel, callback
             val centerY = size.height / 2f
             val baseRadius = iconDiameter / 2f
             for (cell in 0 until frame.size) {
-                val alpha = frame.alpha[cell]
+                val radius = baseRadius * frame.scale[cell]
+                val alpha = honeycombCellAlpha(
+                    frame.alpha[cell], frame.y[cell], radius, size.minDimension / 2f, layout.showLabels,
+                )
                 if (alpha <= 0f) continue
                 val x = centerX + frame.x[cell]
                 val y = centerY + frame.y[cell]
-                val radius = baseRadius * frame.scale[cell]
                 if (HoneycombSlots.isSettings(cell)) {
                     drawGearCell(gear, x, y, radius, alpha, pressed = dragging)
                 } else {
                     val entry = state.entries.getOrNull(HoneycombSlots.appAt(cell)) ?: continue
                     drawAppCell(
+                        appGlyph,
                         imageIcons[entry.key],
                         x,
                         y,

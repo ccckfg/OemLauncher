@@ -74,6 +74,7 @@ fun GridView(state: LauncherUiState, viewModel: LauncherViewModel, callbacks: Ho
                                 icon = state.icons[entry.key],
                                 favorite = entry.key in state.config.favorites,
                                 showLabel = layout.showLabels,
+                                iconShape = layout.iconShape,
                                 iconSize = iconSize,
                                 modifier = Modifier.width(cellWidth),
                                 onClick = { viewModel.launch(entry) },
@@ -93,6 +94,7 @@ private fun GridCell(
     icon: Bitmap?,
     favorite: Boolean,
     showLabel: Boolean,
+    iconShape: com.n2.oemlauncher.shared.model.IconShape,
     iconSize: Dp,
     modifier: Modifier,
     onClick: () -> Unit,
@@ -105,7 +107,7 @@ private fun GridCell(
             .padding(WearUiTokens.GRID_CELL_PADDING_DP.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        AppGlyph(icon, Modifier.size(iconSize), favorite = favorite)
+        AppGlyph(icon, Modifier.size(iconSize), iconShape, favorite = favorite)
         if (showLabel) {
             Text(
                 entry.label,
