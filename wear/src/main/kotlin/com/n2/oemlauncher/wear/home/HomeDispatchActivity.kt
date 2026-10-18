@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import com.n2.oemlauncher.wear.App
 import com.n2.oemlauncher.wear.MainActivity
+import com.n2.oemlauncher.wear.config.WearConstants
 import com.n2.oemlauncher.wear.config.WearDebugLog
 
 /** Transparent HOME entry point; it decides before the launcher surface is drawn. */
@@ -31,8 +32,9 @@ class HomeDispatchActivity : Activity() {
                 "extras=${homeIntent.extras?.keySet()?.sorted()?.joinToString("|") ?: "-"}"
         }
         val snapshot = container.foregroundState.snapshot()
-        val action = decideHomeAction(snapshot.kind, snapshot.launcherResumed, snapshot.lastAction)
-        WearDebugLog.d { "dispatch snapshot=$snapshot decision=$action" }
+        val fromHomeKey = homeIntent.getBooleanExtra(WearConstants.EXTRA_FROM_HOME_KEY, false)
+        val action = decideHomeAction(snapshot.kind, snapshot.launcherResumed, snapshot.lastAction, fromHomeKey)
+        WearDebugLog.d { "dispatch snapshot=$snapshot fromHomeKey=$fromHomeKey decision=$action" }
         val systemTarget = if (action == HomeAction.DELEGATE_TO_SYSTEM) {
             container.systemHomeResolver.resolveIntent(homeIntent)
         } else null

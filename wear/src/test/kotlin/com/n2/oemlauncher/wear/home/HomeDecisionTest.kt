@@ -29,6 +29,30 @@ class HomeDecisionTest {
         decideHomeAction(ForegroundKind.UNKNOWN, launcherResumed = false, LastHomeAction.DELEGATED_TO_SYSTEM),
     )
 
+    @Test fun homeSentByTheSystemNeverOpensTheLauncher() {
+        for (kind in ForegroundKind.entries) for (last in LastHomeAction.entries) for (resumed in listOf(true, false)) {
+            assertEquals(
+                "$kind $last resumed=$resumed",
+                HomeAction.DELEGATE_TO_SYSTEM,
+                decideHomeAction(kind, resumed, last, fromHomeKey = false),
+            )
+        }
+    }
+
+    @Test fun screenOffRehomeLoopCannotStart() {
+        // Screen off with the service disconnected: the launcher stops, its task goes away and the
+        // system sends HOME without the key extra. That HOME must land on the watch face.
+        val holder = ForegroundStateHolder("com.n2.oemlauncher")
+        holder.recordHomeAction(HomeAction.DELEGATE_TO_SYSTEM)
+        holder.setLauncherResumed(true)
+        holder.setLauncherResumed(false)
+        val snapshot = holder.snapshot()
+        assertEquals(
+            HomeAction.DELEGATE_TO_SYSTEM,
+            decideHomeAction(snapshot.kind, snapshot.launcherResumed, snapshot.lastAction, fromHomeKey = false),
+        )
+    }
+
     @Test fun unknownOtherwiseDelegates() = assertEquals(
         HomeAction.DELEGATE_TO_SYSTEM,
         decideHomeAction(ForegroundKind.UNKNOWN, launcherResumed = false, LastHomeAction.OPENED_APP),

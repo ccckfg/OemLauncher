@@ -2,6 +2,9 @@ package com.n2.oemlauncher.wear.config
 
 object WearConstants {
     const val DEBUG_LOG_TAG = "N2Home"
+
+    /** Set by the system only when HOME comes from the physical Home key (hidden platform extra). */
+    const val EXTRA_FROM_HOME_KEY = "android.intent.extra.FROM_HOME_KEY"
     const val ICON_CACHE_BYTES = 8L * 1024L * 1024L
     const val ICON_CACHE_DIR = "icons"
     const val ICON_TARGET_PX = 128

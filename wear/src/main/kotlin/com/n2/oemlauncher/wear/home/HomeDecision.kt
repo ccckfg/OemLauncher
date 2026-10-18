@@ -10,12 +10,17 @@ enum class HomeAction { SHOW_LAUNCHER, DELEGATE_TO_SYSTEM }
 /**
  * Pure Home-key policy. The accessibility service normally supplies [foreground], while the
  * remaining inputs make the behavior deterministic when the service is disabled or delayed.
+ *
+ * Only a real Home key press may open the launcher. The system also sends HOME on its own, for
+ * example when the screen turns off and the launcher's task goes away, or when it returns to the
+ * clock; treating those as key presses reopened the launcher in a loop while the screen was off.
  */
 fun decideHomeAction(
     foreground: ForegroundKind,
     launcherResumed: Boolean,
     lastAction: LastHomeAction,
-): HomeAction = when (foreground) {
+    fromHomeKey: Boolean = true,
+): HomeAction = if (!fromHomeKey) HomeAction.DELEGATE_TO_SYSTEM else when (foreground) {
     // During the Home transition the accessibility service can report SystemUI before the
     // launcher has received onStop; the lifecycle signal keeps that race on the system home.
     ForegroundKind.WATCH_FACE -> if (launcherResumed) HomeAction.DELEGATE_TO_SYSTEM else HomeAction.SHOW_LAUNCHER
