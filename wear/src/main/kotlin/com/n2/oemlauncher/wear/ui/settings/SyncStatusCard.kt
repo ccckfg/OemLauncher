@@ -23,6 +23,7 @@ import com.n2.oemlauncher.shared.model.ApplyResult
 import com.n2.oemlauncher.wear.R
 import com.n2.oemlauncher.wear.config.WearUiTokens
 import com.n2.oemlauncher.wear.ui.LauncherUiState
+import com.n2.oemlauncher.wear.ui.theme.OemColors
 
 /** Connection, last sync time and last applied result, tinted by connection state. */
 @Composable
@@ -43,7 +44,7 @@ fun TransformingLazyColumnItemScope.SyncStatusCard(state: LauncherUiState, spec:
     val lastSync = state.syncLastText
     Column(
         Modifier.fillMaxWidth().transformedHeight(this, spec)
-            .background(colors.surfaceContainerLow, MaterialTheme.shapes.large)
+            .background(OemColors.Glass, MaterialTheme.shapes.large)
             .padding(WearUiTokens.CARD_PADDING_DP.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

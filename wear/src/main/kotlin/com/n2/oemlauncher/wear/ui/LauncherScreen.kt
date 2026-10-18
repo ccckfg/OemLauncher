@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,17 +18,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.CircularProgressIndicator
-import androidx.wear.compose.material3.FilledTonalIconButton
 import androidx.wear.compose.material3.FilledTonalButton
-import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import com.n2.oemlauncher.shared.model.LayoutMode
+import com.n2.oemlauncher.shared.model.VisualTier
 import com.n2.oemlauncher.wear.R
 import com.n2.oemlauncher.wear.config.WearUiTokens
 import com.n2.oemlauncher.wear.catalog.EmptyCatalogState
 import com.n2.oemlauncher.wear.catalog.emptyCatalogState
 import com.n2.oemlauncher.wear.ui.theme.oemBackdrop
+import com.n2.oemlauncher.wear.ui.theme.OemColors
 
 /** Navigation out of the launcher home, provided by the navigation host. */
 class HomeActions(
@@ -51,8 +49,11 @@ class HomeCallbacks(
 fun LauncherHome(state: LauncherUiState, viewModel: LauncherViewModel, actions: HomeActions) {
     var switcherOpen by rememberSaveable { mutableStateOf(false) }
     val callbacks = HomeCallbacks(actions.openSettings, actions.openMenu) { switcherOpen = true }
-    val blur = if (switcherOpen) WearUiTokens.SWITCHER_BLUR_DP.dp else 0.dp
-    Box(Modifier.fillMaxSize().oemBackdrop()) {
+    val tier = state.config.layout.visualTier
+    val blur = if (switcherOpen && tier == com.n2.oemlauncher.shared.model.VisualTier.REFINED) {
+        com.n2.oemlauncher.shared.design.GlassSpecs.watch(tier).overlayBlurDp.dp
+    } else 0.dp
+    Box(Modifier.fillMaxSize().oemBackdrop(tier)) {
         Box(Modifier.fillMaxSize().blur(blur)) {
             when (state.config.layout.mode) {
                 LayoutMode.HONEYCOMB -> HoneycombView(state, viewModel, callbacks)
@@ -76,7 +77,7 @@ fun LauncherHome(state: LauncherUiState, viewModel: LauncherViewModel, actions: 
                     } else {
                         stringResource(R.string.empty_state)
                     },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = OemColors.TextSecondary,
                     textAlign = TextAlign.Center,
                 )
                 if (emptyState != EmptyCatalogState.GENERIC) {
@@ -106,9 +107,9 @@ fun LauncherHome(state: LauncherUiState, viewModel: LauncherViewModel, actions: 
                 it,
                 Modifier.align(Alignment.BottomCenter)
                     .padding(bottom = WearUiTokens.MESSAGE_BOTTOM_PADDING_DP.dp, start = 36.dp, end = 36.dp)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
+                    .background(OemColors.GlassStrong, CircleShape)
                     .padding(horizontal = 12.dp, vertical = 4.dp),
-                color = MaterialTheme.colorScheme.error,
+                color = OemColors.Negative,
                 style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
             )
@@ -116,6 +117,7 @@ fun LauncherHome(state: LauncherUiState, viewModel: LauncherViewModel, actions: 
         if (switcherOpen) {
             LayoutSwitcher(
                 current = state.config.layout.mode,
+                tier = tier,
                 onSelect = { mode ->
                     viewModel.setLayout(mode)
                     switcherOpen = false
@@ -131,15 +133,19 @@ fun LauncherHome(state: LauncherUiState, viewModel: LauncherViewModel, actions: 
  * honeycomb center; a long press opens the layout switcher there as well.
  */
 @Composable
-fun HomeSettingsButton(callbacks: HomeCallbacks, modifier: Modifier = Modifier) {
+fun HomeSettingsButton(
+    callbacks: HomeCallbacks,
+    modifier: Modifier = Modifier,
+    tier: VisualTier = VisualTier.REFINED,
+) {
     val label = stringResource(R.string.settings)
     Box(modifier, contentAlignment = Alignment.Center) {
-        FilledTonalIconButton(
+        CookieGearButton(
+            label = label,
+            tier = tier,
             onClick = callbacks.openSettings,
             onLongClick = callbacks.openSwitcher,
-            onLongClickLabel = stringResource(R.string.switch_layout),
-        ) {
-            Icon(Icons.Rounded.Settings, contentDescription = label)
-        }
+            longClickLabel = stringResource(R.string.switch_layout),
+        )
     }
 }

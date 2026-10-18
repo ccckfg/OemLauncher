@@ -54,11 +54,14 @@ fun ListView(state: LauncherUiState, viewModel: LauncherViewModel, callbacks: Ho
                 ),
                 verticalArrangement = Arrangement.spacedBy(WearUiTokens.LIST_ROW_SPACING_DP.dp),
             ) {
-                item(key = SETTINGS_KEY) { HomeSettingsButton(callbacks, Modifier.fillMaxWidth().roundEdge(this)) }
+                item(key = SETTINGS_KEY) {
+                    HomeSettingsButton(callbacks, Modifier.fillMaxWidth().roundEdge(this), layout.visualTier)
+                }
                 items(state.entries, key = { it.key }) { entry ->
                     ListRow(
                         entry = entry,
                         icon = state.icons[entry.key],
+                        favorite = entry.key in state.config.favorites,
                         showLabel = layout.showLabels,
                         modifier = Modifier.fillMaxWidth().roundEdge(this, arcPx),
                         onClick = { viewModel.launch(entry) },
@@ -74,6 +77,7 @@ fun ListView(state: LauncherUiState, viewModel: LauncherViewModel, callbacks: Ho
 private fun ListRow(
     entry: CatalogEntry,
     icon: Bitmap?,
+    favorite: Boolean,
     showLabel: Boolean,
     modifier: Modifier,
     onClick: () -> Unit,
@@ -88,12 +92,12 @@ private fun ListRow(
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppGlyph(icon, Modifier.size(WearUiTokens.LIST_ICON_DP.dp))
+        AppGlyph(icon, Modifier.size(WearUiTokens.LIST_ICON_DP.dp), favorite = favorite)
         if (showLabel) {
             Text(
                 entry.label,
                 Modifier.padding(start = WearUiTokens.LIST_LABEL_GAP_DP.dp),
-                color = MaterialTheme.colorScheme.onSurface,
+                color = com.n2.oemlauncher.wear.ui.theme.OemColors.TextPrimary,
                 fontSize = WearUiTokens.LIST_LABEL_SP.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

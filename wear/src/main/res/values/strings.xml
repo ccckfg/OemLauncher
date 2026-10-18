@@ -17,6 +17,12 @@
     <string name="label_layout">Layout</string>
     <string name="label_icon_size">Icon size</string>
     <string name="label_icon_shape">Icon shape</string>
+    <string name="label_visual_tier">Visual quality</string>
+    <string name="visual_refined">Refined</string>
+    <string name="visual_lite">Lite</string>
+    <string name="label_icon_style">Icon style</string>
+    <string name="icon_style_original">Original color</string>
+    <string name="icon_style_themed">Themed monochrome</string>
     <string name="label_sort">Sort by</string>
     <string name="label_show_names">Show app names</string>
     <string name="label_fisheye">Fisheye</string>

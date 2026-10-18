@@ -20,6 +20,8 @@ import com.n2.oemlauncher.shared.model.IconShape
 import com.n2.oemlauncher.shared.model.IconSize
 import com.n2.oemlauncher.shared.model.LayoutMode
 import com.n2.oemlauncher.shared.model.SortMode
+import com.n2.oemlauncher.shared.model.VisualTier
+import com.n2.oemlauncher.shared.model.IconStyle
 import com.n2.oemlauncher.wear.R
 import com.n2.oemlauncher.wear.config.WearUiTokens
 import com.n2.oemlauncher.wear.ui.LauncherUiState
@@ -29,7 +31,7 @@ import com.n2.oemlauncher.wear.ui.layoutName
 import com.n2.oemlauncher.wear.ui.theme.oemBackdrop
 
 /** Settings with a few fixed options get their own page with one radio button per option. */
-enum class SettingChoice { LAYOUT, ICON_SIZE, ICON_SHAPE, SORT }
+enum class SettingChoice { LAYOUT, ICON_SIZE, ICON_SHAPE, VISUAL_TIER, ICON_STYLE, SORT }
 
 private class ChoiceOption(val label: String, val selected: Boolean, val apply: () -> Unit)
 
@@ -51,6 +53,16 @@ fun ChoiceScreen(choice: SettingChoice, state: LauncherUiState, viewModel: Launc
                 viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(iconShape = shape) } }
             }
         }
+        SettingChoice.VISUAL_TIER -> VisualTier.entries.map { tier ->
+            ChoiceOption(visualTierName(tier), tier == layout.visualTier) {
+                viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(visualTier = tier) } }
+            }
+        }
+        SettingChoice.ICON_STYLE -> IconStyle.entries.map { style ->
+            ChoiceOption(iconStyleName(style), style == layout.iconStyle) {
+                viewModel.updateConfig { ConfigEditor.updateLayout(it) { l -> l.copy(iconStyle = style) } }
+            }
+        }
         SettingChoice.SORT -> SortMode.entries.map { mode ->
             ChoiceOption(sortName(mode), mode == config.sortMode) { viewModel.setSortMode(mode) }
         }
@@ -62,7 +74,7 @@ fun ChoiceScreen(choice: SettingChoice, state: LauncherUiState, viewModel: Launc
     val listState = rememberTransformingLazyColumnState(initialAnchorItemIndex = anchor)
     val spec = rememberTransformationSpec()
     RotaryTicksScroll(listState, state.rotaryTicks, layout.hapticsEnabled)
-    ScreenScaffold(scrollState = listState, modifier = Modifier.oemBackdrop()) { contentPadding ->
+    ScreenScaffold(scrollState = listState, modifier = Modifier.oemBackdrop(layout.visualTier)) { contentPadding ->
         TransformingLazyColumn(state = listState, contentPadding = contentPadding) {
             item {
                 ListHeader(
@@ -90,6 +102,8 @@ private fun choiceTitle(choice: SettingChoice): Int = when (choice) {
     SettingChoice.LAYOUT -> R.string.label_layout
     SettingChoice.ICON_SIZE -> R.string.label_icon_size
     SettingChoice.ICON_SHAPE -> R.string.label_icon_shape
+    SettingChoice.VISUAL_TIER -> R.string.label_visual_tier
+    SettingChoice.ICON_STYLE -> R.string.label_icon_style
     SettingChoice.SORT -> R.string.label_sort
 }
 
@@ -108,6 +122,22 @@ fun shapeName(shape: IconShape): String = stringResource(
         IconShape.CIRCLE -> R.string.shape_circle
         IconShape.SQUIRCLE -> R.string.shape_squircle
         IconShape.ORIGINAL -> R.string.shape_original
+    },
+)
+
+@Composable
+fun visualTierName(tier: VisualTier): String = stringResource(
+    when (tier) {
+        VisualTier.REFINED -> R.string.visual_refined
+        VisualTier.LITE -> R.string.visual_lite
+    },
+)
+
+@Composable
+fun iconStyleName(style: IconStyle): String = stringResource(
+    when (style) {
+        IconStyle.ORIGINAL -> R.string.icon_style_original
+        IconStyle.THEMED -> R.string.icon_style_themed
     },
 )
 

@@ -17,6 +17,12 @@
     <string name="label_layout">布局</string>
     <string name="label_icon_size">图标大小</string>
     <string name="label_icon_shape">图标形状</string>
+    <string name="label_visual_tier">画质</string>
+    <string name="visual_refined">精致</string>
+    <string name="visual_lite">轻量</string>
+    <string name="label_icon_style">图标风格</string>
+    <string name="icon_style_original">原色</string>
+    <string name="icon_style_themed">主题单色</string>
     <string name="label_sort">排序方式</string>
     <string name="label_show_names">显示应用名</string>
     <string name="label_fisheye">鱼眼强度</string>

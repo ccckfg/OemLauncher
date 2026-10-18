@@ -84,7 +84,7 @@ fun SettingsScreen(
 
     ScreenScaffold(
         scrollState = listState,
-        modifier = Modifier.oemBackdrop(),
+        modifier = Modifier.oemBackdrop(layout.visualTier),
         edgeButton = {
             EdgeButton(onClick = onDone, buttonSize = EdgeButtonSize.Small) {
                 Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.done))
@@ -112,6 +112,16 @@ fun SettingsScreen(
             item {
                 ActionRow(vectorIcon(Icons.Rounded.Interests), stringResource(R.string.label_icon_shape), shapeName(layout.iconShape), spec) {
                     onChoice(SettingChoice.ICON_SHAPE)
+                }
+            }
+            item {
+                ActionRow(vectorIcon(Icons.Rounded.Science), stringResource(R.string.label_visual_tier), visualTierName(layout.visualTier), spec) {
+                    onChoice(SettingChoice.VISUAL_TIER)
+                }
+            }
+            item {
+                ActionRow(vectorIcon(Icons.Rounded.Interests), stringResource(R.string.label_icon_style), iconStyleName(layout.iconStyle), spec) {
+                    onChoice(SettingChoice.ICON_STYLE)
                 }
             }
             item {

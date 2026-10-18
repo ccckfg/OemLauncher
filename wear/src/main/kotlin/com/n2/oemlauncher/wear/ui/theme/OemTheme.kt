@@ -4,38 +4,58 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material3.ColorScheme
 import androidx.wear.compose.material3.MaterialTheme
+import com.n2.oemlauncher.shared.design.Palettes
 
-/** Misty-navy palette: periwinkle accents over deep blue surfaces that fall off to black. */
+private fun mochaColor(value: Long): Color = Color(value)
+
+/** Mocha is fixed on Wear so the watch and the phone preview share exact color roles. */
 object OemColors {
-    val Primary = Color(0xFFB4C4FF)
-    val PrimaryDim = Color(0xFF93A6EE)
-    val PrimaryContainer = Color(0xFF34457A)
-    val OnPrimary = Color(0xFF13204A)
-    val OnPrimaryContainer = Color(0xFFDDE3FF)
-    val Secondary = Color(0xFFC6C8E6)
-    val SecondaryContainer = Color(0xFF3A3F5E)
-    val OnSecondaryContainer = Color(0xFFE1E2F7)
-    val Tertiary = Color(0xFFD9BCFF)
-    val TertiaryContainer = Color(0xFF4C3B70)
-    val SurfaceLow = Color(0xFF151A2B)
-    val Surface = Color(0xFF1D2338)
-    val SurfaceHigh = Color(0xFF272E47)
-    val OnSurface = Color(0xFFE7EAF6)
-    val OnSurfaceVariant = Color(0xFFB5BBD2)
-    val Outline = Color(0xFF7E859E)
-    val OutlineVariant = Color(0xFF3C4359)
-    val Error = Color(0xFFFFB4AB)
+    val Background = mochaColor(Palettes.Mocha.background)
+    val BackgroundGlow = mochaColor(Palettes.Mocha.backgroundGlow)
+    val CoolGlow = mochaColor(Palettes.Mocha.coolGlow)
+    val Glass = mochaColor(Palettes.Mocha.glass)
+    val GlassStrong = mochaColor(Palettes.Mocha.glassStrong)
+    val RimLight = mochaColor(Palettes.Mocha.rimLight)
+    val Accent = mochaColor(Palettes.Mocha.accent)
+    val AccentLight = mochaColor(Palettes.Mocha.accentLight)
+    val AccentDeep = mochaColor(Palettes.Mocha.accentDeep)
+    val OnAccent = mochaColor(Palettes.Mocha.onAccent)
+    val AccentText = mochaColor(Palettes.Mocha.accentText)
+    val TextPrimary = mochaColor(Palettes.Mocha.textPrimary)
+    val TextSecondary = mochaColor(Palettes.Mocha.textSecondary)
+    val TextTertiary = mochaColor(Palettes.Mocha.textTertiary)
+    val Highlight = mochaColor(Palettes.Mocha.highlight)
+    val Positive = mochaColor(Palettes.Mocha.positive)
+    val Negative = mochaColor(Palettes.Mocha.negative)
 
-    val BackdropEdge = Color.Black
-    val BackdropCore = Color(0xFF263760)
-    val BackdropMist = Color(0xFF3A2E66)
-    val BackdropMistAlpha = 0.5f
+    val Primary = Accent
+    val PrimaryDim = AccentDeep
+    val PrimaryContainer = GlassStrong
+    val OnPrimary = OnAccent
+    val OnPrimaryContainer = TextPrimary
+    val Secondary = TextSecondary
+    val SecondaryContainer = Glass
+    val OnSecondaryContainer = TextPrimary
+    val Tertiary = Highlight
+    val TertiaryContainer = GlassStrong
+    val SurfaceLow = Background
+    val Surface = Glass
+    val SurfaceHigh = GlassStrong
+    val OnSurface = TextPrimary
+    val OnSurfaceVariant = TextSecondary
+    val Outline = RimLight
+    val OutlineVariant = GlassStrong
+    val Error = Negative
 
-    val GearDisc = Color(0xFF2A3557)
-    val GearRing = Color(0x33FFFFFF)
-    val GearGlyph = OnPrimaryContainer
-    val Placeholder = Color(0xFF262D45)
-    val Scrim = Color.Black
+    val BackdropEdge = Background
+    val BackdropCore = BackgroundGlow
+    val BackdropMist = CoolGlow
+    val BackdropMistAlpha = 0.75f
+    val GearDisc = GlassStrong
+    val GearRing = RimLight
+    val GearGlyph = OnAccent
+    val Placeholder = GlassStrong
+    val Scrim = Background
 }
 
 private val oemColorScheme = ColorScheme(

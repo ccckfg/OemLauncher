@@ -37,6 +37,7 @@ import com.n2.oemlauncher.wear.ui.LauncherUiState
 import com.n2.oemlauncher.wear.ui.LauncherViewModel
 import com.n2.oemlauncher.wear.ui.RotaryTicksScroll
 import com.n2.oemlauncher.wear.ui.theme.oemBackdrop
+import com.n2.oemlauncher.wear.ui.theme.OemColors
 
 /** Long-press actions for one app as a scrolling page; swipe right to close it. */
 @Composable
@@ -50,7 +51,7 @@ fun AppMenuScreen(key: String, state: LauncherUiState, viewModel: LauncherViewMo
     val listState = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
     RotaryTicksScroll(listState, state.rotaryTicks, state.config.layout.hapticsEnabled)
-    ScreenScaffold(scrollState = listState, modifier = Modifier.oemBackdrop()) { contentPadding ->
+    ScreenScaffold(scrollState = listState, modifier = Modifier.oemBackdrop(state.config.layout.visualTier)) { contentPadding ->
         TransformingLazyColumn(state = listState, contentPadding = contentPadding) {
             item {
                 Column(
@@ -79,7 +80,7 @@ fun AppMenuScreen(key: String, state: LauncherUiState, viewModel: LauncherViewMo
                 }
             }
             item {
-                MenuButton(Icons.Rounded.VisibilityOff, stringResource(R.string.hide_app), spec) {
+                MenuButton(Icons.Rounded.VisibilityOff, stringResource(R.string.hide_app), spec, iconTint = OemColors.Negative) {
                     viewModel.toggleHidden(key)
                     onDone()
                 }
@@ -99,13 +100,19 @@ private fun TransformingLazyColumnItemScope.MenuButton(
     icon: ImageVector,
     label: String,
     spec: TransformationSpec,
+    iconTint: androidx.compose.ui.graphics.Color = OemColors.TextPrimary,
     onClick: () -> Unit,
 ) {
     FilledTonalButton(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
         transformation = SurfaceTransformation(spec),
-        icon = { Icon(icon, contentDescription = null) },
+        icon = { Icon(icon, contentDescription = null, tint = iconTint) },
+        colors = androidx.wear.compose.material3.ButtonDefaults.filledTonalButtonColors(
+            containerColor = OemColors.Glass,
+            contentColor = OemColors.TextPrimary,
+            iconColor = iconTint,
+        ),
         label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
     )
 }
