@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">N2 Launcher</string>
-    <string name="home">Your watch, your layout</string>
-    <string name="home_subtitle">Edit here. See it on your wrist.</string>
     <string name="no_watch">No watch connected</string>
     <string name="no_watch_detail">Pair your watch in the Wear OS app. You can keep editing offline.</string>
     <string name="connected">Connected</string>
@@ -22,9 +20,6 @@
     <string name="sync_rejected">Watch could not apply this configuration</string>
     <string name="sync_outdated">Update the watch app to sync</string>
     <string name="last_sync">Last applied: %1$s</string>
-    <string name="never_synced">No completed sync yet</string>
-    <string name="unsent_changes">Changes saved on this phone</string>
-    <string name="up_to_date">Nothing to send</string>
     <string name="load_watch">Load watch configuration</string>
     <string name="overwrite_watch">Overwrite with my changes</string>
     <string name="conflict_detail">Your draft is based on an older watch configuration. Choose which changes to keep.</string>
@@ -32,7 +27,6 @@
     <string name="demo_detail">A sample watch with 40 apps. Nothing will be sent to your watch.</string>
     <string name="try_demo">Try the demo</string>
     <string name="demo_watch">Demo watch</string>
-    <string name="empty_title">Start with your watch</string>
     <string name="empty_detail">Refresh to get your apps, or try the demo to explore every editor.</string>
     <string name="preview">Watch preview</string>
     <string name="preview_detail">Drag to explore. Uses your watch’s screen size and density.</string>
@@ -51,7 +45,6 @@
     <string name="search">Search apps</string>
     <string name="clear_search">Clear search</string>
     <string name="favorites">Favorites (%1$d/7)</string>
-    <string name="favorites_hint">Pinned to the center. Drag the handle to reorder.</string>
     <string name="all_apps">All apps (%1$d)</string>
     <string name="hidden_apps">Hidden apps (%1$d)</string>
     <string name="no_results">No matching apps</string>
@@ -65,9 +58,22 @@
     <string name="move_down">Move %1$s down</string>
     <string name="drag_app">Drag to reorder %1$s</string>
     <string name="custom">Custom</string>
-    <string name="alphabetical">Alphabetical</string>
+    <string name="alphabetical">A–Z</string>
     <string name="most_used">Most used</string>
-    <string name="recently_used">Recently used</string>
+    <string name="recently_used">Recent</string>
+    <string name="sort_by">Sort by</string>
+    <string name="group_layout">Layout</string>
+    <string name="group_icons">Icons</string>
+    <string name="settings_label">Settings</string>
+    <string name="connection_chip">%1$s · %2$s</string>
+    <string name="visual_tier">Watch quality</string>
+    <string name="tier_refined">Refined</string>
+    <string name="tier_lite">Lite</string>
+    <string name="tier_lite_note">Lite turns off blur, glows and animation: smoother and easier on the battery.</string>
+    <string name="icon_style">Icon style</string>
+    <string name="icon_style_original">Original colors</string>
+    <string name="icon_style_themed">Themed monochrome</string>
+    <string name="icon_style_note">The preview is an approximation; your watch is the source of truth.</string>
     <string name="undo">Undo</string>
     <string name="redo">Redo</string>
     <string name="saved_automatically">Draft saved automatically. All changes can be undone.</string>
@@ -101,6 +107,7 @@
     <string name="crop">Crop icon</string>
     <string name="crop_hint">Drag and pinch to fill the mask. The saved icon is a 192 px PNG.</string>
     <string name="zoom">Zoom</string>
+    <string name="percent">%1$d%%</string>
     <string name="save_icon">Use this icon</string>
     <string name="cancel">Cancel</string>
     <string name="processing">Processing safely…</string>
@@ -122,6 +129,8 @@
     <string name="help_install_body">Install N2 Launcher on your phone and watch. Both apps must have the same package and signature. After pairing, open the watch app once and tap Refresh on this phone.</string>
     <string name="help_home">Use it as your home screen</string>
     <string name="help_home_body">On your watch, open Settings → Apps → Default apps → Home app and choose N2 Launcher, if available. Some watches do not allow replacing the home screen. Use the N2 Launcher Tile or its app icon instead.</string>
+    <string name="help_home_key">Home button and system watch faces</string>
+    <string name="help_home_key_body">N2 keeps your system watch faces: pressing Home on a watch face opens N2, and pressing Home inside an app returns to the watch face. For that decision to be exact, turn on the “N2 Launcher” service under Settings → Accessibility on the watch. Without it the launcher still opens from its icon, the Tile and its watch face shortcuts.</string>
     <string name="help_pair">Before syncing</string>
     <string name="help_pair_body">Pair your watch through its Wear OS companion app. Keep Bluetooth or Wi-Fi connected, enable Google Play services, and install N2 Launcher on both devices. “Sent” means the phone published your draft; “Applied” means the watch confirmed it.</string>
     <string name="help_offline">Can I edit offline?</string>

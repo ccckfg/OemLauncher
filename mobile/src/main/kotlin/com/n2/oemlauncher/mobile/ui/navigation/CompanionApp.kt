@@ -1,7 +1,7 @@
 package com.n2.oemlauncher.mobile.ui.navigation
 
-import androidx.compose.animation.EnterTransition
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -9,20 +9,17 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Redo
 import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.material.icons.outlined.Contrast
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.outlined.Insights
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,8 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,7 +43,14 @@ import com.n2.oemlauncher.mobile.R
 import com.n2.oemlauncher.mobile.config.UiDimensions
 import com.n2.oemlauncher.mobile.data.UserNotice
 import com.n2.oemlauncher.mobile.editor.CompanionViewModel
+import com.n2.oemlauncher.mobile.ui.components.ChampagneButton
+import com.n2.oemlauncher.mobile.ui.components.GlassDialog
+import com.n2.oemlauncher.mobile.ui.components.GlassIconButton
+import com.n2.oemlauncher.mobile.ui.components.GlassPage
+import com.n2.oemlauncher.mobile.ui.components.GlassTopBar
 import com.n2.oemlauncher.mobile.ui.components.label
+import com.n2.oemlauncher.mobile.ui.components.rememberTopBarScrollState
+import com.n2.oemlauncher.mobile.ui.components.trackTopBarScroll
 import com.n2.oemlauncher.mobile.ui.screens.AppearanceScreen
 import com.n2.oemlauncher.mobile.ui.screens.CropScreen
 import com.n2.oemlauncher.mobile.ui.screens.EditorScreen
@@ -61,7 +65,6 @@ import com.n2.oemlauncher.mobile.ui.theme.CompanionTheme
 import com.n2.oemlauncher.mobile.ui.theme.MatchSystemBars
 import kotlinx.coroutines.flow.first
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompanionApp(vm: CompanionViewModel) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -102,80 +105,113 @@ fun CompanionApp(vm: CompanionViewModel) {
         destination.hasRoute<ImportResult>() -> R.string.import_result
         else -> R.string.help
     }
+    val scroll = rememberTopBarScrollState()
+    LaunchedEffect(destination) { scroll.reset() }
     LifecycleStartEffect(vm) {
         vm.start()
         onStopOrDispose { vm.stop() }
     }
     CompanionTheme(dark) {
         MatchSystemBars()
-        Scaffold(topBar = {
-            TopAppBar(
-                title = { Text(stringResource(title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    if (!home) IconButton(back) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.back))
-                    }
+        GlassPage {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = Color.Transparent,
+                topBar = {
+                    GlassTopBar(
+                        title = stringResource(title),
+                        scrolled = scroll.scrolled,
+                        navigationIcon = {
+                            if (!home) {
+                                GlassIconButton(
+                                    Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.back), back,
+                                )
+                            }
+                        },
+                        actions = {
+                            if (home) {
+                                GlassIconButton(
+                                    Icons.Outlined.Insights, stringResource(R.string.sync_diagnostics),
+                                    { nav.navigate(SyncDiagnostics) },
+                                )
+                            }
+                            if (editing) {
+                                GlassIconButton(
+                                    Icons.AutoMirrored.Outlined.Undo, stringResource(R.string.undo),
+                                    { vm.undo() },
+                                    enabled = state.draft?.undo?.isNotEmpty() == true,
+                                )
+                                GlassIconButton(
+                                    Icons.AutoMirrored.Outlined.Redo, stringResource(R.string.redo),
+                                    { vm.redo() },
+                                    enabled = state.draft?.redo?.isNotEmpty() == true,
+                                )
+                            }
+                            GlassIconButton(
+                                Icons.Outlined.Contrast, stringResource(R.string.theme),
+                                { dark = !(dark ?: systemDark) },
+                            )
+                        },
+                    )
                 },
-                actions = {
-                    if (editing) {
-                        IconButton({ vm.undo() }, enabled = state.draft?.undo?.isNotEmpty() == true) {
-                            Icon(Icons.AutoMirrored.Outlined.Undo, stringResource(R.string.undo))
-                        }
-                        IconButton({ vm.redo() }, enabled = state.draft?.redo?.isNotEmpty() == true) {
-                            Icon(Icons.AutoMirrored.Outlined.Redo, stringResource(R.string.redo))
-                        }
-                    }
-                    IconButton({ dark = !(dark ?: systemDark) }) {
-                        Icon(Icons.Outlined.Contrast, stringResource(R.string.theme))
-                    }
-                },
-            )
-        }) { padding ->
-            Box(Modifier.fillMaxSize().padding(padding)) {
-                NavHost(
-                    navController = nav, startDestination = Home,
-                    enterTransition = {
-                        if (state.config.layout.reduceMotion) EnterTransition.None
-                        else fadeIn(tween(UiDimensions.ANIMATION_MS))
-                    },
-                    exitTransition = {
-                        if (state.config.layout.reduceMotion) ExitTransition.None
-                        else fadeOut(tween(UiDimensions.ANIMATION_MS))
-                    },
-                ) {
-                    composable<Home> {
-                        HomeScreen(state, vm) {
-                            when (it) {
-                                HomeDestination.EDITOR -> nav.navigate(Editor)
-                                HomeDestination.APPEARANCE -> nav.navigate(Appearance)
-                                HomeDestination.ICONS -> nav.navigate(IconsPage())
-                                HomeDestination.PREVIEW -> nav.navigate(Preview)
-                                HomeDestination.SYNC -> nav.navigate(SyncDiagnostics)
-                                HomeDestination.HELP -> nav.navigate(Help)
+            ) { padding ->
+                Box(Modifier.fillMaxSize().padding(padding).trackTopBarScroll(scroll)) {
+                    NavHost(
+                        navController = nav, startDestination = Home,
+                        enterTransition = {
+                            if (state.config.layout.reduceMotion) EnterTransition.None
+                            else fadeIn(tween(UiDimensions.ANIMATION_MS))
+                        },
+                        exitTransition = {
+                            if (state.config.layout.reduceMotion) ExitTransition.None
+                            else fadeOut(tween(UiDimensions.ANIMATION_MS))
+                        },
+                    ) {
+                        composable<Home> {
+                            HomeScreen(state, vm) {
+                                when (it) {
+                                    HomeDestination.EDITOR -> nav.navigate(Editor)
+                                    HomeDestination.APPEARANCE -> nav.navigate(Appearance)
+                                    HomeDestination.ICONS -> nav.navigate(IconsPage())
+                                    HomeDestination.PREVIEW -> nav.navigate(Preview)
+                                    HomeDestination.SYNC -> nav.navigate(SyncDiagnostics)
+                                    HomeDestination.HELP -> nav.navigate(Help)
+                                }
                             }
                         }
+                        composable<Editor> {
+                            EditorScreen(state, vm) { nav.navigate(IconsPage(it)) }
+                        }
+                        composable<Appearance> { AppearanceScreen(state, vm) }
+                        composable<IconsPage> {
+                            IconScreen(state, vm, it.toRoute<IconsPage>().appKey, { key ->
+                                nav.navigate(Crop(key))
+                            }, { nav.navigate(ImportResult) })
+                        }
+                        composable<Preview> { PreviewScreen(state, vm) }
+                        composable<SyncDiagnostics> { SyncDiagnosticsScreen(state, vm) }
+                        composable<Crop> {
+                            CropScreen(it.toRoute<Crop>().appKey, vm, imports) { nav.popBackStack() }
+                        }
+                        composable<ImportResult> {
+                            ImportResultScreen(state, imports, vm) { nav.popBackStack() }
+                        }
+                        composable<Help> { HelpScreen() }
                     }
-                    composable<Editor> {
-                        EditorScreen(state, vm, { nav.navigate(IconsPage(it)) }, { nav.navigate(Preview) })
-                    }
-                    composable<Appearance> { AppearanceScreen(state, vm) }
-                    composable<IconsPage> {
-                        IconScreen(state, vm, it.toRoute<IconsPage>().appKey, { key ->
-                            nav.navigate(Crop(key))
-                        }, { nav.navigate(ImportResult) })
-                    }
-                    composable<Preview> { PreviewScreen(state, vm) }
-                    composable<SyncDiagnostics> { SyncDiagnosticsScreen(state, vm) }
-                    composable<Crop> { CropScreen(it.toRoute<Crop>().appKey, vm, imports) { nav.popBackStack() } }
-                    composable<ImportResult> { ImportResultScreen(state, imports, vm) { nav.popBackStack() } }
-                    composable<Help> { HelpScreen() }
                 }
             }
         }
-        if (state.notice != UserNotice.NONE) AlertDialog(
-            onDismissRequest = vm::dismissNotice,
-            text = { Text(stringResource(state.notice.label())) },
-            confirmButton = { TextButton(vm::dismissNotice) { Text(stringResource(R.string.dismiss)) } },
-        )
+        if (state.notice != UserNotice.NONE) GlassDialog(onDismissRequest = vm::dismissNotice) {
+            Text(
+                stringResource(state.notice.label()),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            ChampagneButton(
+                stringResource(R.string.dismiss),
+                vm::dismissNotice,
+                Modifier.fillMaxWidth(),
+            )
+        }
     }
 }

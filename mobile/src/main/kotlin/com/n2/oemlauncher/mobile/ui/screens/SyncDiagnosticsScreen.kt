@@ -7,14 +7,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Watch
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -32,10 +30,14 @@ import com.n2.oemlauncher.mobile.data.NodeStatus
 import com.n2.oemlauncher.mobile.data.SyncDiagnostics
 import com.n2.oemlauncher.mobile.editor.CompanionViewModel
 import com.n2.oemlauncher.mobile.ui.components.ApiErrorLabels
+import com.n2.oemlauncher.mobile.ui.components.ChampagneButton
+import com.n2.oemlauncher.mobile.ui.components.GlassButton
+import com.n2.oemlauncher.mobile.ui.components.GlassCard
 import com.n2.oemlauncher.mobile.ui.components.StatusTone
 import com.n2.oemlauncher.mobile.ui.components.icon
 import com.n2.oemlauncher.mobile.ui.components.relativeTime
 import com.n2.oemlauncher.mobile.ui.components.tint
+import com.n2.oemlauncher.shared.model.WatchCatalog
 
 @Composable
 fun SyncDiagnosticsScreen(state: CompanionState, vm: CompanionViewModel) {
@@ -45,45 +47,45 @@ fun SyncDiagnosticsScreen(state: CompanionState, vm: CompanionViewModel) {
     }
     LazyColumn(
         Modifier.padding(horizontal = UiDimensions.PAGE_PADDING.dp),
-        verticalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp),
+        verticalArrangement = Arrangement.spacedBy(UiDimensions.SMALL_GAP.dp),
     ) {
-        item { NodesCard(diag.nodes) }
+        item { NodesCard(diag.nodes, state.catalog) }
         item { ReceivedCard(diag) }
         item { SentCard(diag) }
         item { MissingCard(missing) }
         item { ErrorCard(diag.lastError) }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp)) {
-                OutlinedButton({ vm.requestCatalog() }, Modifier.weight(1f), enabled = !state.busy) {
-                    Text(
-                        stringResource(R.string.request_catalog),
-                        maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Button({ vm.sync() }, Modifier.weight(1f), enabled = state.canSync && !state.conflict) {
-                    Text(
-                        stringResource(R.string.resend),
-                        maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
-                    )
-                }
+                GlassButton(
+                    stringResource(R.string.request_catalog),
+                    { vm.requestCatalog() },
+                    Modifier.weight(1f),
+                    enabled = !state.busy,
+                )
+                ChampagneButton(
+                    stringResource(R.string.resend),
+                    { vm.sync() },
+                    Modifier.weight(1f),
+                    enabled = state.canSync && !state.conflict,
+                )
             }
         }
-        item { Spacer(Modifier.padding(UiDimensions.SMALL_GAP.dp)) }
+        item { Spacer(Modifier.size(UiDimensions.SMALL_GAP.dp)) }
     }
 }
 
 @Composable
 private fun DiagCard(title: Int, tone: StatusTone, content: @Composable ColumnScope.() -> Unit) {
-    Card {
+    GlassCard {
         Column(
-            Modifier.fillMaxWidth().padding(UiDimensions.GAP.dp),
+            Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(UiDimensions.SMALL_GAP.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(tone.icon(), null, tint = tone.tint())
+                Icon(tone.icon(), null, tint = tone.tint(), modifier = Modifier.size(ICON_DP.dp))
                 Text(
                     stringResource(title),
-                    Modifier.padding(horizontal = UiDimensions.SMALL_GAP.dp),
+                    Modifier.padding(start = UiDimensions.SMALL_GAP.dp),
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
@@ -111,21 +113,29 @@ private fun KeyValueLine(label: Int, value: String) {
 }
 
 @Composable
-private fun NodesCard(nodes: List<NodeStatus>) {
+private fun NodesCard(nodes: List<NodeStatus>, watch: WatchCatalog?) {
     val tone = when {
         nodes.any { it.hasWatchApp } -> StatusTone.GOOD
         nodes.isEmpty() -> StatusTone.WAITING
         else -> StatusTone.WARNING
     }
     DiagCard(R.string.diag_nodes, tone) {
+        if (watch != null) {
+            InfoLine(
+                stringResource(
+                    R.string.watch_versions, watch.deviceName, watch.sdkInt, watch.appVersionName,
+                ),
+            )
+        }
         if (nodes.isEmpty()) InfoLine(stringResource(R.string.diag_no_nodes))
         nodes.forEach { node ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Outlined.Watch, null,
                     tint = if (node.hasWatchApp) tone.tint() else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(ICON_DP.dp),
                 )
-                Column(Modifier.padding(horizontal = UiDimensions.SMALL_GAP.dp)) {
+                Column(Modifier.padding(start = UiDimensions.SMALL_GAP.dp)) {
                     Text(node.name, style = MaterialTheme.typography.titleSmall)
                     Text(
                         stringResource(
@@ -201,3 +211,5 @@ private fun ErrorCard(error: ApiError?) {
         }
     }
 }
+
+private const val ICON_DP = 22

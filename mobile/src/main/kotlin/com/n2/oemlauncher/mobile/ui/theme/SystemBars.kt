@@ -1,7 +1,6 @@
 package com.n2.oemlauncher.mobile.ui.theme
 
 import android.app.Activity
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.luminance
@@ -13,7 +12,7 @@ import com.n2.oemlauncher.mobile.config.ThemeTokens
 fun MatchSystemBars() {
     val view = LocalView.current
     val activity = view.context as? Activity ?: return
-    val light = MaterialTheme.colorScheme.surface.luminance() > ThemeTokens.LIGHT_SURFACE_THRESHOLD
+    val light = GlassTheme.palette.background.luminance() > ThemeTokens.LIGHT_SURFACE_THRESHOLD
     SideEffect {
         WindowCompat.getInsetsController(activity.window, view).apply {
             isAppearanceLightStatusBars = light
