@@ -42,6 +42,7 @@ import com.n2.oemlauncher.mobile.ui.components.EmptyState
 import com.n2.oemlauncher.mobile.ui.components.GlassButton
 import com.n2.oemlauncher.mobile.ui.components.GlassRow
 import com.n2.oemlauncher.mobile.ui.components.SearchPill
+import com.n2.oemlauncher.mobile.ui.components.glassTextButtonColors
 
 @Composable
 fun IconScreen(
@@ -105,16 +106,23 @@ fun IconScreen(
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton({
-                        target = app.key
-                        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    }) {
+                    TextButton(
+                        {
+                            target = app.key
+                            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        },
+                        colors = glassTextButtonColors(),
+                    ) {
                         Icon(
                             Icons.Outlined.PhotoLibrary, stringResource(R.string.choose_photo),
                             modifier = Modifier.size(ICON_DP.dp),
                         )
                     }
-                    TextButton({ vm.resetIcon(app.key) }, enabled = app.key in state.config.iconOverrides) {
+                    TextButton(
+                        { vm.resetIcon(app.key) },
+                        enabled = app.key in state.config.iconOverrides,
+                        colors = glassTextButtonColors(),
+                    ) {
                         Icon(
                             Icons.Outlined.Restore, stringResource(R.string.restore),
                             modifier = Modifier.size(ICON_DP.dp),

@@ -2,6 +2,7 @@ package com.n2.oemlauncher.mobile.ui.components
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PathMeasure
@@ -59,6 +60,7 @@ class PreviewRenderer(
     private val gearSize = DisplayMath.dpToPx(PreviewTokens.GEAR_BUTTON_DP, density)
     private val gridTop = DisplayMath.dpToPx(PreviewTokens.GRID_TOP_DP, density)
     private val gridRow = diameter + DisplayMath.dpToPx(PreviewTokens.GRID_LABEL_GAP_DP, density)
+    private val gearRow = gearSize + DisplayMath.dpToPx(PreviewTokens.GRID_GEAR_GAP_DP, density)
     private val listRow = max(diameter, DisplayMath.dpToPx(PreviewTokens.LIST_ROW_DP, density))
     private val arcPx = radius * PreviewTokens.LIST_ARC_FACTOR
     private val columns = settings.gridColumns.coerceAtLeast(1)
@@ -76,6 +78,18 @@ class PreviewRenderer(
         color = Palettes.Mocha.textSecondary.toInt()
         textSize = DisplayMath.dpToPx(PreviewTokens.FOCUS_LABEL_SP, density)
         textAlign = Paint.Align.LEFT
+        // The arc crosses the outermost icons; a halo in the page color keeps it readable there.
+        val background = Palettes.Mocha.background
+        setShadowLayer(
+            DisplayMath.dpToPx(PreviewTokens.FOCUS_LABEL_HALO_DP, density),
+            0f, 0f,
+            Color.argb(
+                (PreviewTokens.FOCUS_LABEL_HALO_ALPHA * 255f).toInt(),
+                (background shr 16 and 0xFF).toInt(),
+                (background shr 8 and 0xFF).toInt(),
+                (background and 0xFF).toInt(),
+            ),
+        )
     }
     private val labelPath = Path()
     private val pathMeasure = PathMeasure()
@@ -101,9 +115,12 @@ class PreviewRenderer(
         labelArcLength = pathMeasure.length
     }
 
-    private fun contentHeight(): Float =
-        gearSize + if (settings.mode == LayoutMode.LIST) apps.size * listRow
-        else RoundScreen.rowCount(apps.size, columns) * gridRow
+    private fun contentHeight(): Float = if (settings.mode == LayoutMode.LIST) {
+        // List capsules stack like the watch's list, so only the grid keeps the gear gap.
+        gearSize + apps.size * listRow
+    } else {
+        gearRow + RoundScreen.rowCount(apps.size, columns) * gridRow
+    }
 
     fun draw(canvas: Canvas, drawWidth: Float, drawHeight: Float, panX: Float, panY: Float) {
         canvas.withSave {
@@ -203,7 +220,7 @@ class PreviewRenderer(
         }
         for (i in apps.indices) {
             val cx = (i % columns + 0.5f) * cellWidth
-            val cy = gridTop + gearSize + diameter / 2f + i / columns * gridRow + y
+            val cy = gridTop + gearRow + diameter / 2f + i / columns * gridRow + y
             if (cy + diameter < 0f || cy - diameter > watchHeight) continue
             val position = cy / watchHeight
             val scale = PreviewEdge.falloff(position, PreviewTokens.EDGE_MIN_SCALE)

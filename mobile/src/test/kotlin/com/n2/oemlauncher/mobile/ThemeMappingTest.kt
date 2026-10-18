@@ -84,4 +84,27 @@ class ThemeMappingTest {
             dark.strongOverBackground,
         )
     }
+
+    /**
+     * Champagne as text is [Palettes.accentText]; the fill accent is only for capsules and
+     * tracks. This is the legibility rule that keeps the light theme readable.
+     */
+    @Test fun champagneTextStaysLegibleOnBothBackgrounds() {
+        for (palette in listOf(Palettes.Mocha, Palettes.Latte)) {
+            val glass = GlassPalette(palette)
+            val text = palette.accentText
+            for (surface in listOf(palette.background, ColorMath.compositeOver(palette.glass, palette.background))) {
+                val ratio = ColorMath.contrast(text, surface)
+                assertTrue("accentText $ratio on surface", ratio >= 4.5)
+            }
+            assertEquals(Color(palette.accentText), glass.accentText)
+        }
+    }
+
+    /** Documents why the rule exists: the fill accent fails as text on light glass. */
+    @Test fun fillAccentIsNotUsableAsTextOnTheLightTheme() {
+        val surface = ColorMath.compositeOver(Palettes.Latte.glass, Palettes.Latte.background)
+        assertTrue(ColorMath.contrast(Palettes.Latte.accent, surface) < 4.5)
+        assertTrue(ColorMath.contrast(Palettes.Mocha.accent, Palettes.Mocha.background) >= 4.5)
+    }
 }

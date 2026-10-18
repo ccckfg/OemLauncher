@@ -184,7 +184,10 @@ fun WatchPreview(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            TextButton(onClick = { panX = 0f; panY = 0f }) { Text(stringResource(R.string.reset_pan)) }
+            TextButton(
+                onClick = { panX = 0f; panY = 0f },
+                colors = glassTextButtonColors(),
+            ) { Text(stringResource(R.string.reset_pan)) }
         }
     }
 }

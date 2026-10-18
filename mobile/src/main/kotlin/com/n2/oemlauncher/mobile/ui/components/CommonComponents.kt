@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.n2.oemlauncher.mobile.R
@@ -75,7 +76,7 @@ fun SearchPill(query: String, modifier: Modifier = Modifier, onChange: (String) 
                 onValueChange = onChange,
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-                cursorBrush = SolidColor(palette.accent),
+                cursorBrush = SolidColor(palette.accentText),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -125,7 +126,7 @@ fun Processing() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp),
     ) {
-        CircularProgressIndicator(color = GlassTheme.palette.accent)
+        CircularProgressIndicator(color = GlassTheme.palette.accentText)
         Text(
             stringResource(R.string.processing),
             style = MaterialTheme.typography.bodyMedium,
@@ -140,6 +141,7 @@ fun GlassRow(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     elevated: Boolean = false,
+    contentPadding: Dp = UiDimensions.SMALL_GAP.dp,
     content: @Composable RowScope.() -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
@@ -153,7 +155,7 @@ fun GlassRow(
                     Modifier
                 },
             )
-            .padding(horizontal = UiDimensions.SMALL_GAP.dp),
+            .padding(horizontal = contentPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp),
         content = content,

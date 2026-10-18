@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.n2.oemlauncher.mobile.config.GlassTokens
 import com.n2.oemlauncher.mobile.config.UiDimensions
+import com.n2.oemlauncher.mobile.ui.theme.GlassPalette
 import com.n2.oemlauncher.mobile.ui.theme.GlassTheme
 import com.n2.oemlauncher.shared.design.GlassSpecs
 
@@ -133,6 +136,14 @@ fun EmptyState(
         ChampagneButton(action, onAction)
     }
 }
+
+/**
+ * Colors for a text button that carries a glyph or a label. Champagne as *text* is
+ * [GlassPalette.accentText]: the fill accent is far too pale to read on light glass.
+ */
+@Composable
+fun glassTextButtonColors(): ButtonColors =
+    ButtonDefaults.textButtonColors(contentColor = GlassTheme.palette.accentText)
 
 private const val DISABLED_ALPHA = 0.4f
 private const val ICON_BUTTON_DP = 44

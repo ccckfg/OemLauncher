@@ -141,7 +141,7 @@ fun EditableAppRow(
                 Icon(
                     if (pinned) Icons.Filled.Star else Icons.Outlined.StarBorder,
                     stringResource(if (pinned) R.string.remove_favorite else R.string.add_favorite, app.label),
-                    tint = if (pinned) palette.accent else palette.textTertiary,
+                    tint = if (pinned) palette.accentText else palette.textTertiary,
                 )
             }
             IconButton({ menu = true }) {

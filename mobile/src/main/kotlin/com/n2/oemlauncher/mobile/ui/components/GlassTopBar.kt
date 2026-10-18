@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.n2.oemlauncher.mobile.config.GlassTokens
+import com.n2.oemlauncher.mobile.config.UiDimensions
 import com.n2.oemlauncher.mobile.ui.theme.GlassTheme
 
 /**
@@ -98,8 +99,9 @@ fun GlassTopBar(
     )
     Column(modifier.fillMaxWidth().background(background)) {
         Row(
+            // Same side margin as the page content, so the title lines up with the cards below.
             Modifier.fillMaxWidth().statusBarsPadding()
-                .height(GlassTokens.TOP_BAR_HEIGHT.dp).padding(horizontal = 4.dp),
+                .height(GlassTokens.TOP_BAR_HEIGHT.dp).padding(horizontal = UiDimensions.PAGE_PADDING.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             navigationIcon?.invoke()

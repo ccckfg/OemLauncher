@@ -16,6 +16,13 @@ object PreviewTokens {
     const val FOCUS_LABEL_SWEEP_DEGREES = 85f
     const val FOCUS_LABEL_RADIUS_FRACTION = 0.84f
 
+    /**
+     * The focus name crosses the last row of icons, so it carries a background-colored halo;
+     * the label band and the black scrim are gone for good.
+     */
+    const val FOCUS_LABEL_HALO_DP = 4f
+    const val FOCUS_LABEL_HALO_ALPHA = 0.85f
+
     /** Centered settings gear, in dp. The same size the watch uses for its grid and list row. */
     const val GEAR_BUTTON_DP = 52f
     const val GEAR_GLYPH_FRACTION = 0.5f
@@ -31,6 +38,9 @@ object PreviewTokens {
     const val LIST_ROW_DP = 64f
     const val LIST_ARC_FACTOR = 0.55f
     const val ICON_CORNER_RATIO = 0.24f
+
+    /** The gear row is a row too, so it keeps the same gap below it as two app rows do. */
+    const val GRID_GEAR_GAP_DP = GRID_LABEL_GAP_DP
 
     /** Rows shrink and fade towards the edges; WearUiTokens.EDGE_*. */
     const val EDGE_MIN_SCALE = 0.7f

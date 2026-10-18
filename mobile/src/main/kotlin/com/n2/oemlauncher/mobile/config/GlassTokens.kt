@@ -35,6 +35,15 @@ object GlassTokens {
     /** Drag lifts a row: shadow plus a small scale, like a card picked off the table. */
     const val DRAG_SCALE = 1.02f
 
+    /**
+     * Raised glass. The shadow is a stack of bands clipped to the outside of the shape, so
+     * nothing is ever painted under the translucent fill; a real blur behind the pane would
+     * show through it as a grey rectangle. More bands mean a smoother ramp.
+     */
+    const val SHADOW_SPREAD_DP = 14
+    const val SHADOW_DROP_DP = 3
+    const val SHADOW_LAYERS = 20
+
     /** Hero preview on the home page and the smaller one on the appearance page. */
     const val HERO_PREVIEW = 236
     const val SMALL_PREVIEW = 168

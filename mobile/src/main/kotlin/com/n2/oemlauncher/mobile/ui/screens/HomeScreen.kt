@@ -153,7 +153,8 @@ private fun HeroCard(state: CompanionState, vm: CompanionViewModel, open: () -> 
 
 @Composable
 private fun DemoStrip() {
-    GlassRow {
+    // Text-only row: it needs the card padding, not the tighter icon-row one.
+    GlassRow(contentPadding = GlassTokens.CARD_PADDING.dp) {
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.demo), style = MaterialTheme.typography.titleSmall)
             Text(

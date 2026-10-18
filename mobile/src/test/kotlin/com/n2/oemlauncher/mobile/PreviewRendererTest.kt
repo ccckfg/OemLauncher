@@ -97,10 +97,51 @@ class PreviewRendererTest {
         val height = display.heightPx.toFloat()
         val gridWithoutGear = RoundScreen.rowCount(apps.size, columns) * gridRow + top * 2f - height
         val listWithoutGear = apps.size * listRow + top * 2f - height
-        assertEquals(gear, renderer(mode = LayoutMode.GRID).scrollLimit - gridWithoutGear, 0.5f)
+        // The grid adds the gear row plus the gap that separates it from the first app row.
+        val gearGap = DisplayMath.dpToPx(PreviewTokens.GRID_GEAR_GAP_DP, density)
+        assertEquals(gear + gearGap, renderer(mode = LayoutMode.GRID).scrollLimit - gridWithoutGear, 0.5f)
         assertEquals(gear, renderer(mode = LayoutMode.LIST).scrollLimit - listWithoutGear, 0.5f)
         assertTrue(renderer(mode = LayoutMode.GRID).scrollLimit > 0f)
         assertTrue(renderer(mode = LayoutMode.LIST).scrollLimit > 0f)
+    }
+
+    /**
+     * The gear must not touch the first app row: scanning down the middle of the screen, the
+     * first icon pixel has to sit a full row gap below the gear. Regression for the overlap
+     * seen in `preview-grid.png`.
+     */
+    @Test fun gridKeepsARowGapBetweenTheGearAndTheFirstRow() {
+        val icons = List(apps.size) { icon(Color.RED) }
+        val settings = LayoutSettings(
+            mode = LayoutMode.GRID, gridColumns = 1, showLabels = false, visualTier = VisualTier.LITE,
+        )
+        val renderer = PreviewRenderer(
+            apps, display, settings, icons, gear = null, settingsLabel = SETTINGS_LABEL, favoriteCount = 0,
+        )
+        val bitmap = Bitmap.createBitmap(side, side, Bitmap.Config.ARGB_8888)
+        renderer.draw(Canvas(bitmap), side.toFloat(), side.toFloat(), 0f, 0f)
+        val density = display.densityDpi
+        val scale = side / display.widthPx.toFloat()
+        val gear = DisplayMath.dpToPx(PreviewTokens.GEAR_BUTTON_DP, density)
+        val top = DisplayMath.dpToPx(PreviewTokens.GRID_TOP_DP, density)
+        // The gap is the one between two app rows, so it is the label gap, not a new number.
+        val gap = DisplayMath.dpToPx(PreviewTokens.GRID_LABEL_GAP_DP, density)
+        val column = (side / 2f).toInt()
+        val scanFrom = ((top + gear) * scale).toInt() + 1
+        val expectedTop = ((top + gear + gap) * scale).toInt()
+        var firstRowPixel = -1
+        for (y in scanFrom until side) {
+            val color = bitmap.getPixel(column, y)
+            if (Color.red(color) > 150 && Color.red(color) > Color.blue(color) + 60) {
+                firstRowPixel = y
+                break
+            }
+        }
+        assertTrue("no first row found below the gear", firstRowPixel >= 0)
+        assertTrue(
+            "first row starts at $firstRowPixel, expected at or below $expectedTop",
+            firstRowPixel >= expectedTop - AA_TOLERANCE,
+        )
     }
 
     @Test fun scrollLimitShrinksWhenGridColumnsIncrease() {
@@ -170,5 +211,6 @@ class PreviewRendererTest {
         const val SETTINGS_LABEL = "Settings"
         const val SAMPLES = 8
         const val EPSILON = 1e-4f
+        const val AA_TOLERANCE = 2
     }
 }
