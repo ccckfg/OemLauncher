@@ -9,6 +9,9 @@ object WearUiTokens {
     const val VIGNETTE_START_FRACTION = 0.74f
     const val VIGNETTE_ALPHA = 0.9f
 
+    /** Cells fainter than this are skipped: they cost a full draw and cannot be seen. */
+    const val MIN_VISIBLE_ALPHA = 0.02f
+
     /** Size of the gear glyph relative to its honeycomb cell, and its ring stroke. */
     const val GEAR_GLYPH_FRACTION = 0.52f
     const val GEAR_RING_DP = 1.5f

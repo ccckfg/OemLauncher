@@ -3,15 +3,19 @@ package com.n2.oemlauncher.wear.ui
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Region
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import com.n2.oemlauncher.shared.model.IconShape
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -32,9 +36,18 @@ class AppGlyphDrawingTest {
         return target
     }
 
-    @Test fun roundedSquareIsNotClippedByACircle() {
-        assertEquals(255, Color.alpha(render(IconShape.SQUIRCLE, true).getPixel(5, 20)))
-        assertEquals(0, Color.alpha(render(IconShape.CIRCLE, true).getPixel(5, 20)))
+    private fun maskContains(shape: IconShape, x: Int, y: Int): Boolean {
+        val mask = AppGlyphDrawing(shape, 100f, 2f, 3f).mask.asAndroidPath()
+        return Region().apply { setPath(mask, Region(0, 0, 100, 100)) }.contains(x, y)
+    }
+
+    @Test fun roundedSquareMaskKeepsTheCornerACircleCuts() {
+        assertTrue(maskContains(IconShape.SQUIRCLE, 5, 20))
+        assertFalse(maskContains(IconShape.CIRCLE, 5, 20))
+    }
+
+    @Test fun drawingDoesNotClipBitmapsThatAreAlreadyMasked() {
+        assertEquals(Color.RED, render(IconShape.CIRCLE, false).getPixel(5, 20))
     }
 
     @Test fun originalIsUnclippedAndHasNoRingsEvenWhenFavorite() {

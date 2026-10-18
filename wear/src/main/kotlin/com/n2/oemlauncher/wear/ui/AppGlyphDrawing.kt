@@ -9,7 +9,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.IntOffset
@@ -46,10 +45,10 @@ internal fun DrawScope.drawAppCell(
 ) {
     translate(x - radius, y - radius) {
         scale(radius * 2f / glyph.diameter, pivot = Offset.Zero) {
-            if (glyph.shape == IconShape.ORIGINAL) {
-                drawGlyphImage(glyph, icon, alpha)
-            } else {
-                clipPath(glyph.mask) { drawGlyphImage(glyph, icon, alpha) }
+            // Icon bitmaps are masked to the shape when they are decoded, so no per-frame clip here:
+            // a path clip per cell is a real GPU cost on the watch while the honeycomb scrolls.
+            drawGlyphImage(glyph, icon, alpha)
+            if (glyph.shape != IconShape.ORIGINAL) {
                 drawPath(glyph.rim, OemColors.RimLight, alpha, style = glyph.rimStroke)
                 if (favorite) drawPath(glyph.favoriteRing, OemColors.Accent, alpha, style = glyph.favoriteStroke)
             }

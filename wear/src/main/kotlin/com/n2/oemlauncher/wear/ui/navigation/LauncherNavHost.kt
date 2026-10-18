@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.TimeText
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
@@ -57,7 +58,8 @@ fun LauncherNavHost(viewModel: LauncherViewModel, callbacks: LauncherNavCallback
             openAppListPermissionSettings = callbacks.openAppListPermissionSettings,
         )
     }
-    AppScaffold(timeText = { TimeText() }) {
+    // Screens draw their own backdrop; a scaffold fill underneath would only be overdrawn.
+    AppScaffold(timeText = { TimeText() }, containerColor = Color.Transparent) {
         SwipeDismissableNavHost(navController = nav, startDestination = Routes.HOME) {
             composable(Routes.HOME) { LauncherHome(state, viewModel, home) }
             composable(Routes.SETTINGS) {

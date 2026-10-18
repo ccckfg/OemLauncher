@@ -53,6 +53,9 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+        // Every screen paints its own opaque backdrop, so the theme's window background only
+        // matters for the starting window. Keeping it would add one more full-screen fill per frame.
+        window.setBackgroundDrawable(null)
     }
 
     override fun onStart() {

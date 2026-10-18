@@ -194,7 +194,7 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel, callback
                 val alpha = honeycombCellAlpha(
                     frame.alpha[cell], frame.y[cell], radius, size.minDimension / 2f, layout.showLabels,
                 )
-                if (alpha <= 0f) continue
+                if (alpha < WearUiTokens.MIN_VISIBLE_ALPHA) continue
                 val x = centerX + frame.x[cell]
                 val y = centerY + frame.y[cell]
                 if (HoneycombSlots.isSettings(cell)) {
