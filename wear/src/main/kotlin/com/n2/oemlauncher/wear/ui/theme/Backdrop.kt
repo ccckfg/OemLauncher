@@ -10,30 +10,29 @@ import com.n2.oemlauncher.shared.design.GlassSpecs
 import com.n2.oemlauncher.shared.model.VisualTier
 
 /**
- * Misty navy backdrop: a soft glow above the center plus an off-center violet haze, both
- * falling off to black at the bezel. Every screen draws its own copy because swipe-to-dismiss
+ * Mocha backdrop with warm and cool glows. Every screen draws its own copy because swipe-to-dismiss
  * slides the top screen over the one below. Brushes are rebuilt only when the size changes.
  */
 fun Modifier.oemBackdrop(tier: VisualTier = VisualTier.REFINED): Modifier = drawWithCache {
     val spec = GlassSpecs.watch(tier)
-    val radius = size.minDimension / 2f
-    val core = Brush.radialGradient(
-        listOf(OemColors.BackdropCore, Color.Transparent),
-        center = Offset(size.width / 2f, size.height * 0.42f),
-        radius = radius * 1.1f,
-    )
-    val mist = Brush.radialGradient(
-        listOf(OemColors.BackdropMist.copy(alpha = OemColors.BackdropMistAlpha), Color.Transparent),
-        center = Offset(size.width * 0.7f, size.height * 0.72f),
-        radius = radius * 0.85f,
-    )
-    onDrawBehind {
-        drawRect(OemColors.Background)
-        if (spec.ambientGlow) {
+    if (spec.ambientGlow) {
+        val radius = size.minDimension / 2f
+        val core = Brush.radialGradient(
+            listOf(OemColors.BackdropCore, Color.Transparent),
+            center = Offset(size.width / 2f, size.height * WearUiTokens.BACKDROP_CORE_Y),
+            radius = radius * WearUiTokens.BACKDROP_CORE_RADIUS,
+        )
+        val mist = Brush.radialGradient(
+            listOf(OemColors.BackdropMist.copy(alpha = OemColors.BackdropMistAlpha), Color.Transparent),
+            center = Offset(size.width * WearUiTokens.BACKDROP_MIST_X, size.height * WearUiTokens.BACKDROP_MIST_Y),
+            radius = radius * WearUiTokens.BACKDROP_MIST_RADIUS,
+        )
+        onDrawBehind {
+            drawRect(OemColors.Background)
             drawRect(core)
             drawRect(mist)
         }
-    }
+    } else onDrawBehind { drawRect(OemColors.Background) }
 }
 
 /** Darkens content near the bezel so icons sink into the edge instead of being cut by it. */

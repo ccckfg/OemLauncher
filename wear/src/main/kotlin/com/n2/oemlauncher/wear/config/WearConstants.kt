@@ -48,4 +48,9 @@ object WearConstants {
     /** Font sizes of the tile header and of favorite labels. */
     const val TILE_HEADER_SP = 16f
     const val TILE_LABEL_SP = 12f
+    const val TILE_GRID_COLUMNS = 2
+    const val TILE_HEADER_GAP_DP = 8f
+    const val TILE_ROW_GAP_DP = 6f
+    const val TILE_COLUMN_GAP_DP = 10f
+    const val TILE_OPEN_LAUNCHER_ID = "open_launcher"
 }

@@ -50,11 +50,11 @@ fun LauncherHome(state: LauncherUiState, viewModel: LauncherViewModel, actions: 
     var switcherOpen by rememberSaveable { mutableStateOf(false) }
     val callbacks = HomeCallbacks(actions.openSettings, actions.openMenu) { switcherOpen = true }
     val tier = state.config.layout.visualTier
-    val blur = if (switcherOpen && tier == com.n2.oemlauncher.shared.model.VisualTier.REFINED) {
+    val blur = if (switcherOpen && tier == VisualTier.REFINED) {
         com.n2.oemlauncher.shared.design.GlassSpecs.watch(tier).overlayBlurDp.dp
     } else 0.dp
     Box(Modifier.fillMaxSize().oemBackdrop(tier)) {
-        Box(Modifier.fillMaxSize().blur(blur)) {
+        Box(Modifier.fillMaxSize().then(if (blur > 0.dp) Modifier.blur(blur) else Modifier)) {
             when (state.config.layout.mode) {
                 LayoutMode.HONEYCOMB -> HoneycombView(state, viewModel, callbacks)
                 LayoutMode.GRID -> GridView(state, viewModel, callbacks)

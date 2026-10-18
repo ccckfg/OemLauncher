@@ -215,7 +215,7 @@ fun SettingsScreen(
                 item { SectionHeader(stringResource(R.string.section_favorites), spec) }
                 items(config.favorites, key = { "favorite-$it" }) { key ->
                     ActionRow(
-                        icon = { AppGlyph(state.icons[key], Modifier.size(ButtonDefaults.IconSize)) },
+                        icon = { AppGlyph(state.icons[key], Modifier.size(ButtonDefaults.IconSize), layout.iconShape) },
                         label = labels[key] ?: key.substringBefore('/'),
                         value = stringResource(R.string.favorite_move_down),
                         spec = spec,
@@ -226,7 +226,7 @@ fun SettingsScreen(
                 item { SectionHeader(stringResource(R.string.hidden_apps), spec) }
                 items(state.hiddenEntries, key = { "hidden-${it.key}" }) { entry ->
                     ActionRow(
-                        icon = { AppGlyph(state.icons[entry.key], Modifier.size(ButtonDefaults.IconSize)) },
+                        icon = { AppGlyph(state.icons[entry.key], Modifier.size(ButtonDefaults.IconSize), layout.iconShape) },
                         label = entry.label,
                         value = stringResource(R.string.unhide_hint),
                         spec = spec,

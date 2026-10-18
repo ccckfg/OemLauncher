@@ -59,6 +59,13 @@ android {
         buildConfig = true
     }
 
+    // A Tile can use a different app language from its host, including while offline.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }

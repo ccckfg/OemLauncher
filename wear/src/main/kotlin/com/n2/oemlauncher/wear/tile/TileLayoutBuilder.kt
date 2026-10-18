@@ -4,7 +4,6 @@ import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders.argb
 import androidx.wear.protolayout.DimensionBuilders.dp
 import androidx.wear.protolayout.DimensionBuilders.expand
-import androidx.wear.protolayout.DimensionBuilders.sp
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ModifiersBuilders
 import androidx.wear.protolayout.ProtoLayoutScope
@@ -12,9 +11,9 @@ import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.TimelineBuilders
 import androidx.wear.tiles.TileBuilders
 import com.n2.oemlauncher.shared.model.AppKey
-import com.n2.oemlauncher.shared.design.ColorMath
-import com.n2.oemlauncher.shared.design.Palettes
 import com.n2.oemlauncher.wear.config.WearConstants
+import com.n2.oemlauncher.wear.tile.TileAppearance.label
+import com.n2.oemlauncher.wear.tile.TileAppearance.title
 
 /** Everything one tile render needs. */
 data class TileContent(
@@ -46,7 +45,7 @@ object TileLayoutBuilder {
         } else {
             favoritesColumn(content, header, scope)
         }
-        val layout = LayoutElementBuilders.Layout.Builder().setRoot(root).build()
+        val layout = LayoutElementBuilders.Layout.Builder().setRoot(TileAppearance.root(root)).build()
         val timeline = TimelineBuilders.Timeline.Builder()
             .addTimelineEntry(TimelineBuilders.TimelineEntry.Builder().setLayout(layout).build())
             .build()
@@ -93,11 +92,11 @@ object TileLayoutBuilder {
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
             .setModifiers(safeAreaModifiers())
             .addContent(title(header))
-            .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(8f)).build())
+            .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(WearConstants.TILE_HEADER_GAP_DP)).build())
         // 2x2 grid of round icon buttons: every cell stays clear of the round screen edge.
-        content.favorites.chunked(TILE_GRID_COLUMNS).forEach { rowFavorites ->
+        content.favorites.chunked(WearConstants.TILE_GRID_COLUMNS).forEach { rowFavorites ->
             column.addContent(favoritesGridRow(content, rowFavorites, scope))
-            column.addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(6f)).build())
+            column.addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(WearConstants.TILE_ROW_GAP_DP)).build())
         }
         return column.build()
     }
@@ -110,7 +109,9 @@ object TileLayoutBuilder {
         val row = LayoutElementBuilders.Row.Builder()
             .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
         favorites.forEachIndexed { index, favorite ->
-            if (index > 0) row.addContent(LayoutElementBuilders.Spacer.Builder().setWidth(dp(10f)).build())
+            if (index > 0) {
+                row.addContent(LayoutElementBuilders.Spacer.Builder().setWidth(dp(WearConstants.TILE_COLUMN_GAP_DP)).build())
+            }
             row.addContent(favoriteCell(content, favorite, scope))
         }
         return row.build()
@@ -124,7 +125,7 @@ object TileLayoutBuilder {
         val modifiers = ModifiersBuilders.Modifiers.Builder()
             .setBackground(
                 ModifiersBuilders.Background.Builder()
-                    .setColor(argb(GLASS_COLOR))
+                    .setColor(argb(TileAppearance.glass))
                     .setCorner(
                         ModifiersBuilders.Corner.Builder().setRadius(dp(WearConstants.TILE_CELL_WIDTH_DP / 2f)).build(),
                     )
@@ -194,7 +195,7 @@ object TileLayoutBuilder {
                 ModifiersBuilders.Modifiers.Builder()
                     .setClickable(
                         ModifiersBuilders.Clickable.Builder()
-                            .setId(OPEN_LAUNCHER_ID)
+                            .setId(WearConstants.TILE_OPEN_LAUNCHER_ID)
                             .setMinimumClickableWidth(dp(WearConstants.TILE_TOUCH_TARGET_DP))
                             .setMinimumClickableHeight(dp(WearConstants.TILE_TOUCH_TARGET_DP))
                             .setOnClick(action)
@@ -205,7 +206,7 @@ object TileLayoutBuilder {
                     )
                     .setBackground(
                         ModifiersBuilders.Background.Builder()
-                            .setColor(argb(BUTTON_COLOR))
+                            .setColor(argb(TileAppearance.button))
                             .setCorner(
                                 ModifiersBuilders.Corner.Builder()
                                     .setRadius(dp(WearConstants.TILE_TOUCH_TARGET_DP / 2f))
@@ -215,33 +216,10 @@ object TileLayoutBuilder {
                     )
                     .build(),
             )
-            .addContent(label(text))
+            .addContent(label(text, onAccent = true))
             .build()
     }
 
-    private fun title(text: String): LayoutElementBuilders.Text =
-        LayoutElementBuilders.Text.Builder()
-            .setText(text)
-            .setMaxLines(1)
-            .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
-            .setFontStyle(
-                LayoutElementBuilders.FontStyle.Builder()
-                    .setSize(sp(WearConstants.TILE_HEADER_SP))
-                    .build(),
-            )
-            .build()
-
-    private fun label(text: String): LayoutElementBuilders.Text =
-        LayoutElementBuilders.Text.Builder()
-            .setText(text)
-            .setMaxLines(1)
-            .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
-            .setFontStyle(
-                LayoutElementBuilders.FontStyle.Builder()
-                    .setSize(sp(WearConstants.TILE_LABEL_SP))
-                    .build(),
-            )
-            .build()
     private fun icon(bytes: ByteArray, iconId: String, scope: ProtoLayoutScope): LayoutElementBuilders.Image =
         LayoutElementBuilders.Image.Builder(scope)
             .setImageResource(inlineImageResource(bytes), iconId)
@@ -262,8 +240,4 @@ object TileLayoutBuilder {
             .build()
     }
 
-    private const val OPEN_LAUNCHER_ID = "open_launcher"
-    private val GLASS_COLOR = ColorMath.compositeOver(Palettes.Mocha.glass, Palettes.Mocha.background).toInt()
-    private val BUTTON_COLOR = Palettes.Mocha.accent.toInt()
-    private const val TILE_GRID_COLUMNS = 2
 }

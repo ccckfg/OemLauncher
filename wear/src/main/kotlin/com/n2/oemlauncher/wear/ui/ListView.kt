@@ -63,6 +63,7 @@ fun ListView(state: LauncherUiState, viewModel: LauncherViewModel, callbacks: Ho
                         icon = state.icons[entry.key],
                         favorite = entry.key in state.config.favorites,
                         showLabel = layout.showLabels,
+                        iconShape = layout.iconShape,
                         modifier = Modifier.fillMaxWidth().roundEdge(this, arcPx),
                         onClick = { viewModel.launch(entry) },
                         onLongClick = { callbacks.openMenu(entry.key) },
@@ -79,6 +80,7 @@ private fun ListRow(
     icon: Bitmap?,
     favorite: Boolean,
     showLabel: Boolean,
+    iconShape: com.n2.oemlauncher.shared.model.IconShape,
     modifier: Modifier,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -92,7 +94,7 @@ private fun ListRow(
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppGlyph(icon, Modifier.size(WearUiTokens.LIST_ICON_DP.dp), favorite = favorite)
+        AppGlyph(icon, Modifier.size(WearUiTokens.LIST_ICON_DP.dp), iconShape, favorite = favorite)
         if (showLabel) {
             Text(
                 entry.label,

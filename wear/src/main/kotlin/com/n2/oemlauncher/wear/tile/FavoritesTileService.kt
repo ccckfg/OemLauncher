@@ -32,11 +32,12 @@ class FavoritesTileService : TileService() {
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         load { content ->
+            val strings = tileStringContext(this)
             TileLayoutBuilder.buildTile(
                 content,
-                header = getString(R.string.tile_header),
-                emptyText = getString(R.string.tile_empty),
-                openLauncherText = getString(R.string.tile_open_launcher),
+                header = strings.getString(R.string.tile_header),
+                emptyText = strings.getString(R.string.tile_empty),
+                openLauncherText = strings.getString(R.string.tile_open_launcher),
                 scope = requestParams.scope,
             )
         }

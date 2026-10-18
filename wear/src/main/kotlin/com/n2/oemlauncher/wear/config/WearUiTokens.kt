@@ -18,6 +18,13 @@ object WearUiTokens {
     const val COOKIE_PRESS_SCALE = 0.94f
     const val APP_RIM_DP = 1f
     const val FAVORITE_RIM_DP = 1.5f
+    const val ICON_CORNER_FRACTION = 0.22f
+    const val COOKIE_SHADOW_OFFSET_FRACTION = 0.08f
+    const val BACKDROP_CORE_Y = 0.42f
+    const val BACKDROP_CORE_RADIUS = 1.1f
+    const val BACKDROP_MIST_X = 0.7f
+    const val BACKDROP_MIST_Y = 0.72f
+    const val BACKDROP_MIST_RADIUS = 0.85f
     const val GLASS_ROW_HEIGHT_DP = 52f
     const val GLASS_RIM_FADE = 0.55f
     const val MOTION_SHORT_MS = 150
