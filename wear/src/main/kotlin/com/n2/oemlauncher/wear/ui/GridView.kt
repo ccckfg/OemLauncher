@@ -60,7 +60,9 @@ fun GridView(state: LauncherUiState, viewModel: LauncherViewModel, callbacks: Ho
                 contentPadding = PaddingValues(horizontal = horizontal, vertical = WearUiTokens.GRID_VERTICAL_PADDING_DP.dp),
                 verticalArrangement = Arrangement.spacedBy(spacing),
             ) {
-                item(key = SETTINGS_KEY) { HomeSettingsButton(callbacks, Modifier.fillMaxWidth().roundEdge(this)) }
+                item(key = SETTINGS_KEY) {
+                    HomeSettingsButton(callbacks, Modifier.fillMaxWidth().roundEdge(this), layout.visualTier)
+                }
                 items(rows, key = { row -> row.first().key }) { row ->
                     Row(
                         Modifier.fillMaxWidth().roundEdge(this),

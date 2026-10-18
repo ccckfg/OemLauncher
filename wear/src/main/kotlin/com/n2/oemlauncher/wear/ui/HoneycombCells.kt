@@ -3,12 +3,15 @@ package com.n2.oemlauncher.wear.ui
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
@@ -24,11 +27,15 @@ import androidx.compose.ui.graphics.vector.VectorPainter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.CircleShape
 import androidx.wear.compose.foundation.CurvedDirection
 import androidx.wear.compose.foundation.CurvedLayout
 import androidx.wear.compose.material3.MaterialTheme
@@ -76,6 +83,30 @@ fun rememberGearGlyph(radiusPx: Float, tier: VisualTier): GearGlyph {
             cookieColor = OemColors.Accent,
             shadow = tier == VisualTier.REFINED,
         )
+    }
+}
+
+@Composable
+fun CookieGearButton(
+    label: String,
+    tier: VisualTier,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    longClickLabel: String,
+) {
+    val radius = with(LocalDensity.current) { (WearUiTokens.COOKIE_BUTTON_DP / 2f).dp.toPx() }
+    val glyph = rememberGearGlyph(radius, tier)
+    androidx.compose.foundation.Canvas(
+        modifier
+            .size(WearUiTokens.COOKIE_BUTTON_DP.dp)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .semantics {
+                contentDescription = label
+                onClick(label) { onClick(); true }
+            },
+    ) {
+        drawGearCell(glyph, size.width / 2f, size.height / 2f, size.minDimension / 2f, 1f)
     }
 }
 
@@ -141,7 +172,17 @@ fun HoneycombFocusLabel(text: String, visible: Boolean) {
     val color = OemColors.TextSecondary
     CurvedLayout(
         // Decorative: every cell already has its own accessibility node with the same name.
-        Modifier.fillMaxSize().clearAndSetSemantics {}.graphicsLayer { this.alpha = alpha },
+        Modifier
+            .fillMaxSize()
+            .shadow(
+                elevation = 4.dp,
+                shape = CircleShape,
+                clip = false,
+                ambientColor = OemColors.Background.copy(alpha = 0.85f),
+                spotColor = OemColors.Background.copy(alpha = 0.85f),
+            )
+            .clearAndSetSemantics {}
+            .graphicsLayer { this.alpha = alpha },
         anchor = 90f,
         angularDirection = CurvedDirection.Angular.CounterClockwise,
     ) {

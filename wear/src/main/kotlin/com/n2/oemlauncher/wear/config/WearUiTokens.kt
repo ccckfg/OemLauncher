@@ -13,6 +13,7 @@ object WearUiTokens {
     const val GEAR_GLYPH_FRACTION = 0.52f
     const val GEAR_RING_DP = 1.5f
     const val COOKIE_RADIUS_DP = 52f
+    const val COOKIE_BUTTON_DP = 52f
     const val COOKIE_GEAR_FRACTION = 0.5f
     const val COOKIE_PRESS_SCALE = 0.94f
     const val APP_RIM_DP = 1f

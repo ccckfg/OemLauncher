@@ -54,7 +54,9 @@ fun ListView(state: LauncherUiState, viewModel: LauncherViewModel, callbacks: Ho
                 ),
                 verticalArrangement = Arrangement.spacedBy(WearUiTokens.LIST_ROW_SPACING_DP.dp),
             ) {
-                item(key = SETTINGS_KEY) { HomeSettingsButton(callbacks, Modifier.fillMaxWidth().roundEdge(this)) }
+                item(key = SETTINGS_KEY) {
+                    HomeSettingsButton(callbacks, Modifier.fillMaxWidth().roundEdge(this), layout.visualTier)
+                }
                 items(state.entries, key = { it.key }) { entry ->
                     ListRow(
                         entry = entry,
