@@ -1,6 +1,7 @@
 package com.n2.oemlauncher.wear.catalog
 
 import android.app.ActivityOptions
+import android.annotation.TargetApi
 import android.content.ComponentName
 import android.content.Context
 import android.graphics.Bitmap
@@ -11,6 +12,7 @@ import android.graphics.RectF
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.os.Process
+import android.os.Build
 import android.os.UserHandle
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
@@ -157,7 +159,9 @@ class AppCatalogRepository(
     }
 
     /** Builds a circular glass disc only when the platform supplies a monochrome adaptive layer. */
+    @TargetApi(Build.VERSION_CODES.TIRAMISU)
     private fun themedIconBitmap(drawable: Drawable, targetPx: Int): Bitmap? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
         val adaptive = drawable as? AdaptiveIconDrawable ?: return null
         val monochrome = adaptive.monochrome ?: return null
         if (iconRenderMode(IconStyle.THEMED, hasMonochromeLayer = true) != IconRenderMode.THEMED) return null

@@ -1,5 +1,6 @@
 package com.n2.oemlauncher.wear
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.content.Intent
 import android.view.MotionEvent
@@ -19,6 +20,7 @@ import com.n2.oemlauncher.wear.ui.theme.OemTheme
 import com.n2.oemlauncher.wear.config.WearDebugLog
 import com.n2.oemlauncher.wear.home.isCoveredInOwnTask
 
+@SuppressLint("InvalidFragmentVersionForActivityResult")
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<LauncherViewModel>()
     private lateinit var appsObserver: LauncherAppsObserver
