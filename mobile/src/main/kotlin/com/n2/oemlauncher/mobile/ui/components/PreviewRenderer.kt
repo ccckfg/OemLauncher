@@ -2,12 +2,12 @@ package com.n2.oemlauncher.mobile.ui.components
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PathMeasure
 import androidx.core.graphics.withSave
 import com.n2.oemlauncher.mobile.config.PreviewTokens
+import com.n2.oemlauncher.shared.design.LabelZone
 import com.n2.oemlauncher.shared.design.Palettes
 import com.n2.oemlauncher.shared.layout.DisplayMath
 import com.n2.oemlauncher.shared.layout.FisheyeLens
@@ -74,22 +74,22 @@ class PreviewRenderer(
         textSize = DisplayMath.dpToPx(PreviewTokens.LIST_LABEL_SP, density)
         textAlign = Paint.Align.LEFT
     }
+    // Two passes, both built here: the background-colored outline goes down first, the name on
+    // top of it. A blur would smear the glyph edges, which is why the outline is a stroke.
+    private val focusOutline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Palettes.Mocha.background.toInt()
+        alpha = (LabelZone.OUTLINE_ALPHA * 255f).toInt()
+        textSize = DisplayMath.dpToPx(PreviewTokens.FOCUS_LABEL_SP, density)
+        textAlign = Paint.Align.LEFT
+        style = Paint.Style.STROKE
+        strokeWidth = DisplayMath.dpToPx(LabelZone.OUTLINE_WIDTH_DP, density)
+        strokeJoin = Paint.Join.ROUND
+        strokeCap = Paint.Cap.ROUND
+    }
     private val focusText = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Palettes.Mocha.textSecondary.toInt()
         textSize = DisplayMath.dpToPx(PreviewTokens.FOCUS_LABEL_SP, density)
         textAlign = Paint.Align.LEFT
-        // The arc crosses the outermost icons; a halo in the page color keeps it readable there.
-        val background = Palettes.Mocha.background
-        setShadowLayer(
-            DisplayMath.dpToPx(PreviewTokens.FOCUS_LABEL_HALO_DP, density),
-            0f, 0f,
-            Color.argb(
-                (PreviewTokens.FOCUS_LABEL_HALO_ALPHA * 255f).toInt(),
-                (background shr 16 and 0xFF).toInt(),
-                (background shr 8 and 0xFF).toInt(),
-                (background and 0xFF).toInt(),
-            ),
-        )
     }
     private val labelPath = Path()
     private val pathMeasure = PathMeasure()
@@ -186,10 +186,17 @@ class PreviewRenderer(
             val cx = watchWidth / 2f + frame.x[cell]
             val cy = watchHeight / 2f + frame.y[cell]
             val size = diameter * frame.scale[cell]
-            if (HoneycombSlots.isSettings(cell)) {
-                painter.gear(canvas, cx, cy, size / 2f, frame.alpha[cell])
+            // Cells that slide into the bottom strip fade, so the curved name stays readable.
+            val alpha = if (settings.showLabels) {
+                frame.alpha[cell] * LabelZone.alpha(frame.y[cell], size / 2f, radius)
             } else {
-                painter.icon(canvas, HoneycombSlots.appAt(cell), cx, cy, size, frame.alpha[cell])
+                frame.alpha[cell]
+            }
+            if (alpha <= 0f) continue
+            if (HoneycombSlots.isSettings(cell)) {
+                painter.gear(canvas, cx, cy, size / 2f, alpha)
+            } else {
+                painter.icon(canvas, HoneycombSlots.appAt(cell), cx, cy, size, alpha)
             }
         }
     }
@@ -206,7 +213,9 @@ class PreviewRenderer(
         }
         if (label.isEmpty()) return
         val offset = (labelArcLength - focusText.measureText(label)) / 2f
-        canvas.drawTextOnPath(label, labelPath, offset.coerceAtLeast(0f), 0f, focusText)
+        val start = offset.coerceAtLeast(0f)
+        canvas.drawTextOnPath(label, labelPath, start, 0f, focusOutline)
+        canvas.drawTextOnPath(label, labelPath, start, 0f, focusText)
     }
 
     private fun drawGrid(canvas: Canvas, y: Float) {

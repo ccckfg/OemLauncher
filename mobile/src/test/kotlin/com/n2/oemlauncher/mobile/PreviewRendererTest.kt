@@ -8,6 +8,7 @@ import com.n2.oemlauncher.mobile.config.PreviewTokens
 import com.n2.oemlauncher.mobile.ui.components.PreviewEdge
 import com.n2.oemlauncher.mobile.ui.components.PreviewRenderer
 import com.n2.oemlauncher.mobile.ui.components.WatchBackdrop
+import com.n2.oemlauncher.shared.design.LabelZone
 import com.n2.oemlauncher.shared.layout.DisplayMath
 import com.n2.oemlauncher.shared.layout.HoneycombDefaults
 import com.n2.oemlauncher.shared.layout.HoneycombSlots
@@ -26,6 +27,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -43,13 +45,26 @@ class PreviewRendererTest {
         columns: Int = this.columns,
         tier: VisualTier = VisualTier.REFINED,
         icons: List<Bitmap?> = List(apps.size) { null },
+        showLabels: Boolean = true,
     ) = PreviewRenderer(
-        apps, display, LayoutSettings(mode = mode, gridColumns = columns, visualTier = tier),
+        apps, display, LayoutSettings(mode = mode, gridColumns = columns, visualTier = tier, showLabels = showLabels),
         icons, gear = null, settingsLabel = SETTINGS_LABEL, favoriteCount = 2,
     )
 
     private fun icon(color: Int) =
         Bitmap.createBitmap(104, 104, Bitmap.Config.ARGB_8888).apply { eraseColor(color) }
+
+    private fun render(renderer: PreviewRenderer, panY: Float = 0f): Bitmap {
+        val bitmap = Bitmap.createBitmap(side, side, Bitmap.Config.ARGB_8888)
+        renderer.draw(Canvas(bitmap), side.toFloat(), side.toFloat(), 0f, panY)
+        return bitmap
+    }
+
+    /** How red a pixel is over the dark backdrop: the icon fill minus the backdrop's own warmth. */
+    private fun redness(bitmap: Bitmap, watchX: Float, watchY: Float): Int {
+        val pixel = bitmap.getPixel((watchX * SCALE).toInt(), (watchY * SCALE).toInt())
+        return Color.red(pixel) - Color.blue(pixel)
+    }
 
     /** The watch reserves cell 0 for the gear, so the preview must have one cell more. */
     @Test fun honeycombReservesTheFirstCellForTheSettingsGear() {
@@ -207,10 +222,64 @@ class PreviewRendererTest {
         assertTrue("the gear sits at the center at rest", gear)
     }
 
+    /**
+     * The curved name lies on top of the outermost cells, so the cells that scroll into the
+     * bottom strip fade while the name is on — and nothing fades while it is off. Regression for
+     * the overlap still visible in `.screenshots/m4r2/zoom/focus-label-before-after.png`.
+     */
+    @Test fun cellsInTheBottomStripFadeOnlyWhileLabelsAreOn() {
+        val icons = List(apps.size) { icon(Color.RED) }
+        val labelled = renderer(mode = LayoutMode.HONEYCOMB, icons = icons, showLabels = true)
+        val plain = renderer(mode = LayoutMode.HONEYCOMB, icons = icons, showLabels = false)
+        val onBitmap = render(labelled, STRIP_PAN)
+        val offBitmap = render(plain, STRIP_PAN)
+        val quads = FloatArray((apps.size + 1) * 4)
+        val count = labelled.visibleIcons(0f, STRIP_PAN, quads)
+        var faded = -1
+        var fadedDrop = 0f
+        var clear = -1
+        var clearest = 0f
+        for (i in 0 until count) {
+            val x = quads[i * 4]
+            val y = quads[i * 4 + 1]
+            val size = quads[i * 4 + 2]
+            val frame = quads[i * 4 + 3]
+            // Skip the band the name itself is drawn into; only the cell fade is under test.
+            if (abs(x - WATCH_RADIUS) < NAME_BAND) continue
+            val strip = LabelZone.alpha(y - WATCH_RADIUS, size / 2f, WATCH_RADIUS)
+            if (strip < 1f) {
+                val drop = frame * (1f - strip)
+                if (drop > fadedDrop) { fadedDrop = drop; faded = i }
+            } else if (frame > clearest) {
+                clearest = frame; clear = i
+            }
+        }
+        assertTrue("no cell inside the label strip at pan $STRIP_PAN", faded >= 0)
+        assertTrue("no cell outside the label strip at pan $STRIP_PAN", clear >= 0)
+        val onStrip = redness(onBitmap, quads[faded * 4], quads[faded * 4 + 1])
+        val offStrip = redness(offBitmap, quads[faded * 4], quads[faded * 4 + 1])
+        assertTrue("strip cell drew $onStrip with names on and $offStrip with them off", onStrip < offStrip - STRIP_DROP)
+        // Names off means no fade at all: those pixels must be byte-identical.
+        val onClear = redness(onBitmap, quads[clear * 4], quads[clear * 4 + 1])
+        val offClear = redness(offBitmap, quads[clear * 4], quads[clear * 4 + 1])
+        assertEquals(offClear, onClear)
+    }
+
     private companion object {
         const val SETTINGS_LABEL = "Settings"
         const val SAMPLES = 8
         const val EPSILON = 1e-4f
         const val AA_TOLERANCE = 2
+        const val WATCH_RADIUS = 227f
+        const val SCALE = 703f / 454f
+
+        /** Pushes the bottom ring far enough down that cells land in the name strip. */
+        const val STRIP_PAN = 210f
+
+        /** The name is centred on the screen; keep clear of where its glyphs land. */
+        const val NAME_BAND = 70f
+
+        /** Measured drop is about 18 of 255; anything above this is a real fade. */
+        const val STRIP_DROP = 8
     }
 }

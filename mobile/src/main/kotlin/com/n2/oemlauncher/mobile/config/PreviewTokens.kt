@@ -12,16 +12,13 @@ object PreviewTokens {
     const val LIST_LABEL_SP = 14f
     const val FOCUS_LABEL_SP = 13f
 
-    /** The focus name follows the bottom bezel: an arc of this sweep at this radius fraction. */
+    /**
+     * The focus name crosses the last row of icons. It is kept readable by the two mechanisms in
+     * `shared/design/LabelZone.kt` — an outline under the text and a fade on the cells that
+     * scroll into the strip — so the width, the depth and the floor live there, not here.
+     */
     const val FOCUS_LABEL_SWEEP_DEGREES = 85f
     const val FOCUS_LABEL_RADIUS_FRACTION = 0.84f
-
-    /**
-     * The focus name crosses the last row of icons, so it carries a background-colored halo;
-     * the label band and the black scrim are gone for good.
-     */
-    const val FOCUS_LABEL_HALO_DP = 4f
-    const val FOCUS_LABEL_HALO_ALPHA = 0.85f
 
     /** Centered settings gear, in dp. The same size the watch uses for its grid and list row. */
     const val GEAR_BUTTON_DP = 52f
