@@ -37,6 +37,7 @@ import com.n2.oemlauncher.wear.config.WearUiTokens
 import com.n2.oemlauncher.wear.input.HapticController
 import com.n2.oemlauncher.wear.ui.theme.edgeVignette
 import kotlin.math.abs
+import kotlin.math.hypot
 import kotlin.math.max
 
 /**
@@ -46,7 +47,12 @@ import kotlin.math.max
  * cell's name is curved along the bottom edge instead of covering icons.
  */
 @Composable
-fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel, callbacks: HomeCallbacks) {
+fun HoneycombView(
+    state: LauncherUiState,
+    viewModel: LauncherViewModel,
+    callbacks: HomeCallbacks,
+    bloom: () -> Float = Settled,
+) {
     val density = LocalDensity.current
     val context = LocalContext.current
     val haptics = remember { HapticController(context) }
@@ -189,14 +195,22 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel, callback
             val centerX = size.width / 2f
             val centerY = size.height / 2f
             val baseRadius = iconDiameter / 2f
+            val timeline = bloom()
             for (cell in 0 until frame.size) {
-                val radius = baseRadius * frame.scale[cell]
-                val alpha = honeycombCellAlpha(
+                var radius = baseRadius * frame.scale[cell]
+                var alpha = honeycombCellAlpha(
                     frame.alpha[cell], frame.y[cell], radius, size.minDimension / 2f, layout.showLabels,
                 )
+                var spread = 1f
+                if (timeline < 1f) {
+                    val progress = LauncherEntrance.cellProgress(timeline, hypot(frame.x[cell], frame.y[cell]) / fitRadius)
+                    radius *= LauncherEntrance.cellScale(progress)
+                    spread = LauncherEntrance.cellSpread(progress)
+                    alpha *= progress
+                }
                 if (alpha < WearUiTokens.MIN_VISIBLE_ALPHA) continue
-                val x = centerX + frame.x[cell]
-                val y = centerY + frame.y[cell]
+                val x = centerX + frame.x[cell] * spread
+                val y = centerY + frame.y[cell] * spread
                 if (HoneycombSlots.isSettings(cell)) {
                     drawGearCell(gear, x, y, radius, alpha, pressed = dragging)
                 } else {
@@ -213,7 +227,10 @@ fun HoneycombView(state: LauncherUiState, viewModel: LauncherViewModel, callback
                 }
             }
         }
-        HoneycombFocusLabel(labelOf(centerCell), visible = !dragging && layout.showLabels)
+        // The label sits on the rim, so it arrives with the outermost ring.
+        HoneycombFocusLabel(labelOf(centerCell), visible = !dragging && layout.showLabels) {
+            LauncherEntrance.cellProgress(bloom(), 1f)
+        }
         HoneycombA11yOverlay(
             nodes = a11yNodes,
             labelOf = ::labelOf,

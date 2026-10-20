@@ -34,6 +34,18 @@ object WearUiTokens {
     const val MOTION_STANDARD_MS = 260
     const val MOTION_EMPHASIS_MS = 380
 
+    /** Longest motion the lite tier and reduced motion allow: a plain fade. */
+    const val MOTION_FADE_MAX_MS = 120
+
+    /** Launcher entrance: share of the timeline the rings are staggered over, and where cells start. */
+    const val ENTRANCE_STAGGER = 0.4f
+    const val ENTRANCE_START_SCALE = 0.5f
+    const val ENTRANCE_START_SPREAD = 0.6f
+    const val PAGE_START_SCALE = 0.96f
+
+    /** Longest the entrance waits for the window transition before playing anyway. */
+    const val ENTRANCE_WINDOW_WAIT_MS = 600L
+
     /** Curved name of the centered honeycomb cell along the bottom bezel. */
     const val FOCUS_LABEL_SP = 13f
     const val FOCUS_LABEL_SWEEP_DEGREES = 80f

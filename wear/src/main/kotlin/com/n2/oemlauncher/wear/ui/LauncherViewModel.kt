@@ -39,6 +39,8 @@ data class LauncherUiState(
     /** Apps the user hid; they are not in [entries] but settings lists them by name. */
     val hiddenEntries: List<CatalogEntry> = emptyList(),
     val loading: Boolean = true,
+    /** The activity window is on screen (focused or done entering); the content entrance waits for it. */
+    val windowEntered: Boolean = false,
     /** Bumped when every screen above the launcher home must close (Home press, leaving the app). */
     val homeRequest: Int = 0,
     val demoEnabled: Boolean = false,
@@ -157,6 +159,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun onVisible() { active = true; refreshPlatformStatus(); refresh() }
     fun onHidden() { active = false; refreshJob?.cancel() }
+    fun onWindowEntered() { mutable.value = state.value.copy(windowEntered = true) }
 
     fun goHome() { mutable.value = state.value.copy(homeRequest = state.value.homeRequest + 1) }
     fun centerHoneycomb() { mutable.value = state.value.copy(centerRequest = state.value.centerRequest + 1) }

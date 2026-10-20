@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keeps the watch face visible under the fading launcher; without an animation of its own the
+     closing window is hidden at once and the launcher would fade in from black. -->
+<alpha xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/launcher_window_fade_ms"
+    android:fromAlpha="1"
+    android:toAlpha="1" />

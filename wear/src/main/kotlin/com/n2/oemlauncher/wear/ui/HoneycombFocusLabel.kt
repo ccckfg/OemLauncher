@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
@@ -60,11 +62,18 @@ internal class FocusLabelDrawing(
 }
 
 @Composable
-fun HoneycombFocusLabel(text: String, visible: Boolean) {
+fun HoneycombFocusLabel(text: String, visible: Boolean, alpha: () -> Float = { 1f }) {
     if (!visible) return
     Spacer(
         Modifier.fillMaxSize()
             .clearAndSetSemantics {}
+            // A fading full-screen layer would be drawn offscreen every frame of the entrance,
+            // which doubled the GPU time on the watch; the label is two paths of text, so the
+            // alpha can go straight onto its draw calls.
+            .graphicsLayer {
+                this.alpha = alpha()
+                compositingStrategy = CompositingStrategy.ModulateAlpha
+            }
             .drawWithCache {
                 val drawing = FocusLabelDrawing(
                     text, size.width, size.height,

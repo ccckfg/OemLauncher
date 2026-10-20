@@ -104,6 +104,22 @@ class MainActivity : ComponentActivity() {
         super.onStop()
     }
 
+    /**
+     * The system shows the window only once the transition is ready, well after the first frame,
+     * so an entrance timed from composition would mostly play while still invisible. Focus arrives
+     * as the window fade ends; the enter-complete callback comes about 0.2 s later on the watch
+     * and only backs it up.
+     */
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) viewModel.onWindowEntered()
+    }
+
+    override fun onEnterAnimationComplete() {
+        super.onEnterAnimationComplete()
+        viewModel.onWindowEntered()
+    }
+
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         viewModel.goHome()

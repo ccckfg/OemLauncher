@@ -2,10 +2,12 @@ package com.n2.oemlauncher.wear.home
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import com.n2.oemlauncher.wear.App
 import com.n2.oemlauncher.wear.MainActivity
+import com.n2.oemlauncher.wear.R
 import com.n2.oemlauncher.wear.config.WearConstants
 import com.n2.oemlauncher.wear.config.WearDebugLog
 
@@ -51,14 +53,22 @@ class HomeDispatchActivity : Activity() {
         val target = systemTarget ?: Intent(this, MainActivity::class.java)
             .setAction(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_LAUNCHER)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         WearDebugLog.d {
             "dispatch start target=${target.component?.flattenToShortString() ?: target.action ?: "-"} " +
                 "action=$actualAction"
         }
         container.foregroundState.recordHomeAction(actualAction)
-        startActivity(target)
-        overridePendingTransition(0, 0)
+        if (systemTarget == null) {
+            // The launcher fades in over the watch face; its content then plays its own entrance.
+            startActivity(
+                target,
+                ActivityOptions.makeCustomAnimation(this, R.anim.launcher_window_enter, R.anim.launcher_window_hold).toBundle(),
+            )
+        } else {
+            startActivity(target)
+            overridePendingTransition(0, 0)
+        }
         if (actualAction == HomeAction.DELEGATE_TO_SYSTEM) {
             finishAndRemoveTask()
         } else {

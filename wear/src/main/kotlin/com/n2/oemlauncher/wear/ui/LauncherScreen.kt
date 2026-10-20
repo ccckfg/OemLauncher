@@ -53,10 +53,23 @@ fun LauncherHome(state: LauncherUiState, viewModel: LauncherViewModel, actions: 
     val blur = if (switcherOpen && tier == VisualTier.REFINED) {
         com.n2.oemlauncher.shared.design.GlassSpecs.watch(tier).overlayBlurDp.dp
     } else 0.dp
+    val entranceStyle = EntranceStyle.of(state.config.layout)
+    val entrance = rememberEntranceProgress(
+        ready = !state.loading || state.entries.isNotEmpty(),
+        windowEntered = state.windowEntered,
+        style = entranceStyle,
+    )
     Box(Modifier.fillMaxSize().oemBackdrop(tier)) {
-        Box(Modifier.fillMaxSize().then(if (blur > 0.dp) Modifier.blur(blur) else Modifier)) {
+        Box(
+            Modifier.fillMaxSize()
+                .entrance(entranceStyle, entrance)
+                .then(if (blur > 0.dp) Modifier.blur(blur) else Modifier),
+        ) {
             when (state.config.layout.mode) {
-                LayoutMode.HONEYCOMB -> HoneycombView(state, viewModel, callbacks)
+                LayoutMode.HONEYCOMB -> HoneycombView(
+                    state, viewModel, callbacks,
+                    bloom = if (entranceStyle == EntranceStyle.BLOOM) entrance else Settled,
+                )
                 LayoutMode.GRID -> GridView(state, viewModel, callbacks)
                 LayoutMode.LIST -> ListView(state, viewModel, callbacks)
             }
