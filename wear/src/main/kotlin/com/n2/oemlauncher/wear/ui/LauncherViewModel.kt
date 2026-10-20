@@ -19,6 +19,7 @@ import com.n2.oemlauncher.wear.App
 import com.n2.oemlauncher.wear.catalog.AppListPermissionStatus
 import com.n2.oemlauncher.wear.catalog.shouldRetryEmptyCatalog
 import com.n2.oemlauncher.wear.config.WearConstants
+import com.n2.oemlauncher.wear.config.WearDebugLog
 import com.n2.oemlauncher.wear.domain.CatalogSignature
 import com.n2.oemlauncher.wear.domain.LauncherArranger
 import com.n2.oemlauncher.wear.home.HomeSettingsState
@@ -56,25 +57,25 @@ data class LauncherUiState(
 
 class LauncherViewModel(application: Application) : AndroidViewModel(application) {
     private val container = (application as App).container
-    private val mutable = MutableStateFlow(LauncherUiState())
+    private val restored = lastShown
+    private val mutable = MutableStateFlow(restored?.let(::reopenedState) ?: LauncherUiState())
     val state: StateFlow<LauncherUiState> = mutable.asStateFlow()
     private var active = true
     private var refreshJob: Job? = null
     private var refreshGeneration = 0L
+    private val storedCatalog = if (restored != null) null else viewModelScope.launch(Dispatchers.IO) { showStoredCatalog() }
     private var lastCatalogSignature: String? = null
     private var appListPermissionRequested = false
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            val snapshot = container.catalogRepository.snapshot()
-            if (snapshot != null) withContext(Dispatchers.Main.immediate) {
-                mutable.value = state.value.copy(entries = LauncherArranger.arrange(snapshot.entries, state.value.config), loading = false)
-            }
-        }
+        WearDebugLog.d { "view model created restoredIcons=${restored?.icons?.size}" }
+        viewModelScope.launch { state.collect { lastShown = it } }
         viewModelScope.launch {
             container.configRepository.config.collect { config ->
+                val changed = config != state.value.config
                 mutable.value = mutable.value.copy(config = config)
-                if (active) refresh(config)
+                // A reopened launcher starts with this config and onStart already refreshed with it.
+                if (active && (changed || refreshJob == null)) refresh(config)
             }
         }
         refreshPlatformStatus()
@@ -95,6 +96,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         refreshJob?.cancel()
         val generation = ++refreshGeneration
         refreshJob = viewModelScope.launch(Dispatchers.IO) {
+            // The watch has two cores; a full refresh next to the stored catalog would delay both.
+            storedCatalog?.join()
             val usage = container.configRepository.usage.first()
             var catalog = runCatching { container.catalogRepository.refresh(config, usage) }.getOrNull()
             if (catalog != null && shouldRetryEmptyCatalog(catalog.entries.size)) {
@@ -106,18 +109,37 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             val entries = (catalog?.entries ?: state.value.entries).let { if (state.value.demoEnabled) withDemo(it) else it }
             val arranged = LauncherArranger.arrange(entries, config)
             val hidden = entries.filter { it.key in config.hidden }
-            val icons = buildMap {
-                arranged.forEach { entry ->
-                    val bitmap = container.catalogRepository.loadIcon(entry, config)
-                        ?: entry.key.takeIf { it.startsWith("com.n2.demo.") }?.let { DemoIconFactory.create(entry.label) }
-                    bitmap?.let { put(entry.key, it) }
-                }
-            }
+            val icons = loadIcons(arranged, config)
             withContext(Dispatchers.Main.immediate) {
                 if (generation == refreshGeneration) {
+                    WearDebugLog.d { "icons published count=${icons.size} source=refresh" }
                     mutable.value = state.value.copy(entries = arranged, hiddenEntries = hidden, icons = icons, loading = false)
                 }
             }
+        }
+    }
+
+    /**
+     * A fresh process has no [lastShown], but the catalog snapshot and the icon files are on disk:
+     * decoding those is far cheaper than the full [refresh], which re-reads every app.
+     */
+    private suspend fun showStoredCatalog() {
+        val snapshot = container.catalogRepository.snapshot() ?: return
+        val config = container.configRepository.config.first()
+        val arranged = LauncherArranger.arrange(snapshot.entries, config)
+        val hidden = snapshot.entries.filter { it.key in config.hidden }
+        val icons = loadIcons(arranged, config)
+        withContext(Dispatchers.Main.immediate) {
+            WearDebugLog.d { "icons published count=${icons.size} source=snapshot" }
+            mutable.value = state.value.copy(entries = arranged, hiddenEntries = hidden, icons = icons, loading = false)
+        }
+    }
+
+    private suspend fun loadIcons(entries: List<CatalogEntry>, config: LauncherConfig): Map<String, Bitmap> = buildMap {
+        entries.forEach { entry ->
+            val bitmap = container.catalogRepository.loadIcon(entry, config)
+                ?: entry.key.takeIf { it.startsWith("com.n2.demo.") }?.let { DemoIconFactory.create(entry.label) }
+            bitmap?.let { put(entry.key, it) }
         }
     }
 
@@ -226,6 +248,23 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         val day = android.text.format.DateFormat.getDateFormat(context).format(java.util.Date(millis))
         val today = android.text.format.DateFormat.getDateFormat(context).format(java.util.Date())
         return if (day == today) time else "$day $time"
+    }
+
+    private companion object {
+        /**
+         * Every exit finishes the launcher activity, so each Home press builds a new view model,
+         * while the process usually lives on. Starting from what the honeycomb last showed puts the
+         * icons in the very first frame; [refresh] then only applies what changed. Main thread only.
+         */
+        var lastShown: LauncherUiState? = null
+
+        fun reopenedState(last: LauncherUiState) = LauncherUiState(
+            config = last.config,
+            entries = last.entries,
+            icons = last.icons,
+            hiddenEntries = last.hiddenEntries,
+            loading = last.loading,
+        )
     }
 
     private fun withDemo(entries: List<CatalogEntry>): List<CatalogEntry> {

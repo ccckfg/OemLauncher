@@ -27,6 +27,7 @@ import com.n2.oemlauncher.wear.data.UsageStats
 import com.n2.oemlauncher.wear.sync.CatalogSource
 import com.n2.oemlauncher.shared.layout.HoneycombDefaults
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
@@ -46,6 +47,7 @@ class AppCatalogRepository(
     private val packageManager = context.packageManager
     private val memory = IconMemoryCache(WearConstants.ICON_CACHE_BYTES)
     private val users = ConcurrentHashMap<String, UserHandle>()
+    private val defaultIconIds = ConcurrentHashMap<String, String>()
 
     override fun snapshot(): WatchCatalog? = snapshotStore.read()
 
@@ -72,6 +74,9 @@ class AppCatalogRepository(
             throw error
         }
         val entries = activities.mapNotNull { activity ->
+            // Blocking work ignores cancellation; without this a superseded refresh keeps
+            // rendering icons alongside the one that replaced it.
+            ensureActive()
             val key = activity.componentName.flattenToString()
             val record = usage[key] ?: UsageRecord()
             users[key] = activity.user
@@ -188,13 +193,22 @@ class AppCatalogRepository(
         return LaunchableApp(entry, activity.user, null)
     }
 
-    private fun defaultIconId(activity: LauncherActivityInfo, shape: IconShape): String? = try {
-        val bitmap = IconBitmapRenderer.render(activity.getIcon(0), WearConstants.ICON_TARGET_PX, shape)
-        val bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
-        iconStore.put(IconId.of(bytes), bytes)
-        IconId.of(bytes)
-    } catch (_: RuntimeException) {
-        null
+    /**
+     * Rendering and PNG-encoding every icon on each launcher show took seconds on the watch. An
+     * update installs the APK under a new directory, so the source path changes exactly when the
+     * icon can, and the id can be reused until then.
+     */
+    private fun defaultIconId(activity: LauncherActivityInfo, shape: IconShape): String? {
+        val memoKey = "${activity.componentName.flattenToString()}|${activity.applicationInfo.sourceDir}|$shape"
+        defaultIconIds[memoKey]?.let { return it }
+        return try {
+            val bitmap = IconBitmapRenderer.render(activity.getIcon(0), WearConstants.ICON_TARGET_PX, shape)
+            val bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+            iconStore.put(IconId.of(bytes), bytes)
+            IconId.of(bytes).also { defaultIconIds[memoKey] = it }
+        } catch (_: RuntimeException) {
+            null
+        }
     }
 
 }
