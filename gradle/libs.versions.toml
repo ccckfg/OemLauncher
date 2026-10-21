@@ -30,6 +30,8 @@ androidxTestCore = "1.7.0"
 androidxTestRunner = "1.7.0"
 androidxTestJunit = "1.3.0"
 pinyin4j = "2.5.1"
+backdrop = "2.0.1"
+kyantShapes = "1.2.1"
 
 [libraries]
 # Kotlin
@@ -95,6 +97,10 @@ androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro
 
 # Chinese text
 pinyin4j = { module = "com.belerweb:pinyin4j", version.ref = "pinyin4j" }
+
+# Liquid glass (phone): backdrop refraction, blur and highlights, Apache-2.0
+backdrop = { module = "io.github.kyant0:backdrop", version.ref = "backdrop" }
+kyant-shapes = { module = "io.github.kyant0:shapes", version.ref = "kyantShapes" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -4,8 +4,10 @@ import com.n2.oemlauncher.mobile.R
 import com.n2.oemlauncher.mobile.data.UserNotice
 import com.n2.oemlauncher.shared.model.IconShape
 import com.n2.oemlauncher.shared.model.IconSize
+import com.n2.oemlauncher.shared.model.IconStyle
 import com.n2.oemlauncher.shared.model.LayoutMode
 import com.n2.oemlauncher.shared.model.SortMode
+import com.n2.oemlauncher.shared.model.VisualTier
 import com.n2.oemlauncher.shared.protocol.SyncPhase
 
 fun LayoutMode.label(): Int = when (this) {
@@ -28,6 +30,14 @@ fun SortMode.label(): Int = when (this) {
     SortMode.ALPHABETICAL -> R.string.alphabetical
     SortMode.MOST_USED -> R.string.most_used
     SortMode.RECENTLY_USED -> R.string.recently_used
+}
+fun VisualTier.label(): Int = when (this) {
+    VisualTier.REFINED -> R.string.tier_refined
+    VisualTier.LITE -> R.string.tier_lite
+}
+fun IconStyle.label(): Int = when (this) {
+    IconStyle.ORIGINAL -> R.string.icon_style_original
+    IconStyle.THEMED -> R.string.icon_style_themed
 }
 fun SyncPhase.label(): Int = when (this) {
     SyncPhase.NOT_SENT -> R.string.sync_not_sent

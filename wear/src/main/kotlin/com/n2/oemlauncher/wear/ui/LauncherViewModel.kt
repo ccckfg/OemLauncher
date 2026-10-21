@@ -16,9 +16,13 @@ import com.n2.oemlauncher.shared.model.LauncherConfig
 import com.n2.oemlauncher.shared.model.SortMode
 import com.n2.oemlauncher.wear.BuildConfig
 import com.n2.oemlauncher.wear.App
+import com.n2.oemlauncher.wear.catalog.AppListPermissionStatus
+import com.n2.oemlauncher.wear.catalog.shouldRetryEmptyCatalog
 import com.n2.oemlauncher.wear.config.WearConstants
+import com.n2.oemlauncher.wear.config.WearDebugLog
 import com.n2.oemlauncher.wear.domain.CatalogSignature
 import com.n2.oemlauncher.wear.domain.LauncherArranger
+import com.n2.oemlauncher.wear.home.HomeSettingsState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,9 +36,13 @@ data class LauncherUiState(
     val config: LauncherConfig = LauncherConfig(),
     val entries: List<CatalogEntry> = emptyList(),
     val icons: Map<String, Bitmap> = emptyMap(),
+    /** Apps the user hid; they are not in [entries] but settings lists them by name. */
+    val hiddenEntries: List<CatalogEntry> = emptyList(),
     val loading: Boolean = true,
-    val showSettings: Boolean = false,
-    val menuKey: String? = null,
+    /** The activity window is on screen (focused or done entering); the content entrance waits for it. */
+    val windowEntered: Boolean = false,
+    /** Bumped when every screen above the launcher home must close (Home press, leaving the app). */
+    val homeRequest: Int = 0,
     val demoEnabled: Boolean = false,
     val centerRequest: Int = 0,
     val message: String? = null,
@@ -45,30 +53,34 @@ data class LauncherUiState(
     val syncLastText: String? = null,
     val syncResult: ApplyResult = ApplyResult.NONE,
     val syncMissingIcons: Int = 0,
+    val homeSettings: HomeSettingsState = HomeSettingsState(),
+    val appListPermission: AppListPermissionStatus = AppListPermissionStatus(false, false, false, false),
 )
 
 class LauncherViewModel(application: Application) : AndroidViewModel(application) {
     private val container = (application as App).container
-    private val mutable = MutableStateFlow(LauncherUiState())
+    private val restored = lastShown
+    private val mutable = MutableStateFlow(restored?.let(::reopenedState) ?: LauncherUiState())
     val state: StateFlow<LauncherUiState> = mutable.asStateFlow()
     private var active = true
     private var refreshJob: Job? = null
     private var refreshGeneration = 0L
+    private val storedCatalog = if (restored != null) null else viewModelScope.launch(Dispatchers.IO) { showStoredCatalog() }
     private var lastCatalogSignature: String? = null
+    private var appListPermissionRequested = false
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            val snapshot = container.catalogRepository.snapshot()
-            if (snapshot != null) withContext(Dispatchers.Main.immediate) {
-                mutable.value = state.value.copy(entries = LauncherArranger.arrange(snapshot.entries, state.value.config), loading = false)
-            }
-        }
+        WearDebugLog.d { "view model created restoredIcons=${restored?.icons?.size}" }
+        viewModelScope.launch { state.collect { lastShown = it } }
         viewModelScope.launch {
             container.configRepository.config.collect { config ->
+                val changed = config != state.value.config
                 mutable.value = mutable.value.copy(config = config)
-                if (active) refresh(config)
+                // A reopened launcher starts with this config and onStart already refreshed with it.
+                if (active && (changed || refreshJob == null)) refresh(config)
             }
         }
+        refreshPlatformStatus()
         viewModelScope.launch {
             container.syncRepository.status.collect { status ->
                 mutable.value = state.value.copy(
@@ -86,23 +98,50 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         refreshJob?.cancel()
         val generation = ++refreshGeneration
         refreshJob = viewModelScope.launch(Dispatchers.IO) {
+            // The watch has two cores; a full refresh next to the stored catalog would delay both.
+            storedCatalog?.join()
             val usage = container.configRepository.usage.first()
-            val catalog = runCatching { container.catalogRepository.refresh(config, usage) }.getOrNull()
+            var catalog = runCatching { container.catalogRepository.refresh(config, usage) }.getOrNull()
+            if (catalog != null && shouldRetryEmptyCatalog(catalog.entries.size)) {
+                kotlinx.coroutines.delay(WearConstants.CATALOG_EMPTY_RETRY_DELAY_MS)
+                val retry = runCatching { container.catalogRepository.refresh(config, usage) }.getOrNull()
+                if (retry != null) catalog = retry
+            }
             if (catalog != null) publishCatalogWhenChanged(catalog)
             val entries = (catalog?.entries ?: state.value.entries).let { if (state.value.demoEnabled) withDemo(it) else it }
             val arranged = LauncherArranger.arrange(entries, config)
-            val icons = buildMap {
-                arranged.forEach { entry ->
-                    val bitmap = container.catalogRepository.loadIcon(entry, config)
-                        ?: entry.key.takeIf { it.startsWith("com.n2.demo.") }?.let { DemoIconFactory.create(entry.label) }
-                    bitmap?.let { put(entry.key, it) }
-                }
-            }
+            val hidden = entries.filter { it.key in config.hidden }
+            val icons = loadIcons(arranged, config)
             withContext(Dispatchers.Main.immediate) {
                 if (generation == refreshGeneration) {
-                    mutable.value = state.value.copy(entries = arranged, icons = icons, loading = false)
+                    WearDebugLog.d { "icons published count=${icons.size} source=refresh" }
+                    mutable.value = state.value.copy(entries = arranged, hiddenEntries = hidden, icons = icons, loading = false)
                 }
             }
+        }
+    }
+
+    /**
+     * A fresh process has no [lastShown], but the catalog snapshot and the icon files are on disk:
+     * decoding those is far cheaper than the full [refresh], which re-reads every app.
+     */
+    private suspend fun showStoredCatalog() {
+        val snapshot = container.catalogRepository.snapshot() ?: return
+        val config = container.configRepository.config.first()
+        val arranged = LauncherArranger.arrange(snapshot.entries, config)
+        val hidden = snapshot.entries.filter { it.key in config.hidden }
+        val icons = loadIcons(arranged, config)
+        withContext(Dispatchers.Main.immediate) {
+            WearDebugLog.d { "icons published count=${icons.size} source=snapshot" }
+            mutable.value = state.value.copy(entries = arranged, hiddenEntries = hidden, icons = icons, loading = false)
+        }
+    }
+
+    private suspend fun loadIcons(entries: List<CatalogEntry>, config: LauncherConfig): Map<String, Bitmap> = buildMap {
+        entries.forEach { entry ->
+            val bitmap = container.catalogRepository.loadIcon(entry, config)
+                ?: entry.key.takeIf { it.startsWith("com.n2.demo.") }?.let { DemoIconFactory.create(entry.label) }
+            bitmap?.let { put(entry.key, it) }
         }
     }
 
@@ -118,11 +157,11 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         if (previous != null && previous != signature) container.syncRepository.requestCatalogPublish()
     }
 
-    fun onVisible() { active = true; refresh() }
+    fun onVisible() { active = true; refreshPlatformStatus(); refresh() }
     fun onHidden() { active = false; refreshJob?.cancel() }
+    fun onWindowEntered() { mutable.value = state.value.copy(windowEntered = true) }
 
-    fun openSettings(open: Boolean) { mutable.value = state.value.copy(showSettings = open, menuKey = null) }
-    fun showMenu(key: String?) { mutable.value = state.value.copy(menuKey = key) }
+    fun goHome() { mutable.value = state.value.copy(homeRequest = state.value.homeRequest + 1) }
     fun centerHoneycomb() { mutable.value = state.value.copy(centerRequest = state.value.centerRequest + 1) }
 
     fun toggleDemo() {
@@ -135,9 +174,10 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     fun launch(entry: CatalogEntry, sourceBounds: RectF? = null) {
         viewModelScope.launch {
             if (container.catalogRepository.launch(entry.key, sourceBounds)) {
+                container.foregroundState.recordAppLaunch()
                 val count = container.configRepository.recordLaunch(entry.key, System.currentTimeMillis())
                 if (count % WearConstants.USAGE_PUBLISH_EVERY == 0) container.syncRepository.requestCatalogPublish()
-                mutable.value = state.value.copy(menuKey = null, message = null)
+                mutable.value = state.value.copy(message = null)
             } else {
                 mutable.value = state.value.copy(message = getApplication<Application>().getString(com.n2.oemlauncher.wear.R.string.launch_failed))
                 refresh()
@@ -151,7 +191,25 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         getApplication<Application>().startActivity(
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()),
         )
-        showMenu(null)
+    }
+
+    fun refreshPlatformStatus(shouldShowPermissionRationale: Boolean = false) {
+        mutable.value = state.value.copy(
+            homeSettings = container.homeSettingsRepository.read(),
+            appListPermission = container.appListPermission.status(
+                requestAttempted = appListPermissionRequested,
+                shouldShowRationale = shouldShowPermissionRationale,
+            ),
+        )
+    }
+
+    fun markAppListPermissionRequested(shouldShowPermissionRationale: Boolean = false) {
+        appListPermissionRequested = true
+        refreshPlatformStatus(shouldShowPermissionRationale)
+    }
+
+    fun setHomeSettingsMessage(message: String?) {
+        mutable.value = state.value.copy(homeSettings = state.value.homeSettings.copy(message = message))
     }
 
     fun moveFavorite(key: String, delta: Int) {
@@ -172,6 +230,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun toggleFavorite(key: String) = edit { ConfigEditor.toggleFavorite(it, key).first }
     fun toggleHidden(key: String) = edit { ConfigEditor.setHidden(it, key, true) }
+    fun unhide(key: String) = edit { ConfigEditor.setHidden(it, key, false) }
     fun setLayout(mode: LayoutMode) = edit { ConfigEditor.updateLayout(it) { layout -> layout.copy(mode = mode) } }
     fun setSortMode(mode: SortMode) = edit { ConfigEditor.setSortMode(it, mode) }
     fun updateConfig(transform: (LauncherConfig) -> LauncherConfig) = edit(transform)
@@ -192,6 +251,23 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         val day = android.text.format.DateFormat.getDateFormat(context).format(java.util.Date(millis))
         val today = android.text.format.DateFormat.getDateFormat(context).format(java.util.Date())
         return if (day == today) time else "$day $time"
+    }
+
+    private companion object {
+        /**
+         * Every exit finishes the launcher activity, so each Home press builds a new view model,
+         * while the process usually lives on. Starting from what the honeycomb last showed puts the
+         * icons in the very first frame; [refresh] then only applies what changed. Main thread only.
+         */
+        var lastShown: LauncherUiState? = null
+
+        fun reopenedState(last: LauncherUiState) = LauncherUiState(
+            config = last.config,
+            entries = last.entries,
+            icons = last.icons,
+            hiddenEntries = last.hiddenEntries,
+            loading = last.loading,
+        )
     }
 
     private fun withDemo(entries: List<CatalogEntry>): List<CatalogEntry> {

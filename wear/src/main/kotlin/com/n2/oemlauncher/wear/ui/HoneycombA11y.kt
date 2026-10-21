@@ -15,46 +15,48 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.n2.oemlauncher.shared.layout.HoneycombDefaults
-import com.n2.oemlauncher.shared.model.CatalogEntry
 import kotlin.math.roundToInt
 
-/** One honeycomb icon exposed to accessibility: its index plus the settled center it draws at. */
-class A11yNode(val index: Int, val centerX: Float, val centerY: Float, val diameter: Float)
+/** One visible honeycomb cell exposed to accessibility, at the settled center it draws at. */
+class A11yNode(val cell: Int, val centerX: Float, val centerY: Float, val diameter: Float)
 
 /**
- * Invisible per-icon nodes so TalkBack can reach every visible icon individually. They carry
- * semantics actions only, never pointer input, so drags and taps still reach the canvas; and they
- * sit above the canvas because Compose drops semantics nodes fully covered by a later sibling.
+ * Invisible per-cell nodes so TalkBack can reach the gear and every visible icon individually.
+ * They carry semantics actions only, never pointer input, so drags and taps still reach the
+ * canvas; and they sit above the canvas because Compose drops semantics nodes fully covered by
+ * a later sibling.
  */
 @Composable
 fun HoneycombA11yOverlay(
-    entries: List<CatalogEntry>,
     nodes: List<A11yNode>,
-    menuLabel: String,
-    onLaunch: (Int) -> Unit,
-    onMenu: (Int) -> Unit,
+    labelOf: (Int) -> String,
+    actionLabelOf: (Int) -> String,
+    onActivate: (Int) -> Unit,
+    onAction: (Int) -> Unit,
 ) {
     val density = LocalDensity.current
     val minDiameter = with(density) { HoneycombDefaults.MIN_TOUCH_DIAMETER_DP.dp.toPx() }
     nodes.forEach { node ->
-        val entry = entries.getOrNull(node.index) ?: return@forEach
-        key(node.index) {
+        val label = labelOf(node.cell)
+        if (label.isEmpty()) return@forEach
+        key(node.cell) {
             val diameter = node.diameter.coerceAtLeast(minDiameter)
             val x = (node.centerX - diameter / 2f).roundToInt()
             val y = (node.centerY - diameter / 2f).roundToInt()
+            val actionLabel = actionLabelOf(node.cell)
             Box(
                 Modifier
                     .offset { IntOffset(x, y) }
                     .size(with(density) { diameter.toDp() })
                     .semantics {
-                        contentDescription = entry.label
-                        onClick(label = entry.label) {
-                            onLaunch(node.index)
+                        contentDescription = label
+                        onClick(label = label) {
+                            onActivate(node.cell)
                             true
                         }
                         customActions = listOf(
-                            CustomAccessibilityAction(menuLabel) {
-                                onMenu(node.index)
+                            CustomAccessibilityAction(actionLabel) {
+                                onAction(node.cell)
                                 true
                             },
                         )

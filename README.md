@@ -1,5 +1,8 @@
 # N2 桌面（OemLauncher）
 
+[![CI](https://github.com/ccckfg/OemLauncher/actions/workflows/ci.yml/badge.svg)](https://github.com/ccckfg/OemLauncher/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ccckfg/OemLauncher)](https://github.com/ccckfg/OemLauncher/releases/latest)
+
 一个可以设为默认主屏的 Wear OS 启动器，配一个在手机上编辑布局的配套 App。手表端（`wear/`）负责在手腕上运行：蜂窝、网格、列表三种布局，常用应用固定在中心，没有手机也能完成全部基础设置。手机端（`mobile/`）负责编辑：排序、常用、隐藏、替换图标、外观调整，并提供与手表真实分辨率一致的圆屏预览，连上手表后同步。两端共用 `shared/` 里的模型、配置编辑、排序规则、同步协议与蜂窝几何算法，所以预览与手表上看到的是同一套计算。
 
 ## 为什么比同类更好
@@ -87,6 +90,10 @@ adb -s <手机序列号> install -r mobile\build\outputs\apk\debug\mobile-debug.
 ```
 
 两端 `applicationId` 都是 `com.n2.oemlauncher`，安装后按 `docs/delivery.md` 的“安装与使用”一节完成主屏设置、Tile 添加与配对。
+
+## 下载
+
+到 [Releases](https://github.com/ccckfg/OemLauncher/releases/latest) 下载 `n2-launcher-wear-*.apk`（手表）和 `n2-launcher-mobile-*.apk`（手机），两端都要装，用 `SHA256SUMS.txt` 可以核对文件。安装方法见 `docs/delivery.md` 的“安装与使用”。
 
 ## 文档索引
 

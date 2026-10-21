@@ -1,0 +1,81 @@
+name: Release
+
+# Push an annotated tag such as v1.1.0 whose message holds the release notes.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish signed APKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      # Checkout fetches the tag without its annotation, and the annotation is the release notes.
+      - name: Fetch the annotated tag
+        run: git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - name: Check the tag matches both apps' version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for app in wear mobile; do
+            grep -q "versionName = \"${version}\"" "${app}/build.gradle.kts" \
+              || { echo "::error::${app}/build.gradle.kts versionName is not ${version}"; exit 1; }
+          done
+
+      # Every release must carry the same key: Android refuses updates signed by another one,
+      # and the Data Layer only pairs a watch and phone app that share a signature.
+      - name: Restore the signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          if [ -z "${KEYSTORE_BASE64}" ]; then
+            echo "::error::Signing secrets are missing; see docs/delivery.md"
+            exit 1
+          fi
+          echo "${KEYSTORE_BASE64}" | base64 -d > "${RUNNER_TEMP}/release.keystore"
+          {
+            echo "storeFile=${RUNNER_TEMP}/release.keystore"
+            echo "storePassword=${STORE_PASSWORD}"
+            echo "keyAlias=${KEY_ALIAS}"
+            echo "keyPassword=${KEY_PASSWORD}"
+          } > keystore.properties
+
+      - name: Unit tests and release build
+        run: ./gradlew :shared:test :wear:testDebugUnitTest :mobile:testDebugUnitTest assembleRelease
+
+      - name: Collect the APKs
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          apksigner="$(ls -d "${ANDROID_HOME}"/build-tools/*/ | sort -V | tail -1)apksigner"
+          mkdir dist
+          for app in wear mobile; do
+            apk="dist/n2-launcher-${app}-${version}.apk"
+            cp "${app}/build/outputs/apk/release/${app}-release.apk" "${apk}"
+            "${apksigner}" verify --print-certs "${apk}" | grep 'SHA-256'
+          done
+          (cd dist && sha256sum *.apk > SHA256SUMS.txt)
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${GITHUB_REF_NAME}" dist/*
+          --title "${GITHUB_REF_NAME}" --notes-from-tag --verify-tag

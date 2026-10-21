@@ -21,8 +21,8 @@ android {
         applicationId = "com.n2.oemlauncher"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -59,6 +59,13 @@ android {
         buildConfig = true
     }
 
+    // A Tile can use a different app language from its host, including while offline.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
@@ -74,6 +81,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.wear.compose.foundation)
     implementation(libs.androidx.wear.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.wear.compose.navigation)
     implementation(libs.androidx.wear.tooling.preview)
 

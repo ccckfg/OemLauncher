@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window fade when the launcher opens over the watch face: the longest motion the lite tier
+         allows (docs/design/README.md section 8); the refined honeycomb blooms on top of it. -->
+    <integer name="launcher_window_fade_ms">120</integer>
+</resources>

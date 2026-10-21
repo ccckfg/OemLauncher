@@ -39,26 +39,12 @@ object UiDimensions {
     const val DETAIL_MAX_LINES = 3
     const val TOUCH_TARGET = 48
     const val APP_ICON = 44
-    const val PREVIEW = 280
-    const val THUMBNAIL = 216
     const val WIDE_BREAKPOINT = 720
     const val PREVIEW_PANE = 320
-    const val PREVIEW_FOOTER = 140
-    const val ROW_HEIGHT = 112
     const val DRAG_THRESHOLD = 56
-    const val CORNER = 20
-    const val PREVIEW_BORDER = 6
-    const val PREVIEW_LABEL_DP = 12f
-    const val LIST_ROW_DP = 64f
-    const val GRID_LABEL_DP = 20f
-    const val GRID_TOP_DP = 24f
-    const val ICON_CORNER_RATIO = 0.24f
     const val ANIMATION_MS = 180
-    const val LABEL_INSET_RATIO = 0.10f
-    const val LABEL_BAND_LINES = 2.6f
-    /** Icons faded below this alpha count as invisible; the label band hides the rest. */
-    const val LABEL_BAND_ALPHA_THRESHOLD = 0.05f
     const val CROP_SCRIM_ALPHA = 0.65f
+    const val CROP_CORNER = 20
 }
 
 object DemoConstants {
@@ -66,15 +52,10 @@ object DemoConstants {
     const val WIDTH_PX = 454
     const val DENSITY_DPI = 320
     const val SDK = 36
-    const val VERSION = "1.0.0"
+    /** Shown as the demo watch's app version; bump it to redraw stored demo icons. */
+    const val VERSION = "1.2.0"
     const val PACKAGE_PREFIX = "com.n2.demo."
     const val CLASS_SUFFIX = ".MainActivity"
-    const val ICON_TEXT_RATIO = 0.42f
-    const val ICON_INSET_RATIO = 0.18f
-    const val PALETTE_SEED = 137
-    const val PALETTE_STEPS = 360
-    const val PALETTE_SATURATION = 0.58f
-    const val PALETTE_VALUE = 0.83f
 }
 
 object SearchConstants {

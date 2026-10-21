@@ -18,6 +18,14 @@ enum class IconShape { CIRCLE, SQUIRCLE, ORIGINAL }
 @Serializable
 enum class SortMode { CUSTOM, ALPHABETICAL, MOST_USED, RECENTLY_USED }
 
+/** Rendering cost of the watch UI; both tiers share colors and shapes (docs/decisions.md D2). */
+@Serializable
+enum class VisualTier { REFINED, LITE }
+
+/** ORIGINAL keeps each app's colors; THEMED tints apps that ship a monochrome icon layer. */
+@Serializable
+enum class IconStyle { ORIGINAL, THEMED }
+
 /** Which device produced a config revision. */
 @Serializable
 enum class ConfigOrigin { WATCH, PHONE }

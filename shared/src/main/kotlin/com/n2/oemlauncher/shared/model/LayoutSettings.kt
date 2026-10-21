@@ -19,4 +19,8 @@ data class LayoutSettings(
     val hapticsEnabled: Boolean = LauncherDefaults.HAPTICS_ENABLED,
     /** Replace motion (fling physics, scale animations) with instant transitions. */
     val reduceMotion: Boolean = LauncherDefaults.REDUCE_MOTION,
+    /** Added in v2; older peers ignore it and decode missing values as the default. */
+    val visualTier: VisualTier = LauncherDefaults.VISUAL_TIER,
+    /** Added in v2; older peers ignore it and decode missing values as the default. */
+    val iconStyle: IconStyle = LauncherDefaults.ICON_STYLE,
 )

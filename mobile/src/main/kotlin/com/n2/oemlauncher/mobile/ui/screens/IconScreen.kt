@@ -6,14 +6,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,7 +36,13 @@ import com.n2.oemlauncher.mobile.config.UiDimensions
 import com.n2.oemlauncher.mobile.data.CompanionState
 import com.n2.oemlauncher.mobile.editor.CompanionViewModel
 import com.n2.oemlauncher.mobile.ui.components.AppIcon
-import com.n2.oemlauncher.mobile.ui.components.SearchField
+import com.n2.oemlauncher.mobile.ui.components.ChampagneButton
+import com.n2.oemlauncher.mobile.ui.components.EmptyState
+import com.n2.oemlauncher.mobile.ui.components.GlassButton
+import com.n2.oemlauncher.mobile.ui.components.GlassRow
+import com.n2.oemlauncher.mobile.ui.components.SearchPill
+import com.n2.oemlauncher.mobile.ui.components.glassTextButtonColors
+import com.n2.oemlauncher.mobile.ui.theme.GlassTheme
 
 @Composable
 fun IconScreen(
@@ -58,44 +66,80 @@ fun IconScreen(
     }
     LazyColumn(
         Modifier.padding(horizontal = UiDimensions.PAGE_PADDING.dp),
-        verticalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp),
+        verticalArrangement = Arrangement.spacedBy(UiDimensions.SMALL_GAP.dp),
     ) {
         item {
-            Text(stringResource(R.string.icon_tip), style = MaterialTheme.typography.bodyMedium)
-            Button({ zip.launch(ImportLimits.ZIP_MIME_TYPES) }, Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.import_zip))
-            }
-            OutlinedButton({ vm.resetIcons() }, Modifier.fillMaxWidth(), enabled = state.config.iconOverrides.isNotEmpty()) {
-                Text(stringResource(R.string.restore_all))
+            Text(
+                stringResource(R.string.icon_tip),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp)) {
+                GlassButton(
+                    stringResource(R.string.restore_all),
+                    { vm.resetIcons() },
+                    Modifier.weight(1f),
+                    enabled = state.config.iconOverrides.isNotEmpty(),
+                )
+                ChampagneButton(
+                    stringResource(R.string.import_zip),
+                    { zip.launch(ImportLimits.ZIP_MIME_TYPES) },
+                    Modifier.weight(1f),
+                )
             }
         }
-        item { SearchField(query) { query = it } }
+        item { SearchPill(query) { query = it } }
         items(apps, key = { it.key }) { app ->
-            Card {
-                Column(Modifier.padding(UiDimensions.GAP.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        AppIcon(app, state.config, vm)
-                        Column(Modifier.weight(1f).padding(horizontal = UiDimensions.GAP.dp)) {
-                            Text(app.label, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(
-                                stringResource(if (app.key in state.config.iconOverrides) R.string.custom_icon else R.string.default_icon),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
+            val custom = app.key in state.config.iconOverrides
+            GlassRow {
+                AppIcon(app, state.config, vm)
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        app.label, style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                    // Only the exception is worth a line: most apps keep the watch's own icon.
+                    if (custom) {
+                        Text(
+                            stringResource(R.string.custom_icon),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GlassTheme.palette.accentText,
+                        )
                     }
-                    Row {
-                        TextButton({
-                            target = app.key
-                            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        }) { Text(stringResource(R.string.choose_photo)) }
-                        TextButton({ vm.resetIcon(app.key) }, enabled = app.key in state.config.iconOverrides) {
-                            Text(stringResource(R.string.restore))
-                        }
+                }
+                if (custom) {
+                    TextButton({ vm.resetIcon(app.key) }, colors = glassTextButtonColors()) {
+                        Icon(
+                            Icons.Outlined.Restore, stringResource(R.string.restore),
+                            modifier = Modifier.size(ICON_DP.dp),
+                        )
                     }
+                }
+                TextButton(
+                    {
+                        target = app.key
+                        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
+                    colors = glassTextButtonColors(),
+                ) {
+                    Icon(
+                        Icons.Outlined.PhotoLibrary, stringResource(R.string.choose_photo),
+                        modifier = Modifier.size(ICON_DP.dp),
+                    )
                 }
             }
         }
-        if (apps.isEmpty()) item { Text(stringResource(R.string.no_results)) }
-        item { androidx.compose.foundation.layout.Spacer(Modifier.padding(UiDimensions.GAP.dp)) }
+        if (apps.isEmpty()) item {
+            EmptyState(
+                message = stringResource(R.string.no_results),
+                action = stringResource(R.string.clear_search),
+                onAction = { query = "" },
+            )
+        }
+        item { Spacer(Modifier.padding(UiDimensions.SMALL_GAP.dp)) }
     }
 }
+
+private const val ICON_DP = 22

@@ -2,8 +2,10 @@ package com.n2.oemlauncher.shared.config
 
 import com.n2.oemlauncher.shared.model.IconShape
 import com.n2.oemlauncher.shared.model.IconSize
+import com.n2.oemlauncher.shared.model.IconStyle
 import com.n2.oemlauncher.shared.model.LayoutMode
 import com.n2.oemlauncher.shared.model.SortMode
+import com.n2.oemlauncher.shared.model.VisualTier
 
 /** Single source of defaults and allowed ranges for LauncherConfig and LayoutSettings. */
 object LauncherDefaults {
@@ -24,6 +26,8 @@ object LauncherDefaults {
     const val SNAP_TO_CENTER = true
     const val HAPTICS_ENABLED = true
     const val REDUCE_MOTION = false
+    val VISUAL_TIER = VisualTier.REFINED
+    val ICON_STYLE = IconStyle.ORIGINAL
 
     /** Center cell plus the first ring of the honeycomb. */
     const val MAX_FAVORITES = 7

@@ -1,10 +1,15 @@
 package com.n2.oemlauncher.wear.config
 
 object WearConstants {
+    const val DEBUG_LOG_TAG = "N2Home"
+
+    /** Set by the system only when HOME comes from the physical Home key (hidden platform extra). */
+    const val EXTRA_FROM_HOME_KEY = "android.intent.extra.FROM_HOME_KEY"
     const val ICON_CACHE_BYTES = 8L * 1024L * 1024L
     const val ICON_CACHE_DIR = "icons"
     const val ICON_TARGET_PX = 128
     const val CATALOG_THROTTLE_MS = 10_000L
+    const val CATALOG_EMPTY_RETRY_DELAY_MS = 250L
     const val USAGE_PUBLISH_EVERY = 5
     const val DEMO_ENTRY_COUNT = 128
     const val SNAPSHOT_FILE = "catalog.json"
@@ -46,4 +51,9 @@ object WearConstants {
     /** Font sizes of the tile header and of favorite labels. */
     const val TILE_HEADER_SP = 16f
     const val TILE_LABEL_SP = 12f
+    const val TILE_GRID_COLUMNS = 2
+    const val TILE_HEADER_GAP_DP = 8f
+    const val TILE_ROW_GAP_DP = 6f
+    const val TILE_COLUMN_GAP_DP = 10f
+    const val TILE_OPEN_LAUNCHER_ID = "open_launcher"
 }

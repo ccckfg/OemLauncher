@@ -3,8 +3,6 @@ package com.n2.oemlauncher.mobile.data
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import androidx.core.graphics.createBitmap
 import com.n2.oemlauncher.mobile.R
 import com.n2.oemlauncher.mobile.config.DemoConstants
@@ -24,9 +22,13 @@ class DemoCatalogFactory(
     private val icons: IconStore,
     private val processor: IconProcessor,
 ) {
-    /** Demo labels come from resources, so they go stale when the app language changes. */
+    /**
+     * Demo labels come from resources, so they go stale when the app language changes; the
+     * icons go stale when their drawing changes, which bumps [DemoConstants.VERSION].
+     */
     fun matchesLanguage(catalog: WatchCatalog): Boolean =
-        catalog.entries.map { it.label } ==
+        catalog.appVersionName == DemoConstants.VERSION &&
+            catalog.entries.map { it.label } ==
             context.resources.getStringArray(R.array.demo_apps).take(DemoConstants.SIZE)
 
     suspend fun create(): Pair<WatchCatalog, LauncherConfig> = withContext(Dispatchers.IO) {
@@ -34,22 +36,7 @@ class DemoCatalogFactory(
         val entries = labels.take(DemoConstants.SIZE).mapIndexed { index, label ->
             val side = ProtocolLimits.CATALOG_ICON_PX
             val bitmap = createBitmap(side, side)
-            val canvas = Canvas(bitmap)
-            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-            paint.color = Color.HSVToColor(
-                floatArrayOf(
-                    (index * DemoConstants.PALETTE_SEED % DemoConstants.PALETTE_STEPS).toFloat(),
-                    DemoConstants.PALETTE_SATURATION, DemoConstants.PALETTE_VALUE,
-                ),
-            )
-            canvas.drawColor(paint.color)
-            paint.color = Color.WHITE
-            paint.textSize = side * DemoConstants.ICON_TEXT_RATIO
-            paint.textAlign = Paint.Align.CENTER
-            canvas.drawText(
-                label.take(1), side / 2f,
-                side / 2f - (paint.ascent() + paint.descent()) / 2f, paint,
-            )
+            DemoGlyphs.draw(Canvas(bitmap), side, index)
             val bytes = processor.encode(bitmap)
             bitmap.recycle()
             val packageName = DemoConstants.PACKAGE_PREFIX + "app$index"
