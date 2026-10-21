@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -117,6 +118,9 @@ fun GlassSlider(
     )
     val press = rememberKnobPress()
     val track = rememberLayerBackdrop()
+    // The gesture handlers outlive recompositions; always call the latest callbacks.
+    val change by rememberUpdatedState(onValueChange)
+    val finished by rememberUpdatedState(onValueChangeFinished)
     BoxWithConstraints(
         modifier.fillMaxWidth().height(UiDimensions.TOUCH_TARGET.dp)
             .pointerInput(valueRange) {
@@ -124,13 +128,13 @@ fun GlassSlider(
                 detectDragGestures(
                     onDragStart = { offset ->
                         press.press()
-                        onValueChange(valueAt(offset.x, size.width.toFloat(), knob, valueRange))
+                        change(valueAt(offset.x, size.width.toFloat(), knob, valueRange))
                     },
-                    onDragEnd = { press.release(); onValueChangeFinished() },
-                    onDragCancel = { press.release(); onValueChangeFinished() },
-                    onDrag = { change, _ ->
-                        change.consume()
-                        onValueChange(valueAt(change.position.x, size.width.toFloat(), knob, valueRange))
+                    onDragEnd = { press.release(); finished() },
+                    onDragCancel = { press.release(); finished() },
+                    onDrag = { pointer, _ ->
+                        pointer.consume()
+                        change(valueAt(pointer.position.x, size.width.toFloat(), knob, valueRange))
                     },
                 )
             }
@@ -139,8 +143,8 @@ fun GlassSlider(
                 detectTapGestures(
                     onPress = { press.press(); tryAwaitRelease(); press.release() },
                     onTap = { offset ->
-                        onValueChange(valueAt(offset.x, size.width.toFloat(), knob, valueRange))
-                        onValueChangeFinished()
+                        change(valueAt(offset.x, size.width.toFloat(), knob, valueRange))
+                        finished()
                     },
                 )
             }

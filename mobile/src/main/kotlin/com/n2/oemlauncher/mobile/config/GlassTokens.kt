@@ -9,7 +9,9 @@ object GlassTokens {
     const val CARD_CORNER = 28
     const val TILE_CORNER = 24
     const val ROW_CORNER = 20
-    const val SHEET_CORNER = 28
+    const val SHEET_CORNER = 34
+    /** Sheets float clear of the screen edges, as one more pane of glass. */
+    const val SHEET_MARGIN = 10
 
     const val TOP_BAR_HEIGHT = 48
     const val CARD_PADDING = 16
@@ -43,6 +45,13 @@ object GlassTokens {
     const val KNOB_SHADOW = 6
     const val KNOB_SHADOW_ALPHA = 0.3f
     const val KNOB_INNER_SHADOW = 4
+    /** A segment pill is wide, so it swells less than a round knob. */
+    const val PILL_PRESSED_SCALE = 1.1f
+
+    /** Specular rim: alpha kept between the lobes, where the lobes end, the far lobe's share. */
+    const val RIM_FAINT = 0.12f
+    const val RIM_LOBE = 0.32f
+    const val RIM_BACK_LOBE = 0.7f
 
     /** Recessed tracks: the inner shadow along their upper edge. */
     const val RECESS_SHADOW = 4
@@ -65,7 +74,6 @@ object GlassTokens {
 
     /** The rim light is a quiet 22% on Mocha; the specular edge needs about twice that. */
     const val SPECULAR_GAIN = 2.2f
-    const val LIGHT_ANGLE = 45f
     const val SHADOW_RADIUS = 18
     const val CHAMPAGNE_SPECULAR = 0.6f
     const val CHAMPAGNE_OPACITY = 0.94f
@@ -80,7 +88,9 @@ object GlassTokens {
     const val PREVIEW_BORDER = 6
 
     /** Scrim behind a dialog or bottom sheet when the window cannot blur what is behind it. */
-    const val SCRIM_ALPHA = 0.7f
+    const val SCRIM_ALPHA = 0.3f
+    /** Overlays keep this share of the strong glass tint over the blurred page. */
+    const val OVERLAY_TINT = 0.75f
 
     /** Ambient glows of the page background, as fractions of the page size. */
     const val WARM_GLOW_X = 0.12f

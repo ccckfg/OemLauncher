@@ -1,9 +1,14 @@
 package com.n2.oemlauncher.mobile.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -30,6 +35,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.n2.oemlauncher.mobile.config.GlassTokens
+import com.n2.oemlauncher.mobile.config.MotionTokens
 import com.n2.oemlauncher.mobile.config.UiDimensions
 import com.n2.oemlauncher.mobile.ui.theme.GlassTheme
 
@@ -92,6 +98,7 @@ fun GlassTopBar(
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val palette = GlassTheme.palette
+    val density = LocalDensity.current
     val background by animateColorAsState(
         targetValue = if (scrolled) palette.strongOverBackground else Color.Transparent,
         animationSpec = tween(GlassTokens.MOTION_SHORT),
@@ -105,9 +112,18 @@ fun GlassTopBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             navigationIcon?.invoke()
-            Box(Modifier.weight(1f)) {
+            // The title travels with the page: in from the side it comes from, out the other.
+            AnimatedContent(
+                title, Modifier.weight(1f),
+                transitionSpec = {
+                    val shift = with(density) { MotionTokens.TITLE_SHIFT_DP.dp.roundToPx() }
+                    (fadeIn(tween(MotionTokens.PAGE_FADE_IN_MS)) + slideInHorizontally { shift })
+                        .togetherWith(fadeOut(tween(MotionTokens.PAGE_FADE_OUT_MS)) + slideOutHorizontally { -shift })
+                },
+                label = "title",
+            ) { text ->
                 Text(
-                    title,
+                    text,
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,

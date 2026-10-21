@@ -7,14 +7,14 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.drawBackdrop
 import com.kyant.backdrop.effects.lens
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.highlight.HighlightStyle
 import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
@@ -52,14 +52,22 @@ fun rememberKnobPress(): KnobPress {
 }
 
 /**
- * The knob of a slider or switch: a cream glass bead at rest. Held, it swells and clears into
- * a lens, so the track underneath shows through it bent and fringed, the way liquid glass does.
- * [backdrop] should hold the track, so the lens has something to refract.
+ * The knob of a slider or switch, or the pill of a segmented control: a solid glass bead at
+ * rest (cream, or [fill]). Held, it swells by [pressedScale] and clears into a lens, so the
+ * track underneath shows through it bent and fringed, the way liquid glass does. [backdrop]
+ * should hold the track, so the lens has something to refract.
  */
 @Composable
-fun Modifier.liquidKnob(press: KnobPress, backdrop: Backdrop): Modifier {
-    val cream = Color(Palettes.Mocha.textPrimary)
+fun Modifier.liquidKnob(
+    press: KnobPress,
+    backdrop: Backdrop,
+    fill: Brush? = null,
+    pressedScale: Float = GlassTokens.KNOB_PRESSED_SCALE,
+): Modifier {
+    val surface = fill ?: SolidColor(Color(Palettes.Mocha.textPrimary))
     val shape = remember { Capsule() }
+    val rim = Color.White.copy(alpha = GlassTokens.KNOB_SPECULAR)
+    val specular = remember { SpecularRim() }
     return drawBackdrop(
         backdrop = backdrop,
         shape = { shape },
@@ -71,12 +79,7 @@ fun Modifier.liquidKnob(press: KnobPress, backdrop: Backdrop): Modifier {
                 chromaticAberration = true,
             )
         },
-        highlight = {
-            Highlight(
-                width = GlassTokens.HIGHLIGHT_WIDTH.dp,
-                style = HighlightStyle.Default(color = Color.White.copy(alpha = GlassTokens.KNOB_SPECULAR)),
-            )
-        },
+        highlight = null,
         shadow = {
             Shadow(radius = GlassTokens.KNOB_SHADOW.dp, color = Color.Black.copy(alpha = GlassTokens.KNOB_SHADOW_ALPHA))
         },
@@ -85,10 +88,13 @@ fun Modifier.liquidKnob(press: KnobPress, backdrop: Backdrop): Modifier {
             InnerShadow(radius = GlassTokens.KNOB_INNER_SHADOW.dp * held, alpha = held)
         },
         layerBlock = {
-            val scale = lerp(1f, GlassTokens.KNOB_PRESSED_SCALE, press.value)
+            val scale = lerp(1f, pressedScale, press.value)
             scaleX = scale
             scaleY = scale
         },
-        onDrawSurface = { drawRect(cream, alpha = 1f - press.value * GlassTokens.KNOB_CLEARING) },
+        onDrawSurface = {
+            drawRect(surface, alpha = 1f - press.value * GlassTokens.KNOB_CLEARING)
+            specular.draw(this, shape, rim, GlassTokens.HIGHLIGHT_WIDTH.dp.toPx())
+        },
     )
 }

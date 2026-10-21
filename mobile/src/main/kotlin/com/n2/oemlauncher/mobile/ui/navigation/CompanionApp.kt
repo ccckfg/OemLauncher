@@ -1,13 +1,14 @@
 package com.n2.oemlauncher.mobile.ui.navigation
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,13 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -40,7 +39,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.n2.oemlauncher.mobile.R
-import com.n2.oemlauncher.mobile.config.UiDimensions
 import com.n2.oemlauncher.mobile.data.UserNotice
 import com.n2.oemlauncher.mobile.editor.CompanionViewModel
 import com.n2.oemlauncher.mobile.ui.components.ChampagneButton
@@ -63,7 +61,6 @@ import com.n2.oemlauncher.mobile.ui.screens.PreviewScreen
 import com.n2.oemlauncher.mobile.ui.screens.SyncDiagnosticsScreen
 import com.n2.oemlauncher.mobile.ui.theme.CompanionTheme
 import com.n2.oemlauncher.mobile.ui.theme.MatchSystemBars
-import kotlinx.coroutines.flow.first
 
 @Composable
 fun CompanionApp(vm: CompanionViewModel) {
@@ -71,17 +68,9 @@ fun CompanionApp(vm: CompanionViewModel) {
     val imports by vm.importState.collectAsStateWithLifecycle()
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
-    // The destination changes before the fade finishes; keep the old title and actions
-    // until the incoming page is RESUMED so the app bar always matches the visible page.
-    var settled by remember { mutableStateOf(entry?.destination) }
-    LaunchedEffect(entry) {
-        val current = entry ?: return@LaunchedEffect
-        if (!current.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-            current.lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.RESUMED) }
-        }
-        settled = current.destination
-    }
-    val destination = settled
+    // The bar follows the page being navigated to at once; its title crossfades alongside
+    // the page transition rather than snapping after it.
+    val destination = entry?.destination
     val home = destination == null || destination.hasRoute<Home>()
     var dark by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val systemDark = isSystemInDarkTheme()
@@ -122,7 +111,11 @@ fun CompanionApp(vm: CompanionViewModel) {
                         title = stringResource(title),
                         scrolled = scroll.scrolled,
                         navigationIcon = {
-                            if (!home) {
+                            AnimatedVisibility(
+                                !home,
+                                enter = fadeIn() + expandHorizontally(),
+                                exit = fadeOut() + shrinkHorizontally(),
+                            ) {
                                 GlassIconButton(
                                     Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.back), back,
                                     glass = false,
@@ -132,45 +125,46 @@ fun CompanionApp(vm: CompanionViewModel) {
                         actions = {
                             // The theme switch is app-wide, so it lives on the home page only;
                             // inner pages keep their bar to the page's own actions.
-                            if (home) {
-                                GlassIconButton(
-                                    Icons.Outlined.Insights, stringResource(R.string.sync_diagnostics),
-                                    { nav.navigate(SyncDiagnostics) },
-                                )
-                                GlassIconButton(
-                                    Icons.Outlined.Contrast, stringResource(R.string.theme),
-                                    { dark = !(dark ?: systemDark) },
-                                )
+                            AnimatedVisibility(home) {
+                                Row {
+                                    GlassIconButton(
+                                        Icons.Outlined.Insights, stringResource(R.string.sync_diagnostics),
+                                        { nav.navigate(SyncDiagnostics) },
+                                    )
+                                    GlassIconButton(
+                                        Icons.Outlined.Contrast, stringResource(R.string.theme),
+                                        { dark = !(dark ?: systemDark) },
+                                    )
+                                }
                             }
-                            if (editing) {
-                                GlassIconButton(
-                                    Icons.AutoMirrored.Outlined.Undo, stringResource(R.string.undo),
-                                    { vm.undo() },
-                                    enabled = state.draft?.undo?.isNotEmpty() == true,
-                                    glass = false,
-                                )
-                                GlassIconButton(
-                                    Icons.AutoMirrored.Outlined.Redo, stringResource(R.string.redo),
-                                    { vm.redo() },
-                                    enabled = state.draft?.redo?.isNotEmpty() == true,
-                                    glass = false,
-                                )
+                            AnimatedVisibility(editing) {
+                                Row {
+                                    GlassIconButton(
+                                        Icons.AutoMirrored.Outlined.Undo, stringResource(R.string.undo),
+                                        { vm.undo() },
+                                        enabled = state.draft?.undo?.isNotEmpty() == true,
+                                        glass = false,
+                                    )
+                                    GlassIconButton(
+                                        Icons.AutoMirrored.Outlined.Redo, stringResource(R.string.redo),
+                                        { vm.redo() },
+                                        enabled = state.draft?.redo?.isNotEmpty() == true,
+                                        glass = false,
+                                    )
+                                }
                             }
                         },
                     )
                 },
             ) { padding ->
                 Box(Modifier.fillMaxSize().padding(padding).trackTopBarScroll(scroll)) {
+                    val reduced = state.config.layout.reduceMotion
                     NavHost(
                         navController = nav, startDestination = Home,
-                        enterTransition = {
-                            if (state.config.layout.reduceMotion) EnterTransition.None
-                            else fadeIn(tween(UiDimensions.ANIMATION_MS))
-                        },
-                        exitTransition = {
-                            if (state.config.layout.reduceMotion) ExitTransition.None
-                            else fadeOut(tween(UiDimensions.ANIMATION_MS))
-                        },
+                        enterTransition = { PageTransitions.enter(reduced) },
+                        exitTransition = { PageTransitions.exit(reduced) },
+                        popEnterTransition = { PageTransitions.popEnter(reduced) },
+                        popExitTransition = { PageTransitions.popExit(reduced) },
                     ) {
                         composable<Home> {
                             HomeScreen(state, vm) {
@@ -205,18 +199,18 @@ fun CompanionApp(vm: CompanionViewModel) {
                     }
                 }
             }
-        }
-        if (state.notice != UserNotice.NONE) GlassDialog(onDismissRequest = vm::dismissNotice) {
-            Text(
-                stringResource(state.notice.label()),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            ChampagneButton(
-                stringResource(R.string.dismiss),
-                vm::dismissNotice,
-                Modifier.fillMaxWidth(),
-            )
+            if (state.notice != UserNotice.NONE) GlassDialog(onDismissRequest = vm::dismissNotice) {
+                Text(
+                    stringResource(state.notice.label()),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                ChampagneButton(
+                    stringResource(R.string.dismiss),
+                    vm::dismissNotice,
+                    Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

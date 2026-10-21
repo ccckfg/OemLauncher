@@ -119,7 +119,7 @@ fun EditableAppRow(
         Row(
             Modifier.fillMaxWidth().height(GlassTokens.ROW_HEIGHT.dp)
                 .graphicsLayer { scaleX = lift; scaleY = lift }
-                .glassSurface(GlassTokens.ROW_CORNER.dp, elevated = dragging)
+                .glassSurface(GlassTokens.ROW_CORNER.dp, elevated = dragging, refract = false)
                 .then(drag).then(actions)
                 .padding(horizontal = UiDimensions.SMALL_GAP.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -153,6 +153,7 @@ fun EditableAppRow(
             }
         }
         if (menu) GlassBottomSheet({ menu = false }) {
+            SheetTitle(app.label)
             if (!hidden) {
                 SheetAction(
                     stringResource(R.string.action_move_up), Icons.Outlined.ArrowUpward,

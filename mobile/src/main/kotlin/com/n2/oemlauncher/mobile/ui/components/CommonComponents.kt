@@ -147,7 +147,7 @@ fun GlassRow(
     val interaction = remember { MutableInteractionSource() }
     Row(
         modifier.fillMaxWidth().height(GlassTokens.ROW_HEIGHT.dp)
-            .glassSurface(GlassTokens.ROW_CORNER.dp, elevated = elevated)
+            .glassSurface(GlassTokens.ROW_CORNER.dp, elevated = elevated, refract = false)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(interactionSource = interaction, indication = null, onClick = onClick)

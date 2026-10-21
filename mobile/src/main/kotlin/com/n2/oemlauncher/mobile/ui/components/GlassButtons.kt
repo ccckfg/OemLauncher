@@ -46,7 +46,7 @@ fun ChampagneButton(
         modifier
             .height(GlassTokens.BUTTON_HEIGHT.dp)
             .alpha(if (enabled) 1f else DISABLED_ALPHA)
-            .glassSurface(corner = 0.dp, capsule = true, champagne = true)
+            .glassSurface(corner = 0.dp, capsule = true, champagne = true, shadow = enabled)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 24.dp),
         contentAlignment = Alignment.Center,
@@ -70,7 +70,7 @@ fun GlassButton(
         modifier
             .height(GlassTokens.BUTTON_HEIGHT.dp)
             .alpha(if (enabled) 1f else DISABLED_ALPHA)
-            .glassSurface(corner = 0.dp, capsule = true, strong = true, elevated = true)
+            .glassSurface(corner = 0.dp, capsule = true, strong = true, elevated = true, shadow = enabled)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 24.dp),
         contentAlignment = Alignment.Center,

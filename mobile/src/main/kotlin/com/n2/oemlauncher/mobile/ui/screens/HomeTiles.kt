@@ -81,7 +81,7 @@ private fun RowScope.EntryTile(
     val sub = if (accent) palette.onAccent.copy(alpha = SECONDARY_INK_ALPHA) else MaterialTheme.colorScheme.onSurfaceVariant
     // A disabled tile is never the champagne one: a dimmed accent reads as broken, not as off.
     val fill = Modifier.glassSurface(
-        GlassTokens.TILE_CORNER.dp, elevated = true, champagne = accent,
+        GlassTokens.TILE_CORNER.dp, elevated = true, champagne = accent, shadow = enabled,
     )
     Column(
         Modifier.weight(1f).height(GlassTokens.TILE_HEIGHT.dp)

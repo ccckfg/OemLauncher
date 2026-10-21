@@ -2,6 +2,7 @@ package com.n2.oemlauncher.mobile.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,7 +24,8 @@ import com.n2.oemlauncher.shared.model.LayoutMode
 @Composable
 fun PreviewScreen(state: CompanionState, vm: CompanionViewModel) {
     Column(
-        Modifier.padding(UiDimensions.PAGE_PADDING.dp).verticalScroll(rememberScrollState()),
+        // Padding inside the scroll: the scroll clips, and shadows need the margin to fade out.
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(UiDimensions.PAGE_PADDING.dp),
         verticalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp),
     ) {
         Text(
