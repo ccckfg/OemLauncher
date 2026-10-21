@@ -81,6 +81,20 @@ keyPassword=<key 密码>
 
 没有该文件时，release 构建自动回退到 debug 签名。这是刻意行为：Data Layer 要求两端包名与签名一致，本地开发用同一把 debug 签名即可让两个 release 包互通。
 
+### 持续集成与发布（GitHub Actions）
+
+- `.github/workflows/ci.yml`：推送到 `master`、`feat/**` 或提 PR 时，跑三个模块的单测、两端 lint 和调试包构建。
+- `.github/workflows/release.yml`：推送 `v*` 标签时，先核对标签和两端的 `versionName` 一致，再跑单测、构建 release 包，把两个 APK 和 `SHA256SUMS.txt` 发布到 GitHub Release。发布说明取自标签的注释。
+
+发一个新版本：先把两端 `build.gradle.kts` 的 `versionName` 改成新版本号、`versionCode` 加一，合并到 `master` 并推送，然后：
+
+```powershell
+git tag -a v1.2.0 -F <发布说明文件>
+git push origin v1.2.0
+```
+
+签名密钥存在仓库的 Actions Secrets 里：`SIGNING_KEYSTORE_BASE64`（keystore 文件的 base64）、`SIGNING_STORE_PASSWORD`、`SIGNING_KEY_ALIAS`、`SIGNING_KEY_PASSWORD`。现在用的是维护者本机的 debug 密钥，证书 SHA-256 为 `5D:C4:76:EF:FB:EB:1D:5D:D3:BF:20:14:3A:AE:90:26:A4:72:68:36:F5:77:12:DC:E1:3F:BC:19:B9:96:AE:B8`，所以此前用 adb 装上的版本可以直接覆盖升级。以后每个版本都必须用同一把密钥：换了密钥，已安装的用户就没法升级，手表和手机签名不一致也无法同步。
+
 ## 安装与使用
 
 ### 手表端
