@@ -99,12 +99,11 @@
     <string name="snap">吸附到中心</string>
     <string name="haptics">触觉反馈</string>
     <string name="reduce_motion">减少动态效果</string>
-    <string name="icon_tip">为单个应用选择照片，或导入 ZIP。修改会留在草稿中，直到你主动同步。</string>
+    <string name="icon_tip">给应用换照片，或导入 ZIP 图标包；改动先存为草稿，同步后生效。</string>
     <string name="import_zip">导入 ZIP 图标包</string>
     <string name="restore_all">恢复全部默认图标</string>
     <string name="restore">恢复默认</string>
     <string name="custom_icon">自定义图标</string>
-    <string name="default_icon">手表图标</string>
     <string name="choose_photo">选择照片</string>
     <string name="crop">裁剪图标</string>
     <string name="crop_hint">拖动和双指缩放以填满遮罩，保存为 192 像素 PNG。</string>

@@ -99,12 +99,11 @@
     <string name="snap">Snap to center</string>
     <string name="haptics">Haptic feedback</string>
     <string name="reduce_motion">Reduce motion</string>
-    <string name="icon_tip">Choose a photo for one app, or import a ZIP. Changes stay in your draft until you sync.</string>
+    <string name="icon_tip">Give an app a photo, or import a ZIP icon pack. Changes stay a draft until you sync.</string>
     <string name="import_zip">Import ZIP icon pack</string>
     <string name="restore_all">Restore all default icons</string>
     <string name="restore">Restore default</string>
     <string name="custom_icon">Custom icon</string>
-    <string name="default_icon">Watch icon</string>
     <string name="choose_photo">Choose photo</string>
     <string name="crop">Crop icon</string>
     <string name="crop_hint">Drag and pinch to fill the mask. The saved icon is a 192 px PNG.</string>

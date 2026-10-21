@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -43,6 +42,7 @@ import com.n2.oemlauncher.mobile.ui.components.GlassButton
 import com.n2.oemlauncher.mobile.ui.components.GlassRow
 import com.n2.oemlauncher.mobile.ui.components.SearchPill
 import com.n2.oemlauncher.mobile.ui.components.glassTextButtonColors
+import com.n2.oemlauncher.mobile.ui.theme.GlassTheme
 
 @Composable
 fun IconScreen(
@@ -71,27 +71,28 @@ fun IconScreen(
         item {
             Text(
                 stringResource(R.string.icon_tip),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         item {
-            ChampagneButton(
-                stringResource(R.string.import_zip),
-                { zip.launch(ImportLimits.ZIP_MIME_TYPES) },
-                Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            GlassButton(
-                stringResource(R.string.restore_all),
-                { vm.resetIcons() },
-                Modifier.fillMaxWidth(),
-                enabled = state.config.iconOverrides.isNotEmpty(),
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp)) {
+                GlassButton(
+                    stringResource(R.string.restore_all),
+                    { vm.resetIcons() },
+                    Modifier.weight(1f),
+                    enabled = state.config.iconOverrides.isNotEmpty(),
+                )
+                ChampagneButton(
+                    stringResource(R.string.import_zip),
+                    { zip.launch(ImportLimits.ZIP_MIME_TYPES) },
+                    Modifier.weight(1f),
+                )
+            }
         }
         item { SearchPill(query) { query = it } }
         items(apps, key = { it.key }) { app ->
+            val custom = app.key in state.config.iconOverrides
             GlassRow {
                 AppIcon(app, state.config, vm)
                 Column(Modifier.weight(1f)) {
@@ -99,35 +100,34 @@ fun IconScreen(
                         app.label, style = MaterialTheme.typography.bodyLarge,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
-                    Text(
-                        stringResource(if (app.key in state.config.iconOverrides) R.string.custom_icon else R.string.default_icon),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(
-                        {
-                            target = app.key
-                            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        },
-                        colors = glassTextButtonColors(),
-                    ) {
-                        Icon(
-                            Icons.Outlined.PhotoLibrary, stringResource(R.string.choose_photo),
-                            modifier = Modifier.size(ICON_DP.dp),
+                    // Only the exception is worth a line: most apps keep the watch's own icon.
+                    if (custom) {
+                        Text(
+                            stringResource(R.string.custom_icon),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GlassTheme.palette.accentText,
                         )
                     }
-                    TextButton(
-                        { vm.resetIcon(app.key) },
-                        enabled = app.key in state.config.iconOverrides,
-                        colors = glassTextButtonColors(),
-                    ) {
+                }
+                if (custom) {
+                    TextButton({ vm.resetIcon(app.key) }, colors = glassTextButtonColors()) {
                         Icon(
                             Icons.Outlined.Restore, stringResource(R.string.restore),
                             modifier = Modifier.size(ICON_DP.dp),
                         )
                     }
+                }
+                TextButton(
+                    {
+                        target = app.key
+                        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
+                    colors = glassTextButtonColors(),
+                ) {
+                    Icon(
+                        Icons.Outlined.PhotoLibrary, stringResource(R.string.choose_photo),
+                        modifier = Modifier.size(ICON_DP.dp),
+                    )
                 }
             }
         }
