@@ -97,3 +97,9 @@ adb -s <手机序列号> install -r mobile\build\outputs\apk\debug\mobile-debug.
 ## 截图
 
 见 `docs/delivery.md` 的“截图”一节（`docs/images/`）。
+
+## 许可证
+
+本项目以 GNU 通用公共许可证第 3 版（GPL-3.0）发布，全文见 `LICENSE`。
+
+第三方内容：图标包里的线条图形来自 Google 的 [Material Symbols](https://github.com/google/material-design-icons)，按 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) 使用，见 `shared/src/main/kotlin/com/n2/oemlauncher/shared/design/MochaGlyph.kt`。
