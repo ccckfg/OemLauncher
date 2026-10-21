@@ -1,6 +1,6 @@
 # N2 设计语言：摩卡玻璃
 
-手机和手表共用的视觉规范。参考图在 `reference/`，决策背景见 `docs/decisions.md` 的 D2、D4。颜色和材质参数以代码为准：`shared/src/main/kotlin/com/n2/oemlauncher/shared/design/`。本文和代码不一致时，先改代码，再改本文。
+手机和手表共用的视觉规范。参考图是第三方作品，只留在本地 `reference/`，不随仓库发布；决策背景见 `docs/decisions.md` 的 D2、D4。颜色和材质参数以代码为准：`shared/src/main/kotlin/com/n2/oemlauncher/shared/design/`。本文和代码不一致时，先改代码，再改本文。
 
 ## 1. 气质
 

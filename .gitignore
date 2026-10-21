@@ -32,3 +32,8 @@ desktop.ini
 
 # Third-party reference APKs and decompiled output (not ours, never commit)
 kcys/
+
+# Third-party reference media: kept locally for design work, not ours to publish
+/*.jpg
+/*.mp4
+docs/design/reference/
