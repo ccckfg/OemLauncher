@@ -12,8 +12,6 @@ import android.os.Build
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.scale
-import com.n2.oemlauncher.shared.design.ColorMath
-import com.n2.oemlauncher.shared.design.Palettes
 import com.n2.oemlauncher.shared.model.IconShape
 import com.n2.oemlauncher.wear.config.WearUiTokens
 
@@ -50,22 +48,11 @@ internal object IconBitmapRenderer {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             drawable is AdaptiveIconDrawable && drawable.monochrome != null
 
+    /** The app's monochrome layer in cream on a mocha disc, or null when it has none. */
     fun themed(drawable: Drawable, size: Int, shape: IconShape): Bitmap? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
         val monochrome = (drawable as? AdaptiveIconDrawable)?.monochrome?.mutate() ?: return null
-        val bitmap = createBitmap(size, size)
-        val canvas = Canvas(bitmap)
-        val glassShape = if (shape == IconShape.ORIGINAL) IconShape.CIRCLE else shape
-        val path = maskPath(size, glassShape)
-        canvas.clipPath(path)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = ColorMath.compositeOver(Palettes.Mocha.glass, Palettes.Mocha.background).toInt()
-        }
-        canvas.drawPath(path, paint)
-        monochrome.setTint(Palettes.Mocha.textPrimary.toInt())
-        monochrome.setBounds(0, 0, size, size)
-        monochrome.draw(canvas)
-        return bitmap
+        return MochaIconRenderer.monochrome(drawable, monochrome, size, shape)
     }
 
     private fun mask(source: Bitmap, shape: IconShape): Bitmap {
@@ -77,7 +64,7 @@ internal object IconBitmapRenderer {
         return result
     }
 
-    private fun maskPath(size: Int, shape: IconShape): Path = Path().apply {
+    fun maskPath(size: Int, shape: IconShape): Path = Path().apply {
         val rect = RectF(0f, 0f, size.toFloat(), size.toFloat())
         if (shape == IconShape.CIRCLE) addOval(rect, Path.Direction.CW)
         else {

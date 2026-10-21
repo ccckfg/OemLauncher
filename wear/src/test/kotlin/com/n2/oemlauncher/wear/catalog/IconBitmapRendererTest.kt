@@ -5,8 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.InsetDrawable
-import com.n2.oemlauncher.shared.design.ColorMath
-import com.n2.oemlauncher.shared.design.Palettes
+import com.n2.oemlauncher.shared.design.MochaIcons
 import com.n2.oemlauncher.shared.model.IconShape
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -33,11 +32,9 @@ class IconBitmapRendererTest {
         assertEquals(0, Color.alpha(circle.getPixel(5, 20)))
         assertEquals(255, Color.alpha(square.getPixel(5, 20)))
         assertEquals(0, Color.alpha(square.getPixel(0, 0)))
-        assertEquals(Palettes.Mocha.textPrimary.toInt(), square.getPixel(50, 50))
-        assertEquals(
-            ColorMath.compositeOver(Palettes.Mocha.glass, Palettes.Mocha.background).toInt(),
-            square.getPixel(50, 10),
-        )
+        assertEquals(MochaIcons.INK.toInt(), square.getPixel(50, 50))
+        // The disc takes the tone nearest the icon's own colors: a red icon sits on terracotta.
+        assertEquals(MochaIcons.Tone.TERRACOTTA.argb.toInt(), square.getPixel(50, 95))
     }
 
     @Test fun originalThemeUsesCircularGlassWithoutCroppingNativeOriginals() {

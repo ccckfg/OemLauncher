@@ -25,4 +25,11 @@ class IconStylePolicyTest {
         assertEquals(IconRenderMode.THEMED, iconRenderMode(IconStyle.THEMED, true, overrideAvailable = false))
         assertEquals(IconRenderMode.ORIGINAL, iconRenderMode(IconStyle.THEMED, false, overrideAvailable = false))
     }
+
+    @Test fun packComesBeforeTheMonochromeLayerButNeverBeforeAnOverride() {
+        assertEquals(IconRenderMode.PACK, iconRenderMode(IconStyle.THEMED, true, inPack = true))
+        assertEquals(IconRenderMode.PACK, iconRenderMode(IconStyle.THEMED, false, inPack = true))
+        assertEquals(IconRenderMode.OVERRIDE, iconRenderMode(IconStyle.THEMED, false, overrideAvailable = true, inPack = true))
+        assertEquals(IconRenderMode.ORIGINAL, iconRenderMode(IconStyle.ORIGINAL, false, inPack = true))
+    }
 }

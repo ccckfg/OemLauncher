@@ -8,6 +8,7 @@ import android.graphics.RectF
 import android.os.Process
 import android.os.UserHandle
 import androidx.core.graphics.scale
+import com.n2.oemlauncher.shared.design.MochaIcons
 import com.n2.oemlauncher.shared.model.AppKey
 import com.n2.oemlauncher.shared.model.CatalogEntry
 import com.n2.oemlauncher.shared.model.IconShape
@@ -137,10 +138,16 @@ class AppCatalogRepository(
             }
         }
         val drawable by lazy { activity?.getIcon(0) }
-        if (style == IconStyle.THEMED &&
-            iconRenderMode(style, IconBitmapRenderer.hasMonochrome(drawable)) == IconRenderMode.THEMED
-        ) {
-            drawable?.let { IconBitmapRenderer.themed(it, targetPx, shape) }?.let {
+        if (style == IconStyle.THEMED) {
+            val pack = AppKey.parse(entry.key)?.packageName?.let(MochaIcons::forPackage)
+            // Short-circuit: a pack app never loads its own drawable.
+            val monochrome = pack == null && IconBitmapRenderer.hasMonochrome(drawable)
+            val themed = when (iconRenderMode(style, monochrome, inPack = pack != null)) {
+                IconRenderMode.PACK -> pack?.let { MochaIconRenderer.render(it, targetPx, shape) }
+                IconRenderMode.THEMED -> drawable?.let { IconBitmapRenderer.themed(it, targetPx, shape) }
+                else -> null
+            }
+            themed?.let {
                 memory.put(themedKey, it)
                 return@withContext it
             }

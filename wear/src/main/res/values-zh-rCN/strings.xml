@@ -22,7 +22,7 @@
     <string name="visual_lite">轻量</string>
     <string name="label_icon_style">图标风格</string>
     <string name="icon_style_original">原色</string>
-    <string name="icon_style_themed">主题单色</string>
+    <string name="icon_style_themed">摩卡图标</string>
     <string name="label_sort">排序方式</string>
     <string name="label_show_names">显示应用名</string>
     <string name="label_fisheye">鱼眼强度</string>
