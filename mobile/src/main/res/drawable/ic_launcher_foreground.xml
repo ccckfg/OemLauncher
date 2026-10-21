@@ -1,28 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The watch's honeycomb in miniature: six glass discs around the champagne cookie. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M54,45.5a8.5,8.5 0,1 1,0 17a8.5,8.5 0,1 1,0 -17z" />
-    <path
-        android:fillColor="#FF4FC3F7"
-        android:pathData="M73,46.5a7.5,7.5 0,1 1,0 15a7.5,7.5 0,1 1,0 -15z" />
-    <path
-        android:fillColor="#FF81C784"
-        android:pathData="M63.5,62.95a7.5,7.5 0,1 1,0 15a7.5,7.5 0,1 1,0 -15z" />
-    <path
-        android:fillColor="#FFFFB74D"
-        android:pathData="M44.5,62.95a7.5,7.5 0,1 1,0 15a7.5,7.5 0,1 1,0 -15z" />
-    <path
-        android:fillColor="#FFE57373"
-        android:pathData="M35,46.5a7.5,7.5 0,1 1,0 15a7.5,7.5 0,1 1,0 -15z" />
-    <path
-        android:fillColor="#FF9575CD"
-        android:pathData="M44.5,30.05a7.5,7.5 0,1 1,0 15a7.5,7.5 0,1 1,0 -15z" />
-    <path
-        android:fillColor="#FFFFF176"
-        android:pathData="M63.5,30.05a7.5,7.5 0,1 1,0 15a7.5,7.5 0,1 1,0 -15z" />
+        android:fillColor="#38FFF3E6"
+        android:pathData="M75,46.4a7.6,7.6 0,1 1,0 15.2a7.6,7.6 0,1 1,0 -15.2z M64.5,64.59a7.6,7.6 0,1 1,0 15.2a7.6,7.6 0,1 1,0 -15.2z M43.5,64.59a7.6,7.6 0,1 1,0 15.2a7.6,7.6 0,1 1,0 -15.2z M33,46.4a7.6,7.6 0,1 1,0 15.2a7.6,7.6 0,1 1,0 -15.2z M43.5,28.21a7.6,7.6 0,1 1,0 15.2a7.6,7.6 0,1 1,0 -15.2z M64.5,28.21a7.6,7.6 0,1 1,0 15.2a7.6,7.6 0,1 1,0 -15.2z" />
+    <path android:pathData="M54.00,43.50L54.90,43.68L55.74,44.12L56.51,44.64L57.27,45.02L58.10,45.21L59.01,45.32L59.94,45.51L60.75,45.96L61.33,46.67L61.68,47.55L61.94,48.44L62.27,49.22L62.79,49.90L63.42,50.57L64.01,51.32L64.34,52.18L64.32,53.10L64.03,54.00L63.66,54.84L63.41,55.66L63.36,56.51L63.42,57.43L63.39,58.38L63.09,59.25L62.49,59.94L61.68,60.45L60.85,60.85L60.14,61.32L59.56,61.94L59.01,62.68L58.38,63.39L57.59,63.87L56.68,64.01L55.74,63.88L54.84,63.66L54.00,63.55L53.16,63.66L52.26,63.88L51.32,64.01L50.41,63.87L49.62,63.39L48.99,62.68L48.44,61.94L47.86,61.32L47.15,60.85L46.32,60.45L45.51,59.94L44.91,59.25L44.61,58.38L44.58,57.43L44.64,56.51L44.59,55.66L44.34,54.84L43.97,54.00L43.68,53.10L43.66,52.18L43.99,51.32L44.58,50.57L45.21,49.90L45.73,49.22L46.06,48.44L46.32,47.55L46.67,46.67L47.25,45.96L48.06,45.51L48.99,45.32L49.90,45.21L50.73,45.02L51.49,44.64L52.26,44.12L53.10,43.68Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="54"
+                android:startY="43.5"
+                android:endX="54"
+                android:endY="64.5"
+                android:startColor="#FFE6D2BE"
+                android:endColor="#FFBEA591" />
+        </aapt:attr>
+    </path>
 </vector>
