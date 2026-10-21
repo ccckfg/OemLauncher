@@ -65,7 +65,7 @@ fun AppearanceControls(
                 }
                 Choice(
                     R.string.icon_style, IconStyle.entries, settings.iconStyle, { stringResource(it.label()) },
-                    note = R.string.icon_style_note,
+                    note = R.string.icon_style_note.takeIf { settings.iconStyle == IconStyle.THEMED },
                 ) { value -> vm.layout { it.copy(iconStyle = value) } }
             }
         }

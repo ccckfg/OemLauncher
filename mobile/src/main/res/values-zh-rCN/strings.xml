@@ -74,8 +74,8 @@
     <string name="tier_lite_note">轻量档关闭模糊、光晕和动画，更流畅、更省电。</string>
     <string name="icon_style">图标风格</string>
     <string name="icon_style_original">原色</string>
-    <string name="icon_style_themed">主题单色</string>
-    <string name="icon_style_note">预览为近似效果，以手表为准。</string>
+    <string name="icon_style_themed">摩卡图标</string>
+    <string name="icon_style_note">摩卡图标内置在手表里；没收录的应用保留原图标。</string>
     <string name="undo">撤销</string>
     <string name="redo">重做</string>
     <string name="saved_automatically">草稿自动保存，所有修改均可撤销。</string>
@@ -108,6 +108,7 @@
     <string name="crop">裁剪图标</string>
     <string name="crop_hint">拖动和双指缩放以填满遮罩，保存为 192 像素 PNG。</string>
     <string name="zoom">缩放</string>
+    <string name="zoom_value">%1$.1f×</string>
     <string name="percent">%1$d%%</string>
     <string name="save_icon">使用此图标</string>
     <string name="cancel">取消</string>

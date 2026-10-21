@@ -85,7 +85,8 @@ fun WatchPreview(
     val ids = remember(apps, config.iconOverrides) { apps.map { config.iconOverrides[it.key] ?: it.iconId } }
     val iconImages by vm.iconImages.collectAsStateWithLifecycle()
     LaunchedEffect(ids, state.iconGeneration) { vm.prefetchIcons(ids) }
-    val images = ids.map { id -> id?.let { iconImages[it] }?.asAndroidBitmap() }
+    val mocha = rememberMochaIcons(apps, config)
+    val images = ids.mapIndexed { i, id -> mocha[apps[i].key] ?: id?.let { iconImages[it] }?.asAndroidBitmap() }
     val palette = GlassTheme.palette
     val gear = rememberGearGlyph(palette.onAccent)
     val settingsLabel = stringResource(R.string.settings_label)

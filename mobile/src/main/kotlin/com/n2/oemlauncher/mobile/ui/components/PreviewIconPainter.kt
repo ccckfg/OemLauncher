@@ -3,8 +3,6 @@ package com.n2.oemlauncher.mobile.ui.components
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
@@ -12,12 +10,10 @@ import android.graphics.RectF
 import android.graphics.Shader
 import androidx.core.graphics.withSave
 import com.n2.oemlauncher.mobile.config.PreviewTokens
-import com.n2.oemlauncher.shared.design.ColorMath
 import com.n2.oemlauncher.shared.design.CookieOutline
 import com.n2.oemlauncher.shared.design.Palettes
 import com.n2.oemlauncher.shared.layout.DisplayMath
 import com.n2.oemlauncher.shared.model.IconShape
-import com.n2.oemlauncher.shared.model.IconStyle
 import com.n2.oemlauncher.shared.model.VisualTier
 
 /**
@@ -28,7 +24,6 @@ import com.n2.oemlauncher.shared.model.VisualTier
 class PreviewIconPainter(
     densityDpi: Int,
     private val iconShape: IconShape,
-    private val iconStyle: IconStyle,
     private val images: List<Bitmap?>,
     private val initials: List<String>,
     private val favoriteCount: Int,
@@ -40,11 +35,7 @@ class PreviewIconPainter(
     private val favoriteRingPx = DisplayMath.dpToPx(PreviewTokens.FAVORITE_RING_DP, densityDpi)
     private val favoriteGapPx = DisplayMath.dpToPx(PreviewTokens.FAVORITE_RING_GAP_DP, densityDpi)
     private val gearRimPx = DisplayMath.dpToPx(PreviewTokens.GEAR_RIM_DP, densityDpi)
-    private val discColor = ColorMath.compositeOver(palette.glass, palette.background).toInt()
     private val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-    private val monoPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
-        colorFilter = monochromeFilter(palette.textPrimary)
-    }
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val initialPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -75,19 +66,13 @@ class PreviewIconPainter(
     fun icon(canvas: Canvas, index: Int, x: Float, y: Float, size: Float, alpha: Float) {
         val half = size / 2f
         val bitmap = images.getOrNull(index)
-        val paint = if (iconStyle == IconStyle.THEMED) monoPaint else bitmapPaint
         outline(iconPath, x, y, half, 0f)
-        paint.alpha = alphaOf(alpha)
+        bitmapPaint.alpha = alphaOf(alpha)
         canvas.withSave {
-            if (iconStyle == IconStyle.THEMED) {
-                fillPaint.color = discColor
-                fillPaint.alpha = alphaOf(alpha)
-                drawCircle(x, y, half, fillPaint)
-            }
             clipPath(iconPath)
             if (bitmap != null) {
                 rect.set(x - half, y - half, x + half, y + half)
-                drawBitmap(bitmap, null, rect, paint)
+                drawBitmap(bitmap, null, rect, bitmapPaint)
             } else {
                 fillPaint.color = Color.DKGRAY
                 fillPaint.alpha = alphaOf(alpha)
@@ -97,7 +82,7 @@ class PreviewIconPainter(
                 drawText(initials.getOrNull(index).orEmpty(), x, y - (initialPaint.ascent() + initialPaint.descent()) / 2f, initialPaint)
             }
         }
-        paint.alpha = FULL_ALPHA
+        bitmapPaint.alpha = FULL_ALPHA
         stroke(canvas, iconPath, palette.rimLight, rimPx, alpha)
         if (index in 0 until favoriteCount) {
             outline(ringPath, x, y, half, favoriteGapPx + favoriteRingPx / 2f)
@@ -179,28 +164,8 @@ class PreviewIconPainter(
         }
     }
 
-    /** Luminance of the source pixels mapped onto [target], the closest flat approximation. */
-    private fun monochromeFilter(target: Long): ColorMatrixColorFilter {
-        val r = ((target shr 16) and 0xFF) / 255f
-        val g = ((target shr 8) and 0xFF) / 255f
-        val b = (target and 0xFF) / 255f
-        return ColorMatrixColorFilter(
-            ColorMatrix(
-                floatArrayOf(
-                    LUM_R * r, LUM_G * r, LUM_B * r, 0f, 0f,
-                    LUM_R * g, LUM_G * g, LUM_B * g, 0f, 0f,
-                    LUM_R * b, LUM_G * b, LUM_B * b, 0f, 0f,
-                    0f, 0f, 0f, 1f, 0f,
-                ),
-            ),
-        )
-    }
-
     private companion object {
         const val FULL_ALPHA = 255
         const val INITIAL_TEXT_RATIO = 0.42f
-        const val LUM_R = 0.2126f
-        const val LUM_G = 0.7152f
-        const val LUM_B = 0.0722f
     }
 }

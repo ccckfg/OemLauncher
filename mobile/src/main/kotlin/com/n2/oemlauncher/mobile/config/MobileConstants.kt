@@ -44,6 +44,7 @@ object UiDimensions {
     const val DRAG_THRESHOLD = 56
     const val ANIMATION_MS = 180
     const val CROP_SCRIM_ALPHA = 0.65f
+    const val CROP_CORNER = 20
 }
 
 object DemoConstants {
@@ -52,20 +53,9 @@ object DemoConstants {
     const val DENSITY_DPI = 320
     const val SDK = 36
     /** Shown as the demo watch's app version; bump it to redraw stored demo icons. */
-    const val VERSION = "1.1.0"
+    const val VERSION = "1.2.0"
     const val PACKAGE_PREFIX = "com.n2.demo."
     const val CLASS_SUFFIX = ".MainActivity"
-    const val ICON_INSET_RATIO = 0.18f
-
-    /**
-     * Muted earth tones for the stand-in icons: saturated hues fought the mocha page. Cream
-     * glyphs keep at least 6:1 on every tone.
-     */
-    val TONES = longArrayOf(0xFF3E4B5E, 0xFF4C5A3A, 0xFF75582C, 0xFF7A4434, 0xFF5C3D52, 0xFF2F5655, 0xFF5A4636)
-    const val INK = 0xFFFFF7EE
-    const val GLYPH_RATIO = 0.5f
-    const val SHEEN_COLOR = 0x24FFF3E6
-    const val SHEEN_FRACTION = 0.6f
 }
 
 object SearchConstants {

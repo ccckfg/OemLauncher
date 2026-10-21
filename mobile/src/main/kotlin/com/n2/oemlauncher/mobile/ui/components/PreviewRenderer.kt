@@ -54,7 +54,7 @@ class PreviewRenderer(
     val scratch = FloatArray(2)
     private val backdrop = WatchBackdrop(watchWidth, watchHeight, settings.visualTier)
     private val painter = PreviewIconPainter(
-        density, settings.iconShape, settings.iconStyle, images,
+        density, settings.iconShape, images,
         apps.map { it.label.take(1) }, favoriteCount, gear, settings.visualTier,
     )
     private val gearSize = DisplayMath.dpToPx(PreviewTokens.GEAR_BUTTON_DP, density)

@@ -74,8 +74,8 @@
     <string name="tier_lite_note">Lite turns off blur, glows and animation: smoother and easier on the battery.</string>
     <string name="icon_style">Icon style</string>
     <string name="icon_style_original">Original colors</string>
-    <string name="icon_style_themed">Themed monochrome</string>
-    <string name="icon_style_note">The preview is an approximation; your watch is the source of truth.</string>
+    <string name="icon_style_themed">Mocha icons</string>
+    <string name="icon_style_note">Mocha icons are built into the watch; apps it does not cover keep their own icon.</string>
     <string name="undo">Undo</string>
     <string name="redo">Redo</string>
     <string name="saved_automatically">Draft saved automatically. All changes can be undone.</string>
@@ -108,6 +108,7 @@
     <string name="crop">Crop icon</string>
     <string name="crop_hint">Drag and pinch to fill the mask. The saved icon is a 192 px PNG.</string>
     <string name="zoom">Zoom</string>
+    <string name="zoom_value">%1$.1f×</string>
     <string name="percent">%1$d%%</string>
     <string name="save_icon">Use this icon</string>
     <string name="cancel">Cancel</string>
