@@ -29,3 +29,8 @@ dist/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Third-party reference media: kept locally for design work, not ours to publish
+/*.jpg
+/*.mp4
+docs/design/reference/
