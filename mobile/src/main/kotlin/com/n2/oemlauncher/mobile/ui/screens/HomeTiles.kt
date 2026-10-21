@@ -76,19 +76,13 @@ private fun RowScope.EntryTile(
     action: () -> Unit,
 ) {
     val palette = GlassTheme.palette
-    val champagne = remember(palette) {
-        Brush.verticalGradient(listOf(palette.accentLight, palette.accentDeep))
-    }
-    val shadow = Color.Black.copy(alpha = GlassSpecs.Phone.shadowAlpha)
-    val ink = if (primary) palette.onAccent else MaterialTheme.colorScheme.onSurface
-    val sub = if (primary) palette.onAccent.copy(alpha = SECONDARY_INK_ALPHA) else MaterialTheme.colorScheme.onSurfaceVariant
-    val fill = if (primary) {
-        Modifier.shadow(12.dp, RoundedCornerShape(GlassTokens.TILE_CORNER.dp), ambientColor = shadow, spotColor = shadow)
-            .clip(RoundedCornerShape(GlassTokens.TILE_CORNER.dp))
-            .background(champagne)
-    } else {
-        Modifier.glassSurface(GlassTokens.TILE_CORNER.dp, elevated = true)
-    }
+    val accent = primary && enabled
+    val ink = if (accent) palette.onAccent else MaterialTheme.colorScheme.onSurface
+    val sub = if (accent) palette.onAccent.copy(alpha = SECONDARY_INK_ALPHA) else MaterialTheme.colorScheme.onSurfaceVariant
+    // A disabled tile is never the champagne one: a dimmed accent reads as broken, not as off.
+    val fill = Modifier.glassSurface(
+        GlassTokens.TILE_CORNER.dp, elevated = true, champagne = accent,
+    )
     Column(
         Modifier.weight(1f).height(GlassTokens.TILE_HEIGHT.dp)
             .alpha(if (enabled) 1f else DISABLED_ALPHA)
@@ -99,7 +93,7 @@ private fun RowScope.EntryTile(
     ) {
         Box(
             Modifier.size(GlassTokens.TILE_ICON.dp).clip(CircleShape)
-                .background(if (primary) palette.onAccent.copy(alpha = CHIP_FILL_ALPHA) else palette.glassStrong),
+                .background(if (accent) palette.onAccent.copy(alpha = CHIP_FILL_ALPHA) else palette.glassStrong),
             contentAlignment = Alignment.Center,
         ) {
             Icon(icon, null, tint = ink, modifier = Modifier.size(TILE_GLYPH_DP.dp))

@@ -1,6 +1,7 @@
 package com.n2.oemlauncher.mobile.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -17,6 +18,10 @@ fun CompanionTheme(darkOverride: Boolean?, content: @Composable () -> Unit) {
     val palette = remember(dark) { GlassPalette(PaletteMapping.palette(dark)) }
     val colors = remember(palette, dark) { PaletteMapping.colorScheme(palette.design, dark) }
     CompositionLocalProvider(LocalGlassPalette provides palette) {
-        MaterialTheme(colorScheme = colors, typography = CompanionTypography, content = content)
+        MaterialTheme(colorScheme = colors, typography = CompanionTypography) {
+            // Text without a color falls back to LocalContentColor, which stays black unless a
+            // Material Surface sets it, and glass panes are not Surfaces.
+            CompositionLocalProvider(LocalContentColor provides colors.onBackground, content = content)
+        }
     }
 }

@@ -38,6 +38,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.runtime.CompositionLocalProvider
+import com.kyant.backdrop.backdrops.emptyBackdrop
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import com.n2.oemlauncher.mobile.config.GlassTokens
@@ -54,25 +56,30 @@ fun GlassDialog(
     onDismissRequest: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val palette = GlassTheme.palette
     Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        val blurred = overlayBlurBehind(ThemeTokens.OVERLAY_BLUR_DP)
-        val scrim = Color.Black.copy(alpha = if (blurred) BLURRED_SCRIM_ALPHA else GlassTokens.SCRIM_ALPHA)
-        val interaction = remember { MutableInteractionSource() }
-        Box(
-            Modifier.fillMaxSize().background(scrim)
-                .clickable(interactionSource = interaction, indication = null, onClick = onDismissRequest),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                Modifier.padding(UiDimensions.PAGE_PADDING.dp)
-                    .glassSurface(GlassTokens.CARD_CORNER.dp, strong = true, elevated = true)
-                    .clickable(interactionSource = interaction, indication = null, onClick = {})
-                    .padding(UiDimensions.PAGE_PADDING.dp),
-                verticalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp),
-                content = content,
-            )
-        }
+        // The dialog has its own window, where the page backdrop's coordinates mean nothing.
+        CompositionLocalProvider(LocalGlassBackdrop provides emptyBackdrop()) { DialogBody(onDismissRequest, content) }
+    }
+}
+
+@Composable
+private fun DialogBody(onDismissRequest: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    val blurred = overlayBlurBehind(ThemeTokens.OVERLAY_BLUR_DP)
+    val scrim = Color.Black.copy(alpha = if (blurred) BLURRED_SCRIM_ALPHA else GlassTokens.SCRIM_ALPHA)
+    val interaction = remember { MutableInteractionSource() }
+    Box(
+        Modifier.fillMaxSize().background(scrim)
+            .clickable(interactionSource = interaction, indication = null, onClick = onDismissRequest),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            Modifier.padding(UiDimensions.PAGE_PADDING.dp)
+                .glassSurface(GlassTokens.CARD_CORNER.dp, strong = true, elevated = true)
+                .clickable(interactionSource = interaction, indication = null, onClick = {})
+                .padding(UiDimensions.PAGE_PADDING.dp),
+            verticalArrangement = Arrangement.spacedBy(UiDimensions.GAP.dp),
+            content = content,
+        )
     }
 }
 
@@ -95,7 +102,9 @@ fun GlassBottomSheet(
         dragHandle = { SheetHandle() },
     ) {
         overlayBlurBehind(ThemeTokens.OVERLAY_BLUR_DP)
-        Column(Modifier.fillMaxWidth(), content = content)
+        CompositionLocalProvider(LocalGlassBackdrop provides emptyBackdrop()) {
+            Column(Modifier.fillMaxWidth(), content = content)
+        }
     }
 }
 

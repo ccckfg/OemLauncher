@@ -125,14 +125,21 @@ fun CompanionApp(vm: CompanionViewModel) {
                             if (!home) {
                                 GlassIconButton(
                                     Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.back), back,
+                                    glass = false,
                                 )
                             }
                         },
                         actions = {
+                            // The theme switch is app-wide, so it lives on the home page only;
+                            // inner pages keep their bar to the page's own actions.
                             if (home) {
                                 GlassIconButton(
                                     Icons.Outlined.Insights, stringResource(R.string.sync_diagnostics),
                                     { nav.navigate(SyncDiagnostics) },
+                                )
+                                GlassIconButton(
+                                    Icons.Outlined.Contrast, stringResource(R.string.theme),
+                                    { dark = !(dark ?: systemDark) },
                                 )
                             }
                             if (editing) {
@@ -140,17 +147,15 @@ fun CompanionApp(vm: CompanionViewModel) {
                                     Icons.AutoMirrored.Outlined.Undo, stringResource(R.string.undo),
                                     { vm.undo() },
                                     enabled = state.draft?.undo?.isNotEmpty() == true,
+                                    glass = false,
                                 )
                                 GlassIconButton(
                                     Icons.AutoMirrored.Outlined.Redo, stringResource(R.string.redo),
                                     { vm.redo() },
                                     enabled = state.draft?.redo?.isNotEmpty() == true,
+                                    glass = false,
                                 )
                             }
-                            GlassIconButton(
-                                Icons.Outlined.Contrast, stringResource(R.string.theme),
-                                { dark = !(dark ?: systemDark) },
-                            )
                         },
                     )
                 },

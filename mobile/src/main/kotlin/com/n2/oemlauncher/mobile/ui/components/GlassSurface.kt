@@ -1,69 +1,95 @@
 package com.n2.oemlauncher.mobile.ui.components
 
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.RectF
-import android.graphics.Region
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.withTranslation
+import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.backdrops.LayerBackdrop
+import com.kyant.backdrop.backdrops.emptyBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.highlight.HighlightStyle
+import com.kyant.backdrop.shadow.InnerShadow
+import com.kyant.backdrop.shadow.Shadow
+import com.kyant.shapes.Capsule
+import com.kyant.shapes.RoundedRectangle
 import com.n2.oemlauncher.mobile.config.GlassTokens
 import com.n2.oemlauncher.mobile.ui.theme.GlassTheme
 import com.n2.oemlauncher.shared.design.GlassSpecs
-import kotlin.math.pow
 
 /**
- * The page backdrop: the base color plus one warm and one cool ambient glow. Static — it never
- * moves with the scroll (design section 7). Both gradients are cached per size, not per frame.
+ * What a pane of glass refracts: the page backdrop, or the pane it sits on. Overlays in their
+ * own window cannot see the page, so they provide [emptyBackdrop] and keep only the surface.
+ */
+val LocalGlassBackdrop = staticCompositionLocalOf<Backdrop> { emptyBackdrop() }
+
+/**
+ * The page backdrop: the base color, the warm and cool glows, and a few soft pools of light.
+ * Smooth gradients alone give liquid glass nothing to bend, so the pools are what its edges
+ * visibly refract. Static: it never moves with the scroll (design section 7).
  */
 @Composable
 fun GlassPage(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val palette = GlassTheme.palette
-    Box(
-        modifier.fillMaxSize().drawWithCache {
-            val warm = Brush.radialGradient(
-                listOf(palette.warmGlow, Color.Transparent),
-                center = Offset(size.width * GlassTokens.WARM_GLOW_X, size.height * GlassTokens.WARM_GLOW_Y),
-                radius = size.height * GlassTokens.WARM_GLOW_RADIUS,
-            )
-            val cool = Brush.radialGradient(
-                listOf(palette.coolGlow, Color.Transparent),
-                center = Offset(size.width * GlassTokens.COOL_GLOW_X, size.height * GlassTokens.COOL_GLOW_Y),
-                radius = size.height * GlassTokens.COOL_GLOW_RADIUS,
-            )
-            onDrawBehind {
-                drawRect(palette.background)
-                drawRect(warm)
-                drawRect(cool)
-            }
-        },
-        content = content,
-    )
+    val backdrop = rememberLayerBackdrop()
+    Box(modifier.fillMaxSize()) {
+        Box(
+            Modifier.fillMaxSize().layerBackdrop(backdrop).drawWithCache {
+                fun glow(color: Color, x: Float, y: Float, radius: Float, plateau: Float = 0f): Brush {
+                    val center = Offset(size.width * x, size.height * y)
+                    return if (plateau <= 0f) {
+                        Brush.radialGradient(listOf(color, Color.Transparent), center, size.height * radius)
+                    } else {
+                        // A flat middle then a short fade: a pool with an edge the lens can bend.
+                        Brush.radialGradient(
+                            0f to color, plateau to color.copy(alpha = color.alpha * PLATEAU_KEEP),
+                            1f to Color.Transparent,
+                            center = center, radius = size.height * radius,
+                        )
+                    }
+                }
+                val warm = glow(palette.warmGlow, GlassTokens.WARM_GLOW_X, GlassTokens.WARM_GLOW_Y, GlassTokens.WARM_GLOW_RADIUS)
+                val cool = glow(palette.coolGlow, GlassTokens.COOL_GLOW_X, GlassTokens.COOL_GLOW_Y, GlassTokens.COOL_GLOW_RADIUS)
+                val pools = GlassTokens.LIGHT_POOLS.map { pool ->
+                    val tint = if (pool.cool) palette.coolGlow else palette.accent
+                    glow(tint.copy(alpha = pool.alpha), pool.x, pool.y, pool.radius, GlassTokens.POOL_PLATEAU)
+                }
+                onDrawBehind {
+                    drawRect(palette.background)
+                    drawRect(warm)
+                    drawRect(cool)
+                    pools.forEach { drawRect(it) }
+                }
+            },
+        )
+        CompositionLocalProvider(LocalGlassBackdrop provides backdrop) { content() }
+    }
 }
 
 /**
- * A pane of glass: fill, a rim light that fades out over the top half, and an optional shadow.
- * Works for rows, cards, capsules and buttons, so every surface rises by light, not by lines.
+ * A pane of liquid glass: it refracts what lies behind its rim (with a faint spectral fringe),
+ * lifts the colors under it, carries a translucent tint, and catches light on two opposite
+ * edges. [champagne] is the solid accent pane — the one per screen (design section 1).
+ * [recessed] sinks it instead, for tracks. Pass [exported] to let panes laid on this one
+ * refract it in turn.
  */
 @Composable
 fun Modifier.glassSurface(
@@ -71,86 +97,64 @@ fun Modifier.glassSurface(
     capsule: Boolean = false,
     strong: Boolean = false,
     elevated: Boolean = false,
+    champagne: Boolean = false,
+    recessed: Boolean = false,
+    exported: LayerBackdrop? = null,
 ): Modifier {
     val palette = GlassTheme.palette
-    val spec = GlassSpecs.Phone
-    val shape = if (capsule) RoundedCornerShape(percent = 50) else RoundedCornerShape(corner)
-    val lifted = if (elevated) Modifier.outerShadow(corner, capsule) else Modifier
-    return this.then(lifted).clip(shape).drawWithCache {
-        val fill = if (strong) palette.glassStrong else palette.glass
-        val rimEnd = (size.height * spec.rimFadeFraction).coerceAtLeast(1f)
-        val rim = Brush.verticalGradient(listOf(palette.rimLight, Color.Transparent), startY = 0f, endY = rimEnd)
-        val cornerPx = if (capsule) size.height / 2f else corner.toPx()
-        onDrawBehind {
-            drawRect(fill)
-            drawRim(rim, cornerPx, spec.rimWidthDp.dp.toPx())
+    val backdrop = LocalGlassBackdrop.current
+    val shape = remember(corner, capsule) { if (capsule) Capsule() else RoundedRectangle(corner) }
+    val tint = if (strong) palette.glassStrong else palette.glass
+    val surface = remember(palette, strong, champagne) {
+        if (champagne) {
+            Brush.verticalGradient(listOf(palette.accentLight, palette.accentDeep))
+        } else {
+            Brush.verticalGradient(
+                listOf(
+                    tint.copy(alpha = tint.alpha * GlassTokens.LIQUID_TINT_TOP),
+                    tint.copy(alpha = tint.alpha * GlassTokens.LIQUID_TINT_BOTTOM),
+                ),
+            )
         }
     }
-}
-
-/**
- * Shadow that stays outside the outline. `Modifier.shadow` paints behind the node, and glass is
- * translucent, so its blur would read as a grey rectangle inside the pane. The bands below are
- * clipped to the outside of the shape, so nothing can leak inwards.
- */
-private fun Modifier.outerShadow(corner: Dp, capsule: Boolean): Modifier = drawWithCache {
-    val spec = GlassSpecs.Phone
-    val cornerPx = if (capsule) size.height / 2f else corner.toPx()
-    val layers = GlassTokens.SHADOW_LAYERS
-    val insets = GlassShadow.insets(GlassTokens.SHADOW_SPREAD_DP.dp.toPx(), layers)
-    val bandAlpha = GlassShadow.bandAlpha(spec.shadowAlpha, layers)
-    val drop = GlassTokens.SHADOW_DROP_DP.dp.toPx()
-    val paint = Paint().apply {
-        isAntiAlias = true
-        style = Paint.Style.FILL
-        color = android.graphics.Color.BLACK
-        alpha = bandAlpha
-    }
-    val outline = Path().apply { addRoundRect(0f, 0f, size.width, size.height, cornerPx, cornerPx, Path.Direction.CW) }
-    val rect = RectF()
-    onDrawWithContent {
-        drawIntoCanvas { canvas ->
-            // Overlapping bands accumulate into a smooth gradient; the clip keeps it outside.
-            canvas.nativeCanvas.withTranslation(0f, drop) {
-                clipPath(outline, Region.Op.DIFFERENCE)
-                for (inset in insets) {
-                    rect.set(inset, inset, size.width - inset, size.height - inset)
-                    drawRoundRect(rect, cornerPx, cornerPx, paint)
-                }
-            }
-        }
-        drawContent()
-    }
-}
-
-/**
- * Recipe of the raised-glass shadow. Every inset is negative, which is what keeps the shadow
- * out of the pane; [bandAlpha] is small enough that the overlapping bands accumulate to
- * [base] at the outline and fade to nothing at the spread.
- */
-internal object GlassShadow {
-    fun insets(spreadPx: Float, layers: Int): FloatArray =
-        FloatArray(layers) { -(it + 1f) * (spreadPx / layers) }
-
-    fun bandAlpha(base: Float, layers: Int): Int {
-        val clamped = base.coerceIn(0f, 1f)
-        if (clamped <= 0f) return 0
-        val perBand = 1f - (1f - clamped).pow(1f / layers)
-        return (perBand * 255f).toInt().coerceIn(1, 255)
-    }
-}
-
-private fun DrawScope.drawRim(rim: Brush, cornerPx: Float, width: Float) {
-    drawRoundRect(
-        brush = rim,
-        topLeft = Offset(width / 2f, width / 2f),
-        size = Size(size.width - width, size.height - width),
-        cornerRadius = CornerRadius(cornerPx),
-        style = Stroke(width = width),
+    val rim = palette.rimLight.copy(alpha = (palette.rimLight.alpha * GlassTokens.SPECULAR_GAIN).coerceAtMost(1f))
+    return drawBackdrop(
+        backdrop = backdrop,
+        shape = { shape },
+        effects = {
+            vibrancy()
+            val edge = if (capsule) GlassTokens.LENS_EDGE_CAPSULE else GlassTokens.LENS_EDGE
+            lens(edge.dp.toPx(), (edge * GlassTokens.LENS_STRENGTH).dp.toPx(), chromaticAberration = true)
+        },
+        highlight = {
+            Highlight(
+                width = GlassTokens.HIGHLIGHT_WIDTH.dp,
+                style = HighlightStyle.Default(
+                    color = if (champagne) Color.White.copy(alpha = GlassTokens.CHAMPAGNE_SPECULAR) else rim,
+                    angle = GlassTokens.LIGHT_ANGLE,
+                ),
+            )
+        },
+        shadow = if (elevated || champagne) {
+            { Shadow(radius = GlassTokens.SHADOW_RADIUS.dp, color = Color.Black.copy(alpha = GlassSpecs.Phone.shadowAlpha)) }
+        } else {
+            null
+        },
+        // Tracks sit into the glass rather than on it: a shadow along their upper inner edge.
+        innerShadow = if (recessed) {
+            { InnerShadow(radius = GlassTokens.RECESS_SHADOW.dp, color = Color.Black.copy(alpha = GlassTokens.RECESS_ALPHA)) }
+        } else {
+            null
+        },
+        exportedBackdrop = exported,
+        onDrawSurface = { drawRect(surface, alpha = if (champagne) GlassTokens.CHAMPAGNE_OPACITY else 1f) },
     )
 }
 
-/** A glass card with the standard page rhythm inside. */
+/**
+ * A glass card with the standard page rhythm inside. It exports itself, so glass controls on
+ * it (segments, sliders) refract the card rather than punching through to the page.
+ */
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
@@ -160,8 +164,14 @@ fun GlassCard(
     padding: PaddingValues = PaddingValues(GlassTokens.CARD_PADDING.dp),
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val exported = rememberLayerBackdrop()
     Box(
-        modifier.fillMaxWidth().glassSurface(corner, strong = strong, elevated = elevated).padding(padding),
-        content = content,
-    )
+        modifier.fillMaxWidth()
+            .glassSurface(corner, strong = strong, elevated = elevated, exported = exported)
+            .padding(padding),
+    ) {
+        CompositionLocalProvider(LocalGlassBackdrop provides exported) { content() }
+    }
 }
+
+private const val PLATEAU_KEEP = 0.85f

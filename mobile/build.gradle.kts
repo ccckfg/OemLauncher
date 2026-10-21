@@ -90,6 +90,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.pinyin4j)
+    implementation(libs.backdrop)
+    implementation(libs.kyant.shapes)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 

@@ -17,32 +17,58 @@ object GlassTokens {
     const val CHIP_PADDING = 14
     const val ROW_HEIGHT = 64
     const val SETTING_ROW = 52
-    const val SEGMENT_HEIGHT = 40
-    const val SEGMENT_PADDING = 3
-    const val SEGMENT_GAP = 2
+    const val SEGMENT_HEIGHT = 46
+    const val SEGMENT_PADDING = 4
     const val TILE_HEIGHT = 132
     const val TILE_ICON = 40
     const val BUTTON_HEIGHT = 48
     const val STATUS_DOT = 8
 
-    const val SWITCH_WIDTH = 48
-    const val SWITCH_HEIGHT = 28
-    const val SWITCH_THUMB = 20
-    const val SWITCH_INSET = 4
-    const val SLIDER_TRACK = 6
-    const val SLIDER_THUMB = 22
+    /** Switch track and its pill knob; the knob is wider than tall, like a drop. */
+    const val SWITCH_WIDTH = 60
+    const val SWITCH_HEIGHT = 30
+    const val SWITCH_KNOB_WIDTH = 36
+    const val SWITCH_KNOB_HEIGHT = 24
+    const val SWITCH_INSET = 3
+    const val SLIDER_TRACK = 10
+    const val SLIDER_KNOB_WIDTH = 40
+    const val SLIDER_KNOB_HEIGHT = 26
+
+    /** Knobs: held, they swell by [KNOB_PRESSED_SCALE] and clear into a lens. */
+    const val KNOB_PRESSED_SCALE = 1.35f
+    const val KNOB_LENS_EDGE = 8f
+    const val KNOB_LENS_AMOUNT = 12f
+    const val KNOB_CLEARING = 0.85f
+    const val KNOB_SPECULAR = 0.7f
+    const val KNOB_SHADOW = 6
+    const val KNOB_SHADOW_ALPHA = 0.3f
+    const val KNOB_INNER_SHADOW = 4
+
+    /** Recessed tracks: the inner shadow along their upper edge. */
+    const val RECESS_SHADOW = 4
+    const val RECESS_ALPHA = 0.35f
 
     /** Drag lifts a row: shadow plus a small scale, like a card picked off the table. */
     const val DRAG_SCALE = 1.02f
 
     /**
-     * Raised glass. The shadow is a stack of bands clipped to the outside of the shape, so
-     * nothing is ever painted under the translucent fill; a real blur behind the pane would
-     * show through it as a grey rectangle. More bands mean a smoother ramp.
+     * Liquid glass (the backdrop library). The lens bends what lies within [LENS_EDGE] of the
+     * rim by [LENS_STRENGTH] times that distance; capsules are small, so their band is
+     * narrower. The tint fades towards the top, where the light comes through.
      */
-    const val SHADOW_SPREAD_DP = 14
-    const val SHADOW_DROP_DP = 3
-    const val SHADOW_LAYERS = 20
+    const val LENS_EDGE = 20f
+    const val LENS_EDGE_CAPSULE = 12f
+    const val LENS_STRENGTH = 1.8f
+    const val LIQUID_TINT_TOP = 0.5f
+    const val LIQUID_TINT_BOTTOM = 0.85f
+    const val HIGHLIGHT_WIDTH = 1.25f
+
+    /** The rim light is a quiet 22% on Mocha; the specular edge needs about twice that. */
+    const val SPECULAR_GAIN = 2.2f
+    const val LIGHT_ANGLE = 45f
+    const val SHADOW_RADIUS = 18
+    const val CHAMPAGNE_SPECULAR = 0.6f
+    const val CHAMPAGNE_OPACITY = 0.94f
 
     /** Hero preview on the home page and the smaller one on the appearance page. */
     const val HERO_PREVIEW = 236
@@ -60,9 +86,21 @@ object GlassTokens {
     const val WARM_GLOW_X = 0.12f
     const val WARM_GLOW_Y = 0.06f
     const val WARM_GLOW_RADIUS = 0.47f
-    const val COOL_GLOW_X = 1f
-    const val COOL_GLOW_Y = 0.46f
-    const val COOL_GLOW_RADIUS = 0.29f
+    const val COOL_GLOW_X = 0.92f
+    const val COOL_GLOW_Y = 0.84f
+    const val COOL_GLOW_RADIUS = 0.42f
+
+    /**
+     * Soft pools of light on the page, as fractions of the page (radius of its height). Glass
+     * refracts their edges; without them the page is a smooth gradient and the lens shows nothing.
+     */
+    val LIGHT_POOLS = listOf(
+        LightPool(x = 0.16f, y = 0.30f, radius = 0.16f, alpha = 0.22f),
+        LightPool(x = 0.88f, y = 0.14f, radius = 0.10f, alpha = 0.18f),
+        LightPool(x = 0.08f, y = 0.74f, radius = 0.15f, alpha = 0.8f, cool = true),
+        LightPool(x = 0.78f, y = 0.56f, radius = 0.12f, alpha = 0.16f),
+    )
+    const val POOL_PLATEAU = 0.55f
 
     /** Champagne halo drawn around the hero card, and the alpha it is drawn at. */
     const val HERO_HALO_ALPHA = 0.22f
@@ -77,6 +115,9 @@ object GlassTokens {
     const val SPRING_DAMPING = 0.8f
     const val SPRING_STIFFNESS = 800f
 }
+
+/** A pool of light on the page backdrop: champagne, or the cool glow when [cool]. */
+data class LightPool(val x: Float, val y: Float, val radius: Float, val alpha: Float, val cool: Boolean = false)
 
 /** Phone type scale, in sp. Weights and letter spacing live in the Typography object. */
 object TypeTokens {

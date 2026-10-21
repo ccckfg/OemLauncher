@@ -42,15 +42,11 @@ fun ChampagneButton(
     enabled: Boolean = true,
 ) {
     val palette = GlassTheme.palette
-    val brush = remember(palette) { Brush.verticalGradient(listOf(palette.accentLight, palette.accentDeep)) }
-    val shadow = Color.Black.copy(alpha = GlassSpecs.Phone.shadowAlpha)
     Box(
         modifier
             .height(GlassTokens.BUTTON_HEIGHT.dp)
             .alpha(if (enabled) 1f else DISABLED_ALPHA)
-            .shadow(12.dp, CircleShape, ambientColor = shadow, spotColor = shadow)
-            .clip(CircleShape)
-            .background(brush)
+            .glassSurface(corner = 0.dp, capsule = true, champagne = true)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 24.dp),
         contentAlignment = Alignment.Center,
@@ -94,6 +90,7 @@ fun GlassIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    glass: Boolean = true,
 ) {
     Box(
         modifier.size(UiDimensions.TOUCH_TARGET.dp)
@@ -102,7 +99,7 @@ fun GlassIconButton(
     ) {
         Box(
             Modifier.size(ICON_BUTTON_DP.dp).alpha(if (enabled) 1f else DISABLED_ALPHA)
-                .glassSurface(corner = 0.dp, capsule = true, strong = false),
+                .then(if (glass) Modifier.glassSurface(corner = 0.dp, capsule = true, strong = false) else Modifier),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

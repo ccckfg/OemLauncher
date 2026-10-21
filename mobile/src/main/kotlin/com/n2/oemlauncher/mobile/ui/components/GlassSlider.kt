@@ -1,36 +1,47 @@
 package com.n2.oemlauncher.mobile.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.shapes.Capsule
 import com.n2.oemlauncher.mobile.config.GlassTokens
 import com.n2.oemlauncher.mobile.config.UiDimensions
 import com.n2.oemlauncher.mobile.ui.theme.GlassTheme
+import kotlin.math.roundToInt
 
 /** Label, live value and a champagne-filled slider, all on one glass card. */
 @Composable
@@ -53,23 +64,41 @@ fun GlassSliderCard(
             bottom = 0.dp,
         ),
     ) {
-        Column {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    label, Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    valueText, style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            GlassSlider(value, valueRange, onValueChange, onValueChangeFinished, description)
-        }
+        LabeledSlider(label, value, valueText, valueRange, description, onValueChange, onValueChangeFinished)
     }
 }
 
-/** Slider with the design's own track and knob; semantics keep it usable without gestures. */
+/** The slider with its label and live value, for use inside a card that holds other settings. */
+@Composable
+fun LabeledSlider(
+    label: String,
+    value: Float,
+    valueText: String,
+    valueRange: ClosedFloatingPointRange<Float>,
+    description: String,
+    onValueChange: (Float) -> Unit,
+    onValueChangeFinished: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                label, Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                valueText, style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        GlassSlider(value, valueRange, onValueChange, onValueChangeFinished, description)
+    }
+}
+
+/**
+ * Slider with a recessed glass track, a champagne fill and a liquid knob that swells into a
+ * lens while dragged; semantics keep it usable without gestures.
+ */
 @Composable
 fun GlassSlider(
     value: Float,
@@ -80,29 +109,40 @@ fun GlassSlider(
     modifier: Modifier = Modifier,
 ) {
     val palette = GlassTheme.palette
-    val fill = remember(palette) {
-        Brush.horizontalGradient(listOf(palette.accentDeep, palette.accentLight))
-    }
-    Box(
+    val fill = remember(palette) { Brush.horizontalGradient(listOf(palette.accentDeep, palette.accentLight)) }
+    val fraction by animateFloatAsState(
+        fractionOf(value, valueRange),
+        spring(stiffness = KNOB_FOLLOW_STIFFNESS),
+        label = "slider",
+    )
+    val press = rememberKnobPress()
+    val track = rememberLayerBackdrop()
+    BoxWithConstraints(
         modifier.fillMaxWidth().height(UiDimensions.TOUCH_TARGET.dp)
             .pointerInput(valueRange) {
-                val thumb = GlassTokens.SLIDER_THUMB.dp.toPx()
+                val knob = GlassTokens.SLIDER_KNOB_WIDTH.dp.toPx()
                 detectDragGestures(
-                    onDragStart = { offset -> onValueChange(valueAt(offset.x, size.width.toFloat(), thumb, valueRange)) },
-                    onDragEnd = onValueChangeFinished,
-                    onDragCancel = onValueChangeFinished,
+                    onDragStart = { offset ->
+                        press.press()
+                        onValueChange(valueAt(offset.x, size.width.toFloat(), knob, valueRange))
+                    },
+                    onDragEnd = { press.release(); onValueChangeFinished() },
+                    onDragCancel = { press.release(); onValueChangeFinished() },
                     onDrag = { change, _ ->
                         change.consume()
-                        onValueChange(valueAt(change.position.x, size.width.toFloat(), thumb, valueRange))
+                        onValueChange(valueAt(change.position.x, size.width.toFloat(), knob, valueRange))
                     },
                 )
             }
             .pointerInput(valueRange) {
-                val thumb = GlassTokens.SLIDER_THUMB.dp.toPx()
-                detectTapGestures { offset ->
-                    onValueChange(valueAt(offset.x, size.width.toFloat(), thumb, valueRange))
-                    onValueChangeFinished()
-                }
+                val knob = GlassTokens.SLIDER_KNOB_WIDTH.dp.toPx()
+                detectTapGestures(
+                    onPress = { press.press(); tryAwaitRelease(); press.release() },
+                    onTap = { offset ->
+                        onValueChange(valueAt(offset.x, size.width.toFloat(), knob, valueRange))
+                        onValueChangeFinished()
+                    },
+                )
             }
             .semantics {
                 contentDescription = description
@@ -112,37 +152,26 @@ fun GlassSlider(
                     onValueChangeFinished()
                     true
                 }
-            }
-            .drawBehind {
-                val trackHeight = GlassTokens.SLIDER_TRACK.dp.toPx()
-                val thumb = GlassTokens.SLIDER_THUMB.dp.toPx()
-                val centerY = size.height / 2f
-                val top = centerY - trackHeight / 2f
-                val startX = thumb / 2f
-                val travel = (size.width - thumb).coerceAtLeast(1f)
-                val fraction = fractionOf(value, valueRange)
-                drawRoundRect(
-                    color = palette.glassStrong,
-                    topLeft = Offset(startX, top),
-                    size = Size(travel, trackHeight),
-                    cornerRadius = CornerRadius(trackHeight / 2f),
-                )
-                drawRoundRect(
-                    brush = fill,
-                    topLeft = Offset(startX, top),
-                    size = Size(travel * fraction, trackHeight),
-                    cornerRadius = CornerRadius(trackHeight / 2f),
-                )
-                val thumbX = startX + travel * fraction
-                drawCircle(color = palette.accentLight, radius = thumb / 2f, center = Offset(thumbX, centerY))
-                drawCircle(
-                    color = palette.accent,
-                    radius = thumb / 2f - 0.5.dp.toPx(),
-                    center = Offset(thumbX, centerY),
-                    style = Stroke(width = 1.dp.toPx()),
-                )
             },
-    )
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        val knobWidth = GlassTokens.SLIDER_KNOB_WIDTH.dp
+        val travel = maxWidth - knobWidth
+        // The track runs between the knob's centers at both ends, so the fill meets the knob.
+        Box(
+            Modifier.padding(horizontal = knobWidth / 2).fillMaxWidth().height(GlassTokens.SLIDER_TRACK.dp)
+                .layerBackdrop(track)
+                .glassSurface(corner = 0.dp, capsule = true, strong = true, recessed = true),
+        ) {
+            Box(Modifier.fillMaxHeight().fillMaxWidth(fraction).clip(Capsule()).background(fill))
+        }
+        Box(
+            Modifier
+                .offset { IntOffset((travel.toPx() * fraction).roundToInt(), 0) }
+                .size(knobWidth, GlassTokens.SLIDER_KNOB_HEIGHT.dp)
+                .liquidKnob(press, rememberCombinedBackdrop(LocalGlassBackdrop.current, track)),
+        )
+    }
 }
 
 /** Share of [range] covered by [value], clamped to 0..1. */
@@ -152,9 +181,9 @@ fun fractionOf(value: Float, range: ClosedFloatingPointRange<Float>): Float {
     return ((value - range.start) / span).coerceIn(0f, 1f)
 }
 
-private fun valueAt(x: Float, width: Float, thumbPx: Float, range: ClosedFloatingPointRange<Float>): Float {
-    val usable = (width - thumbPx).coerceAtLeast(1f)
-    val fraction = ((x - thumbPx / 2f) / usable).coerceIn(0f, 1f)
+private fun valueAt(x: Float, width: Float, knobPx: Float, range: ClosedFloatingPointRange<Float>): Float {
+    val usable = (width - knobPx).coerceAtLeast(1f)
+    val fraction = ((x - knobPx / 2f) / usable).coerceIn(0f, 1f)
     return range.start + (range.endInclusive - range.start) * fraction
 }
 
@@ -177,3 +206,6 @@ fun GlassSettingRow(
         trailing()
     }
 }
+
+/** The knob trails the finger on a stiff spring: it reads as liquid, never as lag. */
+private const val KNOB_FOLLOW_STIFFNESS = 1000f

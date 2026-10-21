@@ -64,6 +64,8 @@
     <string name="sort_by">Sort by</string>
     <string name="group_layout">Layout</string>
     <string name="group_icons">Icons</string>
+    <string name="group_watch">Watch</string>
+    <string name="group_behavior">Behavior</string>
     <string name="settings_label">Settings</string>
     <string name="connection_chip">%1$s · %2$s</string>
     <string name="visual_tier">Watch quality</string>

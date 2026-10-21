@@ -64,6 +64,8 @@
     <string name="sort_by">排序方式</string>
     <string name="group_layout">布局</string>
     <string name="group_icons">图标</string>
+    <string name="group_watch">手表</string>
+    <string name="group_behavior">交互</string>
     <string name="settings_label">设置</string>
     <string name="connection_chip">%1$s · %2$s</string>
     <string name="visual_tier">手表画质</string>
